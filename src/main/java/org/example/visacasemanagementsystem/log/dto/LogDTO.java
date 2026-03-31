@@ -7,5 +7,7 @@ public record LogDTO (
         Long id,
         LocalDateTime timeStamp,
         Long userId,
-        LogEvent logEvent) {
+        Long visaCaseId,
+        LogEvent logEvent,
+        String description) {
 }
