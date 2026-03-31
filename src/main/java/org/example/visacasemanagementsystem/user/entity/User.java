@@ -30,6 +30,7 @@ public class User {
     private String fullName;
 
     @NotBlank
+    @Column(unique = true)
     private String email;
 
     //Placeholder password storage solution
@@ -43,12 +44,12 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof User user)) return false;
-        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(fullName, user.fullName) && Objects.equals(email, user.email) && Objects.equals(password, user.password) && userAuthorization == user.userAuthorization;
+        return Objects.equals(id, user.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, fullName, email, password, userAuthorization);
+        return Objects.hashCode(id);
     }
 
     @Override
@@ -58,8 +59,7 @@ public class User {
                 ", username='" + username + '\'' +
                 ", fullName='" + fullName + '\'' +
                 ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", userAuthorization=" + userAuthorization +
+                ", role=" + userAuthorization +
                 '}';
     }
 }

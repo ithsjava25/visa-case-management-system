@@ -57,12 +57,12 @@ public class Visa {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Visa visa)) return false;
-        return Objects.equals(id, visa.id) && Objects.equals(visaType, visa.visaType) && visaStatus == visa.visaStatus && Objects.equals(nationality, visa.nationality) && Objects.equals(applicant, visa.applicant) && Objects.equals(handler, visa.handler) && Objects.equals(createdAt, visa.createdAt) && Objects.equals(updatedAt, visa.updatedAt) && Objects.equals(s3Keys, visa.s3Keys);
+        return Objects.equals(id, visa.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, visaType, visaStatus, nationality, applicant, handler, createdAt, updatedAt, s3Keys);
+        return Objects.hashCode(id);
     }
 
     @Override
@@ -70,13 +70,6 @@ public class Visa {
         return "Visa{" +
                 "id=" + id +
                 ", visaType='" + visaType + '\'' +
-                ", visaStatus=" + visaStatus +
-                ", nationality='" + nationality + '\'' +
-                ", applicant=" + applicant +
-                ", handler=" + handler +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                ", s3Keys=" + s3Keys +
                 '}';
     }
 }

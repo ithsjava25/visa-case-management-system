@@ -39,12 +39,12 @@ public class Log {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Log log)) return false;
-        return Objects.equals(id, log.id) && Objects.equals(timeStamp, log.timeStamp) && Objects.equals(userId, log.userId) && Objects.equals(visaCaseId, log.visaCaseId) && logEvent == log.logEvent && Objects.equals(description, log.description);
+        return Objects.equals(id, log.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, timeStamp, userId, visaCaseId, logEvent, description);
+        return Objects.hashCode(id);
     }
 
     @Override
