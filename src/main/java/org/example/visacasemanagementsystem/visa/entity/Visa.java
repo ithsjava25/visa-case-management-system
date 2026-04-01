@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,7 +45,12 @@ public class Visa {
     @JoinColumn(name = "handler_id")
     private User handler; // Handläggaren (Admin) som tilldelar ärendet
 
+    @CreatedDate
+    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @ElementCollection

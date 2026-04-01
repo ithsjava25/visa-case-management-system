@@ -26,7 +26,7 @@ public class User {
     private String username;
 
     @NotBlank
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String fullName;
 
     @NotBlank
@@ -58,7 +58,6 @@ public class User {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", fullName='" + fullName + '\'' +
-                ", email='" + email + '\'' +
                 ", role=" + userAuthorization +
                 '}';
     }

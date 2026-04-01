@@ -21,6 +21,7 @@ public class CommentMapper {
         );
     }
 
+    // Todo: Service layer must set visa and author before persisting
     public Comment toEntity(CreateCommentDTO dto) {
         if  (dto == null) return null;
 

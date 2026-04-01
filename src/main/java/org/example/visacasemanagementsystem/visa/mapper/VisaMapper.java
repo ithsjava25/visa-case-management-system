@@ -25,6 +25,10 @@ public class VisaMapper {
     }
 
     // CreateDTO --> Entity
+
+    // Todo: Feedback från Rabbit
+    // The mapper needs a UserRepository dependency to fetch the User entity and set it as the applicant before returning the Visa.
+    // Without this, persisting a new Visa will fail with a constraint violation.
     public Visa toEntity(CreateVisaDTO dto) {
         if (dto == null) return null;
 
