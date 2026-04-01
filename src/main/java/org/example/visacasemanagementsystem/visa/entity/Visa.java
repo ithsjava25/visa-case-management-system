@@ -10,6 +10,7 @@ import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Visa {
 
     @Id
@@ -47,7 +49,7 @@ public class Visa {
 
     @CreatedDate
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")

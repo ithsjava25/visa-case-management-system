@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.visacasemanagementsystem.user.entity.User;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -15,6 +17,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Comment {
 
     @Id
@@ -33,25 +36,27 @@ public class Comment {
     @Column(columnDefinition = "TEXT")
     private String text;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreatedDate
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Comment comment)) return false;
-        return Objects.equals(id, comment.id) && Objects.equals(visa, comment.visa) && Objects.equals(author, comment.author) && Objects.equals(text, comment.text) && Objects.equals(createdAt, comment.createdAt);
+        return Objects.equals(id, comment.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, visa, author, text, createdAt);
+        return Objects.hashCode(id);
     }
 
     @Override
     public String toString() {
         return "Comment{" +
                 "id=" + id +
-                ", visa=" + visa +
-                ", author=" + author +
+                ", visaId=" + (visa != null ? visa.getId() : null) +
+                ", authorId=" + (author != null ? author.getId() : null) +
                 ", text='" + text + '\'' +
                 ", createdAt=" + createdAt +
                 '}';
