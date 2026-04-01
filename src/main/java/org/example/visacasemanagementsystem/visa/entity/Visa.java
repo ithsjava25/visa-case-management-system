@@ -55,6 +55,8 @@ public class Visa {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    private String rejectionReason;
+
     @ElementCollection
     @CollectionTable(name = "visa_documents", joinColumns = @JoinColumn(name = "visa_id"))
     @Column(name = "s3_key")

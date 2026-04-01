@@ -25,7 +25,7 @@ public class LogMapper {
     }
 
 
-    // Service-klassen kommer senare skapa denna log
+    // Service-klassen sköter skapandet av denna log
     public Log toEntity(Long userId, Long visaCaseId, LogEvent logEvent, String description){
         Log log = new Log();
         log.setUserId(userId);

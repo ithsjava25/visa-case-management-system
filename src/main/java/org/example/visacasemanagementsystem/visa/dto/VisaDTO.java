@@ -9,6 +9,6 @@ public record VisaDTO(
         String nationality,
         Long applicantId,
         String applicantName,
-        Long handlerId
-) {
-}
+        Long handlerId,
+        String rejectionReason
+) {}

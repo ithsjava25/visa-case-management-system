@@ -22,7 +22,6 @@ public class User {
     @Column(nullable = false, updatable = false)
     private Long id;
 
-
     @NotBlank
     @Column(nullable = false)
     private String fullName;

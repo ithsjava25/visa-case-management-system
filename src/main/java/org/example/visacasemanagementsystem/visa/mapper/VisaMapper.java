@@ -20,13 +20,15 @@ public class VisaMapper {
                 visa.getNationality(),
                 visa.getApplicant() != null ? visa.getApplicant().getId() : null,
                 visa.getApplicant() != null ? visa.getApplicant().getFullName() : "Unknown",
-                visa.getHandler() != null ? visa.getHandler().getId() : null
+                visa.getHandler() != null ? visa.getHandler().getId() : null,
+                visa.getRejectionReason()
+
         );
     }
 
     // CreateDTO --> Entity
 
-    // Todo: Feedback från Rabbit
+    // Todo:
     // The mapper needs a UserRepository dependency to fetch the User entity and set it as the applicant before returning the Visa.
     // Without this, persisting a new Visa will fail with a constraint violation.
     public Visa toEntity(CreateVisaDTO dto) {

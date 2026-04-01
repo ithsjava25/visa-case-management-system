@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.user.service;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,8 +28,10 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public List<User> findByEmail(String email) {
-        return null;
-    }
+//    public Optional<User> findByEmail(String email) {
+//        return userRepository.findByEmail(email);
+//    }
+
+
 
 }

@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.example.visacasemanagementsystem.log.LogEvent;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -14,6 +17,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Log {
 
     @Id
@@ -22,6 +26,7 @@ public class Log {
     private Long id;
 
     @NotNull
+    @CreatedDate
     private LocalDateTime timeStamp;
 
     @NotNull

@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface VisaRepository extends JpaRepository<Visa,Long> {
 
+    // Todo: Skapa enum för tillgängliga visatyper istället för att te emot String?
     List<Visa> findByVisaTypeContainingIgnoreCase(String visaType, Sort type);
 
     List<Visa> findByVisaStatus(VisaStatus visaStatus, Sort sort);
