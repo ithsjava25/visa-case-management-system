@@ -4,7 +4,11 @@ import org.example.visacasemanagementsystem.visa.VisaStatus;
 
 public record VisaDTO(
         Long id,
-        String visa,
+        String visaType,
         VisaStatus visaStatus,
-        String nationality) {
+        String nationality,
+        Long applicantId,
+        String applicantName,
+        Long handlerId
+) {
 }

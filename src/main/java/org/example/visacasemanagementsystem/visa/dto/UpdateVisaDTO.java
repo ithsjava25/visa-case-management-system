@@ -6,7 +6,9 @@ import org.example.visacasemanagementsystem.visa.VisaStatus;
 
 public record UpdateVisaDTO(
         @NotNull Long id,
-        @NotBlank(message = "Visa type must be specified") String visa,
+        @NotBlank(message = "Visa type must be specified") String visaType,
         @NotNull(message = "Application must have a status") VisaStatus visaStatus,
-        @NotBlank(message = "Nationality must be specified") String nationality) {
+        @NotBlank(message = "Nationality must be specified") String nationality,
+        Long handlerId // För att kunna tilldela en handläggare
+) {
 }
