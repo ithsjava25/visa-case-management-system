@@ -1,6 +1,7 @@
 package org.example.visacasemanagementsystem.visa.repository;
 
 import org.example.visacasemanagementsystem.visa.VisaStatus;
+import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,8 +13,8 @@ import java.util.List;
 @Repository
 public interface VisaRepository extends JpaRepository<Visa,Long> {
 
-    // Todo: Skapa enum för tillgängliga visatyper istället för att te emot String?
-    List<Visa> findByVisaTypeContainingIgnoreCase(String visaType, Sort type);
+
+    List<Visa> findByVisaType(VisaType visaType, Sort type);
 
     List<Visa> findByVisaStatus(VisaStatus visaStatus, Sort sort);
 

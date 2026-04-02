@@ -6,6 +6,7 @@ import org.example.visacasemanagementsystem.audit.service.AuditService;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
+import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
@@ -23,6 +24,8 @@ import java.util.Optional;
 
 @Service
 public class VisaService {
+
+    private static final String NOT_FOUND_MESSAGE = "Visa not found";
 
     private final VisaRepository visaRepository;
     private final UserRepository userRepository;
@@ -45,8 +48,8 @@ public class VisaService {
         return visaRepository.findById(id);
     }
 
-    public List<VisaDTO> findVisaByType(String visaType) {
-       return visaRepository.findByVisaTypeContainingIgnoreCase(visaType, Sort.by("visaType").descending())
+    public List<VisaDTO> findVisaByType(VisaType visaType) {
+       return visaRepository.findByVisaType(visaType, Sort.by("visaType").descending())
                .stream()
                .map(visaMapper::toDTO)
                .toList();
@@ -90,7 +93,7 @@ public class VisaService {
     public VisaDTO updateVisaStatus(Long visaId, VisaStatus newStatus, Long userId) {
         // Hämta visa
         Visa visa = visaRepository.findById(visaId)
-                .orElseThrow(() -> new EntityNotFoundException("Visa not found"));
+                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
 
         // Uppdatera statusen
         visa.setVisaStatus(newStatus);
@@ -121,7 +124,7 @@ public class VisaService {
 
         // Sätter initial status och kopplar användare
         visa.setApplicant(applicant);
-        visa.setVisaStatus(VisaStatus.REGISTERED);
+        visa.setVisaStatus(VisaStatus.SUBMITTED);
 
         Visa savedVisa = visaRepository.save(visa);
 
@@ -139,7 +142,7 @@ public class VisaService {
     @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
         Visa visa = visaRepository.findById(visaId)
-                .orElseThrow(() -> new EntityNotFoundException("Visa not found"));
+                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
 
         visa.setVisaStatus(VisaStatus.GRANTED);
         Visa savedVisa = visaRepository.save(visa);
@@ -159,7 +162,7 @@ public class VisaService {
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId,  String reason) {
         Visa visa = visaRepository.findById(visaId)
-                .orElseThrow(() -> new EntityNotFoundException("Visa not found"));
+                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
 
         visa.setVisaStatus(VisaStatus.REJECTED);
         visa.setRejectionReason(reason);
