@@ -1,8 +1,8 @@
-package org.example.visacasemanagementsystem.visa.mapper;
+package org.example.visacasemanagementsystem.comment.mapper;
 
-import org.example.visacasemanagementsystem.visa.dto.CommentDTO;
-import org.example.visacasemanagementsystem.visa.dto.CreateCommentDTO;
-import org.example.visacasemanagementsystem.visa.entity.Comment;
+import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
+import org.example.visacasemanagementsystem.comment.dto.CreateCommentDTO;
+import org.example.visacasemanagementsystem.comment.entity.Comment;
 import org.springframework.stereotype.Component;
 
 @Component

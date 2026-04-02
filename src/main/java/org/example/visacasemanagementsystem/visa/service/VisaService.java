@@ -1,8 +1,8 @@
 package org.example.visacasemanagementsystem.visa.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.visacasemanagementsystem.log.LogEvent;
-import org.example.visacasemanagementsystem.log.service.LogService;
+import org.example.visacasemanagementsystem.audit.AuditEventType;
+import org.example.visacasemanagementsystem.audit.service.AuditService;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
@@ -27,14 +27,14 @@ public class VisaService {
     private final VisaRepository visaRepository;
     private final UserRepository userRepository;
     private final VisaMapper visaMapper;
-    private final LogService logService;
+    private final AuditService auditService;
 
 
-    public VisaService(VisaRepository visaRepository, UserRepository userRepository ,VisaMapper visaMapper, LogService logService) {
+    public VisaService(VisaRepository visaRepository, UserRepository userRepository ,VisaMapper visaMapper, AuditService auditService) {
         this.visaRepository = visaRepository;
         this.userRepository = userRepository;
         this.visaMapper = visaMapper;
-        this.logService = logService;
+        this.auditService = auditService;
     }
 
     public List<Visa> findAll() {
@@ -97,10 +97,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Logga händelsen
-        logService.createLog(
+        auditService.createLog(
                 userId,
                 visaId,
-                LogEvent.UPDATED,
+                AuditEventType.UPDATED,
                 "Status changed to: " + newStatus
         );
 
@@ -126,10 +126,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Logga händelsen
-        logService.createLog(
+        auditService.createLog(
                 userId,
                 savedVisa.getId(),
-                LogEvent.CREATED,
+                org.example.visacasemanagementsystem.audit.AuditEventType.CREATED,
                 "Visa application submitted."
         );
         return visaMapper.toDTO(savedVisa);
@@ -145,10 +145,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Logga händelsen
-        logService.createLog(
+        auditService.createLog(
                 adminId,
                 visaId,
-                LogEvent.GRANTED,
+                org.example.visacasemanagementsystem.audit.AuditEventType.GRANTED,
                 "Visa has been approved by admin."
         );
 
@@ -166,7 +166,7 @@ public class VisaService {
 
         Visa savedVisa = visaRepository.save(visa);
 
-        logService.createLog(adminId, visaId, LogEvent.REJECTED, "Visa rejected. Reason: " + reason);
+        auditService.createLog(adminId, visaId, org.example.visacasemanagementsystem.audit.AuditEventType.REJECTED, "Visa rejected. Reason: " + reason);
 
         return visaMapper.toDTO(savedVisa);
     }

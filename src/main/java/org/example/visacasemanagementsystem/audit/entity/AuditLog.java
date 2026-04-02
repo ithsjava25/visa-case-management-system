@@ -1,12 +1,11 @@
-package org.example.visacasemanagementsystem.log.entity;
+package org.example.visacasemanagementsystem.audit.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
-import org.example.visacasemanagementsystem.log.LogEvent;
+import org.example.visacasemanagementsystem.audit.AuditEventType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -18,11 +17,11 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class Log {
+public class AuditLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
+    @Column(name = "audit_id", nullable = false)
     private Long id;
 
     @NotNull
@@ -37,14 +36,14 @@ public class Log {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private LogEvent logEvent;
+    private AuditEventType auditEventType;
 
     private String description; // Beskrivning av händelse
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Log log)) return false;
-        return Objects.equals(id, log.id);
+        if (!(o instanceof AuditLog auditLog)) return false;
+        return Objects.equals(id, auditLog.id);
     }
 
     @Override
@@ -54,12 +53,12 @@ public class Log {
 
     @Override
     public String toString() {
-        return "Log{" +
+        return "AuditLog{" +
                 "id=" + id +
                 ", timeStamp=" + timeStamp +
                 ", userId=" + userId +
                 ", visaCaseId=" + visaCaseId +
-                ", logEvent=" + logEvent +
+                ", auditEventType=" + auditEventType +
                 ", description='" + description + '\'' +
                 '}';
     }
