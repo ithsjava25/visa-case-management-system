@@ -47,7 +47,7 @@ public class Visa {
 
     @ManyToOne
     @JoinColumn(name = "handler_id")
-    private User handler; // Handläggaren (Admin) som tilldelar ärendet
+    private User handler; // Handläggaren (Admin) --> Används vid tilldelning/filtrering & validering
 
     @CreatedDate
     @Column(name = "created_at")

@@ -17,7 +17,7 @@ public class AuditService {
         this.auditMapper = auditMapper;
     }
 
-    public void createLog(Long userId, Long visaCaseId, AuditEventType auditEventType, String description) {
+    public void createAuditLog(Long userId, Long visaCaseId, AuditEventType auditEventType, String description) {
         AuditLog auditLog = auditMapper.toEntity(userId, visaCaseId, auditEventType, description);
         auditRepository.save(auditLog);
     }

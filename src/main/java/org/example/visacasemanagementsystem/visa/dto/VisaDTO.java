@@ -1,10 +1,11 @@
 package org.example.visacasemanagementsystem.visa.dto;
 
 import org.example.visacasemanagementsystem.visa.VisaStatus;
+import org.example.visacasemanagementsystem.visa.VisaType;
 
 public record VisaDTO(
         Long id,
-        String visaType,
+        VisaType visaType,
         VisaStatus visaStatus,
         String nationality,
         Long applicantId,
