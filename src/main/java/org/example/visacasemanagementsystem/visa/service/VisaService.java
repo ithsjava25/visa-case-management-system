@@ -20,12 +20,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class VisaService {
 
-    private static final String NOT_FOUND_MESSAGE = "Visa not found";
+    private static final String NOT_FOUND_MESSAGE = "Visa not found.";
 
     private final VisaRepository visaRepository;
     private final UserRepository userRepository;
@@ -40,13 +39,14 @@ public class VisaService {
         this.auditService = auditService;
     }
 
-    // --- För filtrering i Frontend list-vy ---
+    // --- For filtering in Frontend list-view ---
     public List<Visa> findAll() {
         return visaRepository.findAll();
     }
 
-    public Optional<Visa> findById(Long id) {
-        return visaRepository.findById(id);
+    private Visa findVisaById(Long id) {
+       return visaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
     }
 
     public List<VisaDTO> findVisaByType(VisaType visaType) {
@@ -89,117 +89,126 @@ public class VisaService {
                 .toList();
     }
 
-    // ---
+    // -----
 
     @Transactional
-    public VisaDTO updateVisaStatus(Long visaId, VisaStatus newStatus, Long userId) {
-        // Hämta visa
-        Visa visa = visaRepository.findById(visaId)
-                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
+    public VisaDTO updateVisaStatus(Long visaId, VisaStatus newStatus, Long adminId) {
+        validateHandler(adminId);
+        Visa visa = findVisaById(visaId);
 
-        // Addera logik för att kontrollera korrekt behörighet?
-
-        // Uppdatera statusen
+        // Update visa status
         visa.setVisaStatus(newStatus);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Logga händelsen
+        // Create log
         auditService.createAuditLog(
-                userId,
+                adminId,
                 visaId,
                 AuditEventType.UPDATED,
                 "Status changed to: " + newStatus
         );
 
-        // Returnera DTO
+        // return dto
         return visaMapper.toDTO(savedVisa);
     }
 
-    // Skapa ansökan
     @Transactional
     public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId, String reason) {
-        // Mappar grunddata
+        // Maps data
         Visa visa = visaMapper.toEntity(dto);
 
-        // Hämtar användaren
+        // Get user
         User applicant = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // Sätter initial status och kopplar användare
         visa.setApplicant(applicant);
         visa.setVisaStatus(VisaStatus.SUBMITTED);
-
         Visa savedVisa = visaRepository.save(visa);
 
-        // Logga händelsen
+        // Create log
         auditService.createAuditLog(
                 userId,
                 savedVisa.getId(),
-                org.example.visacasemanagementsystem.audit.AuditEventType.CREATED,
+                AuditEventType.CREATED,
                 "Visa application submitted."
         );
         return visaMapper.toDTO(savedVisa);
     }
 
-    // Godkänn ansökan
+
     @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
-        Visa visa = visaRepository.findById(visaId) // Addera logik och anropa metod här i service istället för repo??
-                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
-
-        // Addera logik för att kontrollera korrekt behörighet?
+        validateHandler(adminId);
+        Visa visa = findVisaById(visaId);
 
         visa.setVisaStatus(VisaStatus.GRANTED);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Logga händelsen
+        // Create log
         auditService.createAuditLog(
                 adminId,
                 visaId,
-                org.example.visacasemanagementsystem.audit.AuditEventType.GRANTED,
+                AuditEventType.GRANTED,
                 "Visa has been granted."
         );
 
         return visaMapper.toDTO(savedVisa);
     }
 
-    // Neka ansökan
+
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId, String reason) {
-        Visa visa = visaRepository.findById(visaId)
-                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
 
-        // Addera logik för att kontrollera korrekt behörighet?
+        validateHandler(adminId);
+        Visa visa = findVisaById(visaId);
 
         visa.setVisaStatus(VisaStatus.REJECTED);
         visa.setRejectionReason(reason);
-
         Visa savedVisa = visaRepository.save(visa);
 
-        auditService.createAuditLog(adminId, visaId, org.example.visacasemanagementsystem.audit.AuditEventType.REJECTED, "Visa rejected. Reason: " + reason);
+        // Create log
+        auditService.createAuditLog(
+                adminId,
+                visaId,
+                AuditEventType.REJECTED,
+                "Visa rejected. Reason: " + reason);
 
         return visaMapper.toDTO(savedVisa);
     }
 
     // Assign Handler
+    @Transactional
+    public VisaDTO assignHandler(Long visaId, Long adminId) {
+        User admin = validateHandler(adminId);
+        Visa visa = findVisaById(visaId);
 
+        visa.setHandler(admin); // Connects handler
+        visaRepository.save(visa);
 
-    // Hjälpmetoder
+        // Create log
+        auditService.createAuditLog(
+                adminId,
+                visaId,
+                AuditEventType.ASSIGNED,
+                "Admin has been assigned to case."
+        );
+        return visaMapper.toDTO(visa);
+    }
 
-    // ValidateHandler --> Bekräfta att en handläggare har rätt behörighet
+    // ---- HELP METHODS ----
+
     public User validateHandler(Long handlerId) throws UnauthorizedException {
-        // Hämta användare
-        User  user = userRepository.findById(handlerId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        // Get user by id
+        User user = userRepository.findById(handlerId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
 
-        // Kontrollera behörighetet
+        // Checks Authorization
         boolean isAdmin = user.getUserAuthorization() == UserAuthorization.ADMIN;
         boolean isSysAdmin = user.getUserAuthorization() == UserAuthorization.SYSADMIN;
 
         if (!isAdmin && !isSysAdmin) {
-            throw  new UnauthorizedException("User is not authorized to perform this action");
+            throw  new UnauthorizedException("User is not authorized to perform this action.");
         }
         return user;
     }
-
 }
