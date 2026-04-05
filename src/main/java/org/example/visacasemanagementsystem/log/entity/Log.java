@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import org.example.visacasemanagementsystem.log.LogEvent;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -21,17 +20,13 @@ public class Log {
     @Column(nullable = false)
     private Long id;
 
-    @NotNull
-    private LocalDateTime timeStamp;
+    @NotNull private LocalDateTime timeStamp;
 
-    @NotNull
-    private Long userId; // Vem gjorde vad?
+    @NotNull private Long userId; // Vem gjorde vad?
 
-    @NotNull
-    private Long visaCaseId; // Vilket ärende rör det?
+    @NotNull private Long visaCaseId; // Vilket ärende rör det?
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
+    @NotNull @Enumerated(EnumType.STRING)
     private LogEvent logEvent;
 
     private String description; // Beskrivning av händelse

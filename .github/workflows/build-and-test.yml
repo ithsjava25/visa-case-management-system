@@ -1,0 +1,37 @@
+name: Build and Test
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks out code from GitHub
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+        # Sets up Java 25 (Temurin) and cache Maven-dependencies
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+        # Make sure Maven Wrapper is executable
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+        # Compile and run tests
+      - name: Compile and run tests
+        run: ./mvnw -B test
+
+      # Control code format with spotless
+      - name: Run spotless check
+        run: ./mvnw -B spotless:check

@@ -32,8 +32,7 @@ public class Comment {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
-    @NotBlank
-    @Column(columnDefinition = "TEXT")
+    @NotBlank @Column(columnDefinition = "TEXT")
     private String text;
 
     @CreatedDate
