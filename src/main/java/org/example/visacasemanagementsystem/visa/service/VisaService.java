@@ -61,6 +61,10 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisaByStatus(String visaStatus) {
+        if(visaStatus == null || visaStatus.isBlank()) {
+            throw new IllegalArgumentException("Visa status cannot be null or blank");
+        }
+
         VisaStatus status;
 
         try {
