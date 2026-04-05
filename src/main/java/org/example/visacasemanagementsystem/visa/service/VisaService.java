@@ -2,6 +2,7 @@ package org.example.visacasemanagementsystem.visa.service;
 import jakarta.persistence.EntityNotFoundException;
 import org.example.visacasemanagementsystem.audit.AuditEventType;
 import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
@@ -40,8 +41,11 @@ public class VisaService {
     }
 
     // --- For filtering in Frontend list-view ---
-    public List<Visa> findAll() {
-        return visaRepository.findAll();
+    public List<VisaDTO> findAll() {
+        return visaRepository.findAll()
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
     }
 
     private Visa findVisaById(Long id) {
