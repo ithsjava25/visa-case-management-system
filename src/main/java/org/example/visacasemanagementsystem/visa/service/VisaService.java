@@ -57,7 +57,13 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisaByStatus(String visaStatus) {
-        VisaStatus status = VisaStatus.valueOf(visaStatus.toUpperCase());
+        VisaStatus status;
+
+        try {
+            status = VisaStatus.valueOf(visaStatus.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid visa status: " + visaStatus);
+        }
 
         List<Visa> visaEntites = visaRepository.findByVisaStatus(
                 status,
@@ -113,7 +119,7 @@ public class VisaService {
     }
 
     @Transactional
-    public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId, String reason) {
+    public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId) {
         // Maps data
         Visa visa = visaMapper.toEntity(dto);
 
@@ -183,7 +189,7 @@ public class VisaService {
         Visa visa = findVisaById(visaId);
 
         visa.setHandler(admin); // Connects handler
-        visaRepository.save(visa);
+        Visa savedVisa = visaRepository.save(visa);
 
         // Create log
         auditService.createAuditLog(
@@ -192,7 +198,7 @@ public class VisaService {
                 AuditEventType.ASSIGNED,
                 "Admin has been assigned to case."
         );
-        return visaMapper.toDTO(visa);
+        return visaMapper.toDTO(savedVisa);
     }
 
     // ---- HELP METHODS ----

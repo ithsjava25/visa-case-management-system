@@ -1,9 +1,8 @@
 package org.example.visacasemanagementsystem.user.service;
 
-import org.example.visacasemanagementsystem.user.entity.User;
+import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,12 +19,16 @@ public class UserService {
         this.userMapper = userMapper;
     }
 
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<UserDTO> findAll() {
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toDTO)
+                .toList();
     }
 
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public Optional<UserDTO> findById(Long id) {
+        return userRepository.findById(id)
+                .map(userMapper::toDTO);
     }
 
 //    public Optional<User> findByEmail(String email) {

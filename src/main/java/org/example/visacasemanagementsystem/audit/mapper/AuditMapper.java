@@ -32,7 +32,6 @@ public class AuditMapper {
         auditLog.setVisaCaseId(visaCaseId);
         auditLog.setAuditEventType(auditEventType);
         auditLog.setDescription(description);
-        auditLog.setTimeStamp(LocalDateTime.now());
         return auditLog;
 
     }

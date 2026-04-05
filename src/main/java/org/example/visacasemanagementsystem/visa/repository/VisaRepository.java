@@ -22,7 +22,7 @@ public interface VisaRepository extends JpaRepository<Visa,Long> {
 
     List<Visa> findByUpdatedAtAfter(LocalDateTime lastLogin, Sort sort);
 
-    List<Visa> findByHandlerIdAndVisaStatus(Long handlerId, VisaStatus visaStatus, Sort sort);
+    List<Visa> findByHandler_IdAndVisaStatus(Long handlerId, VisaStatus visaStatus, Sort sort);
 
 
 
