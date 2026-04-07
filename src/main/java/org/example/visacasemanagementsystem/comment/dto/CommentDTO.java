@@ -1,4 +1,4 @@
-package org.example.visacasemanagementsystem.visa.dto;
+package org.example.visacasemanagementsystem.comment.dto;
 
 import java.time.LocalDateTime;
 

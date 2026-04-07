@@ -15,7 +15,6 @@ public class UserMapper {
 
         return new UserDTO(
                 user.getId(),
-                user.getUsername(),
                 user.getFullName(),
                 user.getEmail(),
                 user.getUserAuthorization()
@@ -27,7 +26,6 @@ public class UserMapper {
         if (dto == null) return null;
 
         User user = new User();
-        user.setUsername(dto.username());
         user.setFullName(dto.fullName());
         user.setEmail(dto.email());
         user.setUserAuthorization(dto.userAuthorization());

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
+import org.example.visacasemanagementsystem.visa.VisaType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -29,8 +30,9 @@ public class Visa {
     @Column(name = "visa_id", nullable = false, updatable = false)
     private Long id;
 
-    @NotBlank
-    private String visaType;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private VisaType visaType;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -45,7 +47,7 @@ public class Visa {
 
     @ManyToOne
     @JoinColumn(name = "handler_id")
-    private User handler; // Handläggaren (Admin) som tilldelar ärendet
+    private User handler; // Handläggaren (Admin) --> Används vid tilldelning/filtrering & validering
 
     @CreatedDate
     @Column(name = "created_at")
@@ -54,6 +56,8 @@ public class Visa {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    private String rejectionReason;
 
     @ElementCollection
     @CollectionTable(name = "visa_documents", joinColumns = @JoinColumn(name = "visa_id"))
@@ -78,7 +82,15 @@ public class Visa {
     public String toString() {
         return "Visa{" +
                 "id=" + id +
-                ", visaType='" + visaType + '\'' +
+                ", visaType=" + visaType +
+                ", visaStatus=" + visaStatus +
+                ", nationality='" + nationality + '\'' +
+                ", applicantId=" + (applicant != null ? applicant.getId() : "null") +
+                ", handlerId=" + (handler != null ? handler.getId() : "null") +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", rejectionReason='" + rejectionReason + '\'' +
+                ", s3Keys=" + s3Keys +
                 '}';
     }
 }

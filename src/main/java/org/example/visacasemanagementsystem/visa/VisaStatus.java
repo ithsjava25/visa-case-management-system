@@ -1,7 +1,7 @@
 package org.example.visacasemanagementsystem.visa;
 
 public enum VisaStatus {
-    REGISTERED,
+    SUBMITTED,
     UNASSIGNED,
     ASSIGNED,
     INCOMPLETE,

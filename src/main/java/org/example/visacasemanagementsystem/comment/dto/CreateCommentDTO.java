@@ -1,4 +1,4 @@
-package org.example.visacasemanagementsystem.visa.dto;
+package org.example.visacasemanagementsystem.comment.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
