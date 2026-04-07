@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class VisaService {
@@ -67,7 +68,7 @@ public class VisaService {
 
         VisaStatus status;
         try {
-            status = VisaStatus.valueOf(visaStatus.toUpperCase());
+            status = VisaStatus.valueOf(visaStatus.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid visa status: " + visaStatus);
         }
@@ -118,11 +119,16 @@ public class VisaService {
             throw new IllegalArgumentException("New visa status cannot be null");
         }
 
+        if (newStatus == VisaStatus.REJECTED) {
+            throw new IllegalArgumentException("Use rejectVisa(...) when rejecting a visa.");
+        }
+
         validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
         // Update visa status
         visa.setVisaStatus(newStatus);
+        visa.setRejectionReason(null);
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log
@@ -160,13 +166,13 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
-
     @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
         validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
         visa.setVisaStatus(VisaStatus.GRANTED);
+        visa.setRejectionReason(null);
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log
@@ -179,7 +185,6 @@ public class VisaService {
 
         return visaMapper.toDTO(savedVisa);
     }
-
 
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId, String reason) {
