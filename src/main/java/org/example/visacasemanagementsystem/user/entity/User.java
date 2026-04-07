@@ -14,15 +14,13 @@ import java.util.Objects;
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(name = "users")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, updatable = false)
     private Long id;
-
-    @NotBlank @Column(nullable = false, unique = true)
-    private String username;
 
     @NotBlank @Column(nullable = false)
     private String fullName;
@@ -51,7 +49,6 @@ public class User {
     public String toString() {
         return "User{" +
                 "id=" + id +
-                ", username='" + username + '\'' +
                 ", fullName='" + fullName + '\'' +
                 ", role=" + userAuthorization +
                 '}';

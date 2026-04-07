@@ -1,4 +1,4 @@
-package org.example.visacasemanagementsystem.visa.entity;
+package org.example.visacasemanagementsystem.comment.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.visacasemanagementsystem.user.entity.User;
+import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 

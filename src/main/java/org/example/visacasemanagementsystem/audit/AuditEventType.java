@@ -1,6 +1,6 @@
-package org.example.visacasemanagementsystem.log;
+package org.example.visacasemanagementsystem.audit;
 
-public enum LogEvent {
+public enum AuditEventType {
     CREATED,
     ASSIGNED,
     UPDATED,
