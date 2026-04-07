@@ -66,7 +66,6 @@ public class VisaService {
         }
 
         VisaStatus status;
-
         try {
             status = VisaStatus.valueOf(visaStatus.toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -84,6 +83,10 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisaByDateCreated(LocalDate date){
+        if (date == null) {
+            throw new IllegalArgumentException("Visa date cannot be null");
+        }
+
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
@@ -97,6 +100,10 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisaByDateUpdated(LocalDateTime since){
+        if (since == null) {
+            throw new IllegalArgumentException("Updated-since timestamp cannot be null");
+        }
+
         return visaRepository.findByUpdatedAtAfter(since, Sort.by("updatedAt").descending())
                 .stream()
                 .map(visaMapper::toDTO)
@@ -107,6 +114,10 @@ public class VisaService {
 
     @Transactional
     public VisaDTO updateVisaStatus(Long visaId, VisaStatus newStatus, Long adminId) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("New visa status cannot be null");
+        }
+
         validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
@@ -172,6 +183,9 @@ public class VisaService {
 
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId, String reason) {
+        if(reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Reason for rejection cannot be null or blank");
+        }
 
         validateHandler(adminId);
         Visa visa = findVisaById(visaId);
