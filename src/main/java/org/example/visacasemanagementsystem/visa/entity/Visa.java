@@ -9,7 +9,6 @@ import lombok.Setter;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
-import org.example.visacasemanagementsystem.visa.VisaType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
