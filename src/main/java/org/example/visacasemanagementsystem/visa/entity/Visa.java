@@ -30,16 +30,13 @@ public class Visa {
     @Column(name = "visa_id", nullable = false, updatable = false)
     private Long id;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
+    @NotNull @Enumerated(EnumType.STRING)
     private VisaType visaType;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
+    @NotNull @Enumerated(EnumType.STRING)
     private VisaStatus visaStatus;
 
-    @NotBlank
-    private String nationality;
+    @NotBlank private String nationality;
 
     @ManyToOne
     @JoinColumn(name = "applicant_id", nullable = false)

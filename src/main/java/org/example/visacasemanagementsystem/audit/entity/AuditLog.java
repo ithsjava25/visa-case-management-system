@@ -24,18 +24,14 @@ public class AuditLog {
     @Column(name = "audit_id", nullable = false)
     private Long id;
 
-    @NotNull
-    @CreatedDate
+    @NotNull @CreatedDate
     private LocalDateTime timeStamp;
 
-    @NotNull
-    private Long userId; // Vem gjorde vad?
+    @NotNull private Long userId; // Vem gjorde vad?
 
-    @NotNull
-    private Long visaCaseId; // Vilket ärende rör det?
+    @NotNull private Long visaCaseId; // Vilket ärende rör det?
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
+    @NotNull @Enumerated(EnumType.STRING)
     private AuditEventType auditEventType;
 
     private String description; // Beskrivning av händelse
