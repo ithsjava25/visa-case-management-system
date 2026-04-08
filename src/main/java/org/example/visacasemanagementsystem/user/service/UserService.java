@@ -45,14 +45,14 @@ public class UserService {
 
     @Transactional
     public UserDTO createUser(CreateUserDTO dto) {
-        userRepository.findByEmail(dto.email()).ifPresent(existing -> {
-            throw new IllegalArgumentException("A user with this email already exists");
-        });
-
         User user = userMapper.toEntity(dto);
         user.setPassword(dto.password()); // mapper doesn't set this currently
-        User savedUser = userRepository.save(user);
-        return userMapper.toDTO(savedUser);
+        try {
+            User savedUser = userRepository.save(user);
+            return userMapper.toDTO(savedUser);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("A user with this email already exists", e);
+        }
     }
 
     @Transactional
@@ -86,18 +86,18 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
+        validateSysAdmin(requesterId); // confirm requester is SYSADMIN
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         userRepository.delete(user);
     }
 
-    private User validateSysAdmin(Long requesterId) {
+    private void validateSysAdmin(Long requesterId) {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
 
         if (requester.getUserAuthorization() != UserAuthorization.SYSADMIN) {
             throw new UnauthorizedException("User is not authorized to perform this action.");
         }
-        return requester;
     }
 }
