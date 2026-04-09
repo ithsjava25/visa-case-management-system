@@ -1,10 +1,13 @@
 package org.example.visacasemanagementsystem.audit.service;
 
 import org.example.visacasemanagementsystem.audit.AuditEventType;
+import org.example.visacasemanagementsystem.audit.dto.AuditDTO;
 import org.example.visacasemanagementsystem.audit.entity.AuditLog;
 import org.example.visacasemanagementsystem.audit.mapper.AuditMapper;
 import org.example.visacasemanagementsystem.audit.repository.AuditRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class AuditService {
@@ -22,4 +25,10 @@ public class AuditService {
         auditRepository.save(auditLog);
     }
 
+    public List<AuditDTO> findAll() {
+        return auditRepository.findAll()
+                .stream()
+                .map(auditMapper::toDTO)
+                .toList();
+    }
 }

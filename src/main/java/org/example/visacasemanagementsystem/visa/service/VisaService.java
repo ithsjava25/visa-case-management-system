@@ -69,7 +69,7 @@ public class VisaService {
         VisaStatus status;
         try {
             status = VisaStatus.valueOf(visaStatus.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             throw new IllegalArgumentException("Invalid visa status: " + visaStatus);
         }
 
@@ -243,5 +243,20 @@ public class VisaService {
             throw  new UnauthorizedException("User is not authorized to perform this action.");
         }
         return user;
+    }
+
+    public List<VisaDTO> findByApplicantId(Long userId) {
+        return visaRepository.findAll()
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+        
+    }
+
+    public List<VisaDTO> findByHandlerId(Long userId) {
+        return visaRepository.findAll()
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
     }
 }
