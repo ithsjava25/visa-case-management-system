@@ -60,16 +60,15 @@ public class CommentService {
     }
 
     // Get all comments for a selected visa case
-    @Transactional
+    @Transactional (readOnly = true)
     public List<CommentDTO> getCommentsByVisaId(Long visaId) {
-        if (!visaRepository.existsById(visaId)) {
-            throw new ResourceNotFoundException("Visa case not found with id: " + visaId);
-        }
+       List<Comment> comments = commentRepository.findByVisaIdOrderByCreatedAtDesc(visaId);
+       if(comments.isEmpty() && !visaRepository.existsById(visaId)) {
+           throw new ResourceNotFoundException("Visa case not found with id: " + visaId);
+       }
 
-        return commentRepository.findByVisaIdOrderByCreatedAtDesc(visaId)
-                .stream()
-                .map(commentMapper::toDTO)
-                .toList();
+       return comments.stream()
+               .map(commentMapper::toDTO)
+               .toList();
     }
-
 }
