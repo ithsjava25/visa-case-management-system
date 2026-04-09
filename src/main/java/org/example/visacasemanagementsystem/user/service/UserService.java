@@ -51,6 +51,7 @@ public class UserService {
         user.setPassword(dto.password()); // mapper doesn't set this currently
         try {
             User savedUser = userRepository.save(user);
+            savedUser.setUserAuthorization(UserAuthorization.USER);
             return userMapper.toDTO(savedUser);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);
@@ -58,20 +59,25 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO updateUser(UpdateUserDTO dto) {
+    public UserDTO updateUser(UpdateUserDTO dto, UserAuthorization currentAuth) {
         // Check if user and email exists
         User user = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
-        userRepository.findByEmail(dto.email())
-                .filter(existing -> !existing.getId().equals(dto.id()))
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("A user with this email already exists");
-                });
+//        userRepository.findByEmail(dto.email())
+//                .filter(existing -> !existing.getId().equals(dto.id()))
+//                .ifPresent(existing -> {
+//                    throw new IllegalArgumentException("A user with this email already exists");
+//                });
 
-        userMapper.updateEntityFromDTO(dto, user);
-        User savedUser = userRepository.save(user);
-        return userMapper.toDTO(savedUser);
+        try {
+            userMapper.updateEntityFromDTO(dto, user);
+            User savedUser = userRepository.save(user);
+            savedUser.setUserAuthorization(currentAuth);
+            return userMapper.toDTO(savedUser);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("A user with this email already exists", e);
+        }
     }
 
     @Transactional
