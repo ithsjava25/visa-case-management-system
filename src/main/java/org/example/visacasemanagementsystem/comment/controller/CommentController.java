@@ -1,5 +1,6 @@
 package org.example.visacasemanagementsystem.comment.controller;
 
+import jakarta.validation.Valid;
 import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.dto.CreateCommentDTO;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
@@ -21,7 +22,7 @@ public class CommentController {
 
     // Create new comment
     @PostMapping
-    public ResponseEntity<CommentDTO> createComment(@RequestBody CreateCommentDTO dto){
+    public ResponseEntity<CommentDTO> createComment(@Valid @RequestBody CreateCommentDTO dto){
         CommentDTO createComment =  commentService.createComment(dto);
         return new ResponseEntity<>(createComment, HttpStatus.CREATED);
     }

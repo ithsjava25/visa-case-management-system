@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     @ExceptionHandler({EntityNotFoundException.class, ResourceNotFoundException.class})
     @ResponseBody
-    public String handleNotFoundException(EntityNotFoundException exception) {
+    public String handleNotFoundException(RuntimeException exception) {
         return exception.getMessage();
     }
 

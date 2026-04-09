@@ -32,6 +32,8 @@ public class CommentService {
 
 
      // Create Comment
+     // TODO: Security Risk - Replace authorId from DTO with authenticated user from
+     // SecurityContext once Spring Security is integrated to prevent IDOR vulnerabilities.
     @Transactional
     public CommentDTO createComment(CreateCommentDTO dto) {
         if (dto.text() == null || dto.text().isBlank()) {
