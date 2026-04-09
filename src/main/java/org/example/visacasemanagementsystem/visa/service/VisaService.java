@@ -245,16 +245,15 @@ public class VisaService {
         return user;
     }
 
-    public List<VisaDTO> findByApplicantId(Long userId) {
-        return visaRepository.findAll()
+    public List<VisaDTO> findVisasByApplicantId(Long applicantId) {
+        return visaRepository.findVisasByApplicantId(applicantId)
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();
-        
     }
 
-    public List<VisaDTO> findByHandlerId(Long userId) {
-        return visaRepository.findAll()
+    public List<VisaDTO> findVisasByHandlerId(Long handlerId) {
+        return visaRepository.findVisasByHandlerId(handlerId)
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();

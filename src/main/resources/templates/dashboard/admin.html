@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <p>Welcome, <span th:text="${name}">Admin</span>. Manage and review visa cases.</p>
+
+    <h2>Assigned Cases</h2>
+    <div th:if="${assignedCases.isEmpty()}">
+        <p>No assigned cases at the moment.</p>
+    </div>
+    <div th:if="${!assignedCases.isEmpty()}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Applicant</th>
+                    <th>Visa Type</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="case : ${assignedCases}">
+                    <td th:text="${case.id()}">1</td>
+                    <td th:text="${case.applicantName()}">John Doe</td>
+                    <td th:text="${case.visaType()}">Work Visa</td>
+                    <td th:text="${case.visaStatus()}">SUBMITTED</td>
+                    <td>
+                        <a href="#">Review</a>
+                        <a href="#">Approve</a>
+                        <a href="#">Reject</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Unassigned Cases</h2>
+    <div th:if="${unassignedCases.isEmpty()}">
+        <p>All cases are assigned!</p>
+    </div>
+    <div th:if="${!unassignedCases.isEmpty()}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Applicant</th>
+                    <th>Visa Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="case : ${unassignedCases}">
+                    <td th:text="${case.id()}">1</td>
+                    <td th:text="${case.applicantName()}">Jane Doe</td>
+                    <td th:text="${case.visaType()}">Student Visa</td>
+                    <td>
+                        <a href="#">Assign to Me</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

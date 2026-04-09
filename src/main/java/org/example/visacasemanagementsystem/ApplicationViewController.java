@@ -31,7 +31,7 @@ public class ApplicationViewController {
     @GetMapping("/applicant/dashboard")
     public String applicantDashboard(@AuthenticationPrincipal SecurityUser principal,
                                      Model model) {
-        List<VisaDTO> visas = visaService.findByApplicantId(principal.getUserId());
+        List<VisaDTO> visas = visaService.findVisasByApplicantId(principal.getUserId());
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("visas", visas);
         return "dashboard/applicant";
@@ -40,7 +40,7 @@ public class ApplicationViewController {
     @GetMapping("/admin/dashboard")
     public String adminDashboard(@AuthenticationPrincipal SecurityUser principal,
                                  Model model) {
-        List<VisaDTO> assignedCases = visaService.findByHandlerId(principal.getUserId());
+        List<VisaDTO> assignedCases = visaService.findVisasByHandlerId(principal.getUserId());
         List<VisaDTO> unassignedCases = visaService.findVisaByStatus("UNASSIGNED");
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("assignedCases", assignedCases);

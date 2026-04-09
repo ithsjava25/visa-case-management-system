@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicant Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, <span th:text="${name}">Applicant</span>!</h1>
+    <p>Manage and track your visa applications</p>
+
+    <h2>Your Visa Applications</h2>
+    
+    <div th:if="${visas.isEmpty()}">
+        <p>You haven't applied for any visas yet.</p>
+        <a href="#">Apply for Visa</a>
+    </div>
+
+    <div th:if="${!visas.isEmpty()}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Visa Type</th>
+                    <th>Nationality</th>
+                    <th>Status</th>
+                    <th>Handler</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="visa : ${visas}">
+                    <td th:text="${visa.visaType()}">Work Visa</td>
+                    <td th:text="${visa.nationality()}">Sweden</td>
+                    <td th:text="${visa.visaStatus()}">SUBMITTED</td>
+                    <td>
+                        <span th:if="${visa.handlerId() != null}" th:text="${visa.handlerId()}">Assigned</span>
+                        <span th:if="${visa.handlerId() == null}">Pending Assignment</span>
+                    </td>
+                    <td>
+                        <a href="#">View Details</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div th:each="visa : ${visas}" th:if="${visa.visaStatus().toString() == 'REJECTED'}">
+            <h3>Application Rejected</h3>
+            <p th:if="${visa.rejectionReason() != null}">
+                <strong>Reason:</strong> <span th:text="${visa.rejectionReason()}"></span>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

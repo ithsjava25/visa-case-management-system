@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SysAdmin Dashboard</title>
+</head>
+<body>
+    <h1>System Administrator Dashboard</h1>
+    <p>System overview and audit logs for <span th:text="${name}">SysAdmin</span>.</p>
+
+    <h2>All Users</h2>
+    <div th:if="${users.isEmpty()}">
+        <p>No users in the system.</p>
+    </div>
+    <div th:if="${!users.isEmpty()}">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${users}">
+                    <td th:text="${user.id()}">1</td>
+                    <td th:text="${user.fullName()}">John Doe</td>
+                    <td th:text="${user.email()}">john@example.com</td>
+                    <td th:text="${user.userAuthorization()}">ADMIN</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Recent Audit Logs</h2>
+    <div th:if="${auditLogs.isEmpty()}">
+        <p>No audit logs available.</p>
+    </div>
+    <div th:if="${!auditLogs.isEmpty()}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User ID</th>
+                    <th>Visa ID</th>
+                    <th>Event Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="log : ${auditLogs}">
+                    <td th:text="${#temporals.format(log.timeStamp(), 'yyyy-MM-dd HH:mm:ss')}">2024-01-01 10:00:00</td>
+                    <td th:text="${log.userId()}">1</td>
+                    <td th:text="${log.visaCaseId()}">1</td>
+                    <td th:text="${log.auditEventType()}">CREATED</td>
+                    <td th:text="${log.description()}">Visa application submitted</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
