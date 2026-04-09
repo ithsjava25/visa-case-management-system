@@ -36,6 +36,10 @@ public class CommentService {
      // SecurityContext once Spring Security is integrated to prevent IDOR vulnerabilities.
     @Transactional
     public CommentDTO createComment(CreateCommentDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Comment payload cannot be null");
+        }
+
         if (dto.text() == null || dto.text().isBlank()) {
             throw new IllegalArgumentException("Comment text cannot be empty");
         }
@@ -62,6 +66,10 @@ public class CommentService {
     // Get all comments for a selected visa case
     @Transactional (readOnly = true)
     public List<CommentDTO> getCommentsByVisaId(Long visaId) {
+        if (visaId == null || visaId <= 0) {
+            throw new IllegalArgumentException("Visa ID must be a positive number");
+        }
+
        List<Comment> comments = commentRepository.findByVisaIdOrderByCreatedAtDesc(visaId);
        if(comments.isEmpty() && !visaRepository.existsById(visaId)) {
            throw new ResourceNotFoundException("Visa case not found with id: " + visaId);
