@@ -59,21 +59,14 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO updateUser(UpdateUserDTO dto, UserAuthorization currentAuth) {
+    public UserDTO updateUser(UpdateUserDTO dto) {
         // Check if user and email exists
         User user = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
-//        userRepository.findByEmail(dto.email())
-//                .filter(existing -> !existing.getId().equals(dto.id()))
-//                .ifPresent(existing -> {
-//                    throw new IllegalArgumentException("A user with this email already exists");
-//                });
-
         try {
             userMapper.updateEntityFromDTO(dto, user);
-            User savedUser = userRepository.save(user);
-            savedUser.setUserAuthorization(currentAuth);
+            User savedUser = userRepository.saveAndFlush(user);
             return userMapper.toDTO(savedUser);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);
