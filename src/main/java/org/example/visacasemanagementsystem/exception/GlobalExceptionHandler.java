@@ -18,9 +18,16 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    @ExceptionHandler(EntityNotFoundException.class)
+    @ExceptionHandler({EntityNotFoundException.class, ResourceNotFoundException.class})
     @ResponseBody
-    public String handleNotFoundException(EntityNotFoundException exception) {
+    public String handleNotFoundException(RuntimeException exception) {
         return exception.getMessage();
+    }
+
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseBody
+    public String handleIllegalArgumentException(IllegalArgumentException exception) {
+        return "Invalid Request: " + exception.getMessage();
     }
 }
