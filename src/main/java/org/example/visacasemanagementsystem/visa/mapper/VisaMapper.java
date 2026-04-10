@@ -21,6 +21,8 @@ public class VisaMapper {
                 visa.getApplicant() != null ? visa.getApplicant().getId() : null,
                 visa.getApplicant() != null ? visa.getApplicant().getFullName() : "Unknown",
                 visa.getHandler() != null ? visa.getHandler().getId() : null,
+                visa.getCreatedAt(),
+                visa.getUpdatedAt(),
                 visa.getRejectionReason()
 
         );

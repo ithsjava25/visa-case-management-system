@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Visa Case Details</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #333; line-height: 1.6; background: #fff; margin: 0; padding: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+
+        /* Navigation back */
+        .back-link { text-decoration: none; color: #666; font-size: 14px; margin-bottom: 20px; display: block; }
+
+        header { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { font-size: 28px; font-weight: 500; margin: 0; }
+
+        /* Grid för info */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+        .info-item { border: 1px solid #f0f0f0; padding: 15px; border-radius: 4px; }
+        .label { font-size: 11px; text-transform: uppercase; color: #999; display: block; margin-bottom: 5px; }
+        .value { font-size: 16px; font-weight: 500; }
+
+        /* Kommentar-sektion */
+        .comments-section { margin-top: 50px; border-top: 2px solid #333; pt: 30px; }
+        .comment-card { padding: 15px 0; border-bottom: 1px solid #eee; }
+        .comment-meta { font-size: 12px; color: #999; margin-bottom: 5px; }
+        .comment-text { font-size: 14px; }
+
+        /* Enkelt formulär för ny kommentar */
+        .comment-form { margin-top: 30px; background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 4px; resize: vertical; min-height: 80px; margin-bottom: 10px; }
+        .btn-submit { background: #333; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a th:href="@{/visas/dashboard(currentUserId=${currentUser.id})}" class="back-link">← Back to Dashboard</a>
+
+    <header>
+        <h1 th:text="'Case #' + ${visa.id}">Case #101</h1>
+        <p class="user-info">Handled by: <span th:text="${visa.handlerId ?: 'Unassigned'}">Pending</span></p>
+    </header>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="label">Applicant</span>
+            <span class="value" th:text="${visa.applicantName}">John Doe</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Status</span>
+            <span class="value" th:text="${visa.visaStatus}">SUBMITTED</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Visa Type</span>
+            <span class="value" th:text="${visa.visaType}">STUDENT</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Submitted </span>
+            <span class="value" th:text="${#temporals.format(visa.createdAt, 'yyyy-MM-dd')}">2023-10-27</span>
+        </div>
+    </div>
+    <form th:action="@{/visas/{id}/assign(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+        <button type="submit">Ta på mig ärendet</button>
+    </form>
+
+    <form th:action="@{/visas/{id}/approve(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+        <button type="submit" style="color: green;">Approve Visa</button>
+    </form>
+
+    <form th:action="@{/visas/{id}/reject(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+        <input type="text" name="reason" placeholder="Reason for rejection" required>
+        <button type="submit" style="color: red;">Reject Visa</button>
+    </form>
+
+
+    <section class="comments-section">
+        <h3>Comments</h3>
+
+        <div th:each="comment : ${comments}" class="comment-card">
+            <div class="comment-meta">
+                <strong th:text="${comment.authorName}">Admin</strong> •
+                <span th:text="${#temporals.format(comment.createdAt, 'MMM dd, HH:mm')}">Oct 27, 14:00</span>
+            </div>
+            <div class="comment-text" th:text="${comment.content}">This is a comment</div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(comments)}" style="color: #999; padding: 20px 0;">
+            No comments yet.
+        </div>
+
+        <div class="comment-form">
+            <form th:action="@{/api/comments}" method="post">
+                <input type="hidden" name="visaId" th:value="${visa.id}">
+                <input type="hidden" name="authorId" th:value="${currentUser.id}">
+                <textarea name="content" placeholder="Write a comment..."></textarea>
+                <button type="submit" class="btn-submit">Send</button>
+            </form>
+        </div>
+    </section>
+</div>
+
+</body>
+</html>

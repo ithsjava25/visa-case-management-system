@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>New Visa Application</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; color: #333; line-height: 1.6; padding: 40px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        header { border-bottom: 1px solid #eee; margin-bottom: 30px; padding-bottom: 10px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #666; }
+
+        select, input, textarea {
+            width: 100%; padding: 10px; border: 1px solid #ddd;
+            border-radius: 4px; box-sizing: border-box; font-size: 15px;
+        }
+
+        .btn-submit {
+            background: #000; color: #fff; border: none; padding: 12px 20px;
+            border-radius: 4px; cursor: pointer; width: 100%; font-weight: 500;
+        }
+        .btn-submit:hover { background: #333; }
+        .cancel-link { display: block; text-align: center; margin-top: 15px; color: #999; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>New Application</h1>
+        <p>Logged in as <span th:text="${currentUser.fullName}">User</span></p>
+    </header>
+
+    <form th:action="@{/visas/apply(currentUserId=${currentUser.id})}" method="post">
+
+        <div class="form-group">
+            <label>Visa Type</label>
+            <select name="visaType" required>
+                <option value="" disabled selected>Select type...</option>
+                <option th:each="type : ${visaTypes}"
+                        th:value="${type}"
+                        th:text="${type}">STUDENT</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Nationality</label>
+            <input type="text" name="nationality" placeholder="e.g. Swedish" required>
+        </div>
+
+        <div class="form-group">
+            <label>Notes / Documentation Reference</label>
+            <textarea name="documentationReference" placeholder="e.g. Passport number or link to docs"></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit">Submit Application</button>
+
+        <a th:href="@{/visas/dashboard(currentUserId=${currentUser.id})}" class="cancel-link">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>

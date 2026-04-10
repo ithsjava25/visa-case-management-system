@@ -54,6 +54,20 @@ public class VisaService {
                 .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
     }
 
+    public VisaDTO findVisaDtoById(Long id) {
+        Visa visa = visaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
+
+        return visaMapper.toDTO(visa);
+    }
+
+    public List<VisaDTO> findVisasByApplicant(Long applicantId) {
+        return visaRepository.findByApplicantId(applicantId, Sort.by("createdAt").descending())
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+    }
+
     public List<VisaDTO> findVisaByType(VisaType visaType) {
        return visaRepository.findByVisaType(visaType, Sort.by("visaType").descending())
                .stream()
