@@ -127,7 +127,7 @@ public class VisaService {
 
     // -----
 
-    // Todo: Denna metod används aldrig just nu --> Få in via en drop-down meny?
+    // Todo: Ta bort denna metod? --> då visa status sätts genom andra metoder/knappar
     @Transactional
     public VisaDTO updateVisaStatus(Long visaId, VisaStatus newStatus, Long adminId) {
         if (newStatus == null) {
@@ -274,7 +274,7 @@ public class VisaService {
                 adminId,
                 visaId,
                 AuditEventType.ASSIGNED,
-                "Admin" + admin.getFullName() + "has been assigned to case and status is now ASSIGNED."
+                "Admin" + admin.getFullName() + " has been assigned to case and status is now ASSIGNED."
         );
         return visaMapper.toDTO(savedVisa);
     }

@@ -81,12 +81,32 @@
             </form>
         </div>
 
-        <form class="reject-form" th:action="@{/visas/{id}/reject(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
-            <input type="text" name="reason" placeholder="Reason for rejection or info request..." required>
-            <button type="submit" style="color: #d93025; border-color: #d93025; background: #fff;">Reject</button>
-        </form>
 
+        <div class="decision-form" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+            <input type="text" id="infoReason"
+                   placeholder="Write reason for rejection or what info is missing..."
+                   style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
 
+            <div style="display: flex; gap: 10px;">
+                <form th:action="@{/visas/{id}/request-info(id=${visa.id}, currentUserId=${currentUser.id})}" method="post" id="form-info" style="flex: 1;">
+                    <input type="hidden" name="reason" id="hidden-info">
+                    <button type="submit" onclick="document.getElementById('hidden-info').value = document.getElementById('infoReason').value"
+                            style="width: 100%">
+                        Request More Info
+                    </button>
+                </form>
+
+                <form th:action="@{/visas/{id}/reject(id=${visa.id}, currentUserId=${currentUser.id})}" method="post" id="form-reject" style="flex: 1;">
+                    <input type="hidden" name="reason" id="hidden-reject">
+                    <button type="submit" onclick="document.getElementById('hidden-reject').value = document.getElementById('infoReason').value"
+                            style="width: 100%;">
+                        Reject Visa
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
 
     <section class="comments-section">
         <h3>Comments</h3>

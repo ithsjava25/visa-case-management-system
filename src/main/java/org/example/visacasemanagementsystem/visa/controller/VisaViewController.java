@@ -104,6 +104,16 @@ public class VisaViewController {
        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
     }
 
+    @PostMapping("/{id}/request-info")
+    public String requestMoreInformation(@PathVariable Long id,
+                                         @RequestParam Long currentUserId,
+                                         @RequestParam String reason) {
+
+        visaService.requestInformation(id, currentUserId, reason);
+
+        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+    }
+
     // POST/visas/{id}/reject -> Beslut (Admin) Avvisar visumet med en motivering
     @PostMapping("/{id}/reject")
     public String rejectVisa(@PathVariable Long id,
