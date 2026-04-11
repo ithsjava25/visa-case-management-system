@@ -25,12 +25,16 @@
         table { width: 100%; border-spacing: 0; }
         th { text-align: left; font-size: 12px; text-transform: uppercase;
             letter-spacing: 1px; color: #999; padding: 10px 0; border-bottom: 1px solid #eee; }
-        td { padding: 20px 0; border-bottom: 1px solid #f9f9f9; font-size: 15px; }
+        td { padding: 10px 0; border-bottom: 1px solid #f9f9f9; font-size: 15px; }
 
         /* Minimalist Status Indicators */
         .status { font-size: 12px; padding: 4px 8px; border-radius: 12px; background: #f0f0f0; }
-        .status-granted { background: #e6f4ea; color: #1e7e34; }
-        .status-rejected { background: #fce8e6; color: #d93025; }
+        .status-submitted { background: #e8f0fe; color: #1967d2; } /* Ljusblå */
+        .status-unassigned { background: #f1f3f4; color: #5f6368; } /* Grå */
+        .status-assigned { background: #e7f3ff; color: #0061c1; }   /* Blå */
+        .status-incomplete { background: #fef7e0; color: #b06000; } /* Orange/Gul */
+        .status-granted { background: #e6f4ea; color: #1e7e34; }    /* Grön */
+        .status-rejected { background: #fce8e6; color: #d93025; }    /* Röd */
 
         .view-link { color: #007bff; text-decoration: none; font-weight: 500; }
         .view-link:hover { text-decoration: underline; }
@@ -41,11 +45,15 @@
 <div class="container">
     <header>
         <div>
-            <h1>Visa Overview</h1>
-            <span class="user-info">Logged in as <span th:text="${currentUser.fullName}">User</span></span>
+            <h1>Visa Dashboard</h1>
+            <span class="user-info">Logged in as: <span th:text="${currentUser.fullName}">User</span></span>
         </div>
-        <a th:href="@{/visas/apply(currentUserId=${currentUser.id})}" class="btn-new">
+        <a th:if="${currentUser.userAuthorization.name() == 'USER'}"
+                th:href="@{/visas/apply(currentUserId=${currentUser.id})}" class="btn-new">
             + New Application
+        </a>
+        <a th:href="@{/visas/apply(currentUserId=${currentUser.id})}" class="btn-new">
+            Sign Out
         </a>
     </header>
 
@@ -54,25 +62,35 @@
             <thead>
             <tr>
                 <th>Reference</th>
+                <th th:if="${currentUser.userAuthorization.name() != 'USER'}">Applicant</th>
+                <th th:if="${currentUser.userAuthorization.name() != 'USER'}">Handler</th>
                 <th>Visa Type</th>
                 <th>Status</th>
                 <th>Submitted</th>
+                <th>Updated</th>
                 <th></th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="visa : ${visas}">
                 <td th:text="'#' + ${visa.id}">#101</td>
+
+                <td th:if="${currentUser.userAuthorization.name() != 'USER'}"
+                    th:text="${visa.applicantName}">Anna Andersson</td>
+
+                <td th:if="${currentUser.userAuthorization.name() != 'USER'}"
+                    th:text="${visa.handlerName != null ? visa.handlerName : 'Unassigned'}">-</td>
+
                 <td th:text="${visa.visaType}">STUDENT</td>
                 <td>
                         <span class="status"
-                              th:classappend="${visa.visaStatus.name() == 'GRANTED' ? 'status-granted' :
-                                               (visa.visaStatus.name() == 'REJECTED' ? 'status-rejected' : '')}"
+                              th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
                               th:text="${visa.visaStatus}">
                             SUBMITTED
                         </span>
                 </td>
-                <td th:text="${#temporals.format(visa.createdAt, 'yyyy-MM-dd')}">Current date</td>
+                <td th:text="${#temporals.format(visa.createdAt, 'yyyy-MM-dd')}">-</td>
+                <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd')}">-</td>
                 <td style="text-align: right;">
                     <a th:href="@{/visas/{id}(id=${visa.id}, currentUserId=${currentUser.id})}" class="view-link">
                         Details →

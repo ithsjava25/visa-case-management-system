@@ -39,11 +39,13 @@
 
     <header>
         <h1 th:text="'Case #' + ${visa.id}">Case #101</h1>
-        <p class="user-info">Handled by: <span th:text="${visa.handlerId ?: 'Unassigned'}">Pending</span></p>
+        <p class="user-info">
+            Handled by: <span th:text="${visa.handlerName != 'Unassigned' ? visa.handlerName : 'Waiting for assignment'}"></span>
+        </p>
     </header>
 
     <div class="info-grid">
-        <div class="info-item">
+        <div class="info-item" th:if="${currentUser.userAuthorization.name() != 'USER'}">
             <span class="label">Applicant</span>
             <span class="value" th:text="${visa.applicantName}">John Doe</span>
         </div>
@@ -56,22 +58,34 @@
             <span class="value" th:text="${visa.visaType}">STUDENT</span>
         </div>
         <div class="info-item">
-            <span class="label">Submitted </span>
-            <span class="value" th:text="${#temporals.format(visa.createdAt, 'yyyy-MM-dd')}">2023-10-27</span>
+            <span class="label">Nationality</span>
+            <span class="value" th:text="${visa.nationality}">-</span>
+        </div>
+        <div class="info-item" style="grid-column: span 2;" th:if="${visa.statusInformation != null}">
+            <span class="label">Important Information / Notes</span>
+            <span class="value" th:text="${visa.statusInformation}">-</span>
         </div>
     </div>
-    <form th:action="@{/visas/{id}/assign(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
-        <button type="submit">Ta på mig ärendet</button>
-    </form>
 
-    <form th:action="@{/visas/{id}/approve(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
-        <button type="submit" style="color: green;">Approve Visa</button>
-    </form>
+    <div th:if="${currentUser.userAuthorization.name() != 'USER'}" class="admin-actions">
+        <h3 style="margin-top:0; font-size: 16px;">Case Management</h3>
 
-    <form th:action="@{/visas/{id}/reject(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
-        <input type="text" name="reason" placeholder="Reason for rejection" required>
-        <button type="submit" style="color: red;">Reject Visa</button>
-    </form>
+        <div class="action-group">
+            <form th:if="${visa.handlerName == 'Unassigned'}"
+                  th:action="@{/visas/{id}/assign(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+                <button type="submit" class="btn-assign">Assign to Me</button>
+            </form>
+
+            <form th:action="@{/visas/{id}/approve(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+                <button type="submit" class="btn-approve">Approve Visa</button>
+            </form>
+        </div>
+
+        <form class="reject-form" th:action="@{/visas/{id}/reject(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+            <input type="text" name="reason" placeholder="Reason for rejection or info request..." required>
+            <button type="submit" style="color: #d93025; border-color: #d93025; background: #fff;">Reject</button>
+        </form>
+
 
 
     <section class="comments-section">

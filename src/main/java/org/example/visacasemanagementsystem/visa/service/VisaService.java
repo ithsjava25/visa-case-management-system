@@ -62,7 +62,7 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisasByApplicant(Long applicantId) {
-        return visaRepository.findByApplicantId(applicantId, Sort.by("createdAt").descending())
+        return visaRepository.findByApplicantId(applicantId, Sort.by("id").ascending())
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();
@@ -127,6 +127,7 @@ public class VisaService {
 
     // -----
 
+    // Todo: Denna metod används aldrig just nu --> Få in via en drop-down meny?
     @Transactional
     public VisaDTO updateVisaStatus(Long visaId, VisaStatus newStatus, Long adminId) {
         if (newStatus == null) {
@@ -142,10 +143,10 @@ public class VisaService {
 
         // Update visa status
         visa.setVisaStatus(newStatus);
-        visa.setRejectionReason(null);
+        visa.setStatusInformation(null);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
@@ -170,7 +171,7 @@ public class VisaService {
         visa.setVisaStatus(VisaStatus.SUBMITTED);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 userId,
                 savedVisa.getId(),
@@ -182,14 +183,19 @@ public class VisaService {
 
     @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
-        validateHandler(adminId);
+        User admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
+        if (visa.getHandler() == null) {
+            visa.setHandler(admin);
+        }
+
+
         visa.setVisaStatus(VisaStatus.GRANTED);
-        visa.setRejectionReason(null);
+        visa.setStatusInformation(null);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
@@ -202,18 +208,22 @@ public class VisaService {
 
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId, String reason) {
-        if(reason == null || reason.isBlank()) {
+        if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("Reason for rejection cannot be null or blank");
         }
 
-        validateHandler(adminId);
+        User admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
+        if (visa.getHandler() == null) {
+            visa.setHandler(admin);
+        }
+
         visa.setVisaStatus(VisaStatus.REJECTED);
-        visa.setRejectionReason(reason);
+        visa.setStatusInformation(reason);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
@@ -223,6 +233,31 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
+    @Transactional
+    public VisaDTO requestInformation (Long visaId, Long adminId, String infoText) {
+        User  admin = validateHandler(adminId);
+        Visa visa = findVisaById(visaId);
+
+        if (visa.getHandler() == null) {
+            visa.setHandler(admin);
+        }
+
+        visa.setVisaStatus(VisaStatus.INCOMPLETE);
+        visa.setStatusInformation(infoText);
+        Visa savedVisa = visaRepository.save(visa);
+
+        // Create log in database
+        auditService.createAuditLog(
+                adminId,
+                visaId,
+                AuditEventType.UPDATED,
+                "Information requested: " + infoText
+        );
+
+        return visaMapper.toDTO(savedVisa);
+    }
+
+
     // Assign Handler
     @Transactional
     public VisaDTO assignHandler(Long visaId, Long adminId) {
@@ -230,14 +265,16 @@ public class VisaService {
         Visa visa = findVisaById(visaId);
 
         visa.setHandler(admin); // Connects handler
+        visa.setVisaStatus(VisaStatus.ASSIGNED);
+
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
                 AuditEventType.ASSIGNED,
-                "Admin has been assigned to case."
+                "Admin" + admin.getFullName() + "has been assigned to case and status is now ASSIGNED."
         );
         return visaMapper.toDTO(savedVisa);
     }

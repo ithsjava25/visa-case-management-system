@@ -119,11 +119,4 @@ public class VisaViewController {
         visaService.assignHandler(id, currentUserId);
         return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
     }
-
-
-
-
-
-
-
 }

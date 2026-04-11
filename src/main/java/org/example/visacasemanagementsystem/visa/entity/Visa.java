@@ -54,14 +54,12 @@ public class Visa {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    private String rejectionReason;
+    private String statusInformation;
 
     @ElementCollection
     @CollectionTable(name = "visa_documents", joinColumns = @JoinColumn(name = "visa_id"))
     @Column(name = "s3_key")
     private List<String> s3Keys = new ArrayList<>();
-
-    //ToDo: Comments in the form of a discussion between applicant and administrator.
 
 
     @Override
@@ -86,7 +84,7 @@ public class Visa {
                 ", handlerId=" + (handler != null ? handler.getId() : "null") +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
-                ", rejectionReason='" + rejectionReason + '\'' +
+                ", rejectionReason='" + statusInformation + '\'' +
                 ", s3Keys=" + s3Keys +
                 '}';
     }

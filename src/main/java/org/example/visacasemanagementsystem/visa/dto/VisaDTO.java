@@ -13,7 +13,7 @@ public record VisaDTO(
         Long applicantId,
         String applicantName,
         Long handlerId,
+        String handlerName,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        String rejectionReason
-) {}
+        String statusInformation) {}
