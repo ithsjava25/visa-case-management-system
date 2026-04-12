@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <title>Visa Dashboard</title>
     <style>
-        /* Monokrom Dark Mode Palette */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #f0f0f0; /* Ljusgrå text (inte kritvit) för bättre läsbarhet */
+            color: #f0f0f0;
             line-height: 1.6;
-            background: #000; /* Ren svart bakgrund */
+            background: #000;
             margin: 0;
             padding: 40px;
         }
@@ -18,10 +17,10 @@
             max-width: 1000px;
             margin: 0 auto;
             padding: 32px;
-            background: #111; /* Mycket mörkgrå, nästan svart, för kortet */
-            border: 1px solid #222; /* Subtil ram */
+            background: #111;
+            border: 1px solid #222;
             border-radius: 12px;
-            box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.6); /* Mörk skugga */
+            box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.6);
         }
 
         header {
@@ -43,17 +42,16 @@
         .btn-new {
             text-decoration: none;
             color: #fff;
-            background: #222; /* Mörkgrå bas */
+            background: #222;
             padding: 10px 20px;
             font-size: 14px;
             font-weight: 500;
             border-radius: 6px;
             transition: all 0.2s;
-            border: 1px solid #333; /* Lite ljusare ram */
+            border: 1px solid #333;
         }
         .btn-new:hover { background: #333; color: #fff; transform: translateY(-1px); }
 
-        /* Sign out specifik stil för att göra den diskretare */
         .btn-signout {
             background: transparent;
             border: 1px solid #222;
@@ -81,7 +79,7 @@
             border-bottom: 1px solid #181818;
             font-size: 14px;
             color: #ccc;
-            border-left: 2px solid transparent; /* Förbered en osynlig kant */
+            border-left: 2px solid transparent;
             transition: all 0.2s;
         }
 
@@ -89,11 +87,10 @@
             background: rgba(30, 30, 30, 0.4);
         }
 
-        /* Vid hover: ge den första cellen i raden en vit kant till vänster */
         tr:hover td:first-child {
             border-left: 2px solid #fff;
         }
-        /* STATUS BADGES - Dina originalfärger anpassade för mörk bakgrund */
+        /* STATUS BADGES */
         .status {
             font-size: 12px;
             padding: 4px 10px;
@@ -101,7 +98,6 @@
             font-weight: 500;
         }
 
-        /* Vi använder en svag bakgrundsfärg (20% opacitet) för att det ska se modernt ut mot svart */
         .status-submitted { background: rgba(25, 103, 210, 0.2); color: #8ab4f8; }
         .status-unassigned { background: rgba(95, 99, 104, 0.2); color: #bdc1c6; }
         .status-assigned { background: rgba(0, 97, 193, 0.2); color: #66b2ff; }
