@@ -87,11 +87,13 @@ public class Visa {
                 ", visaType=" + visaType +
                 ", visaStatus=" + visaStatus +
                 ", nationality='" + nationality + '\'' +
-                ", applicantId=" + (applicant != null ? applicant.getId() : "null") +
-                ", handlerId=" + (handler != null ? handler.getId() : "null") +
+                ", passportNumber='" + passportNumber + '\'' +
+                ", travelDate=" + travelDate +
+                ", applicant=" + applicant +
+                ", handler=" + handler +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
-                ", rejectionReason='" + statusInformation + '\'' +
+                ", statusInformation='" + statusInformation + '\'' +
                 ", s3Keys=" + s3Keys +
                 '}';
     }

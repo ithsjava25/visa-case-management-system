@@ -1,6 +1,7 @@
 package org.example.visacasemanagementsystem.visa.controller;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
@@ -11,7 +12,9 @@ import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -29,9 +32,6 @@ public class VisaViewController {
         this.userService = userService;
     }
 
-    // ENDPOINTS
-
-    // GET/visas/dashboard -> Huvudsidan. Visa listan på visum (alla för admin, egna för användaren)
 
     @GetMapping("/dashboard")
     public String showDashboard(@RequestParam Long currentUserId, Model model) {
@@ -43,9 +43,9 @@ public class VisaViewController {
 
         // If the current user = ADMIN/SYSADMIN show everything
         if (user.userAuthorization() == UserAuthorization.ADMIN ||
-            user.userAuthorization() == UserAuthorization.SYSADMIN) {
+                user.userAuthorization() == UserAuthorization.SYSADMIN) {
             visas = visaService.findAll();
-        } else  {
+        } else {
             // Normal user/applicant can only se their own visa applications
             visas = visaService.findVisasByApplicant(currentUserId);
         }
@@ -58,9 +58,9 @@ public class VisaViewController {
 
     }
 
-    // GET/visas/{id} -> Detaljvyn. Visa all info om ett ärende + dess kommentarer
-@GetMapping("/{id}")
-    public String viewDetails(@PathVariable Long id, @RequestParam Long currentUserId , Model model) {
+
+    @GetMapping("/{id}")
+    public String viewDetails(@PathVariable Long id, @RequestParam Long currentUserId, Model model) {
         // Get visa
         VisaDTO visa = visaService.findVisaDtoById(id);
 
@@ -68,7 +68,7 @@ public class VisaViewController {
         var comments = commentService.getCommentsByVisaId(id);
 
         // Get user
-        UserDTO user =  userService.findById(currentUserId)
+        UserDTO user = userService.findById(currentUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
 
         model.addAttribute("visa", visa);
@@ -78,7 +78,6 @@ public class VisaViewController {
         return "visa/details";
     }
 
-    // GET/visas/apply -> Ansökningssidan. Visa formuläret för att söka ett nytt visum
     @GetMapping("/apply")
     public String showApplyForm(@RequestParam Long currentUserId, Model model) {
         UserDTO user = userService.findById(currentUserId)
@@ -86,22 +85,42 @@ public class VisaViewController {
 
         model.addAttribute("currentUser", user);
         model.addAttribute("visaTypes", VisaType.values());
+
+        if (!model.containsAttribute("CreateVisaDTO")) {
+            model.addAttribute("createVisaDTO", new CreateVisaDTO(null, "", "", null, currentUserId));
+        }
+
         return "visa/apply-form";
     }
 
-    // POST/visas/apply -> Skicka ansökan. Tar emot förmulärdatan och sparar via VisaService
     @PostMapping("/apply")
-    public String submitApplication(@ModelAttribute CreateVisaDTO createVisaDTO,
-                                     @RequestParam Long currentUserId) {
-        visaService.applyForVisa(createVisaDTO, currentUserId);
+    public String submitApplication(
+            @Valid @ModelAttribute("createVisaDTO") CreateVisaDTO createVisaDTO,
+            BindingResult bindingResult,
+            @RequestParam Long currentUserId,
+            RedirectAttributes redirectAttributes,
+            Model model) {
+
+        if (bindingResult.hasErrors()) {
+            prepareApplyModel(currentUserId, model);
+            return "visa/apply-form";
+        }
+
+        try {
+            visaService.applyForVisa(createVisaDTO, currentUserId);
+        } catch (IllegalArgumentException e) {
+            bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
+            prepareApplyModel(currentUserId, model);
+            return "visa/apply-form";
+        }
+
         return "redirect:/visas/dashboard?currentUserId=" + currentUserId;
     }
 
-    // POST/visas/{id}/approve -> Beslut. (Admin) Godkänner visumet via en knapp i detaljvyn
     @PostMapping("/{id}/approve")
     public String approveVisa(@PathVariable Long id, @RequestParam Long currentUserId) {
-       visaService.approveVisa(id, currentUserId);
-       return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+        visaService.approveVisa(id, currentUserId);
+        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
     }
 
     @PostMapping("/{id}/request-info")
@@ -114,7 +133,7 @@ public class VisaViewController {
         return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
     }
 
-    // POST/visas/{id}/reject -> Beslut (Admin) Avvisar visumet med en motivering
+
     @PostMapping("/{id}/reject")
     public String rejectVisa(@PathVariable Long id,
                              @RequestParam Long currentUserId,
@@ -123,10 +142,19 @@ public class VisaViewController {
         return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
     }
 
-    // ASSIGN - Admin tar på sig ett ärende
+
     @PostMapping("/{id}/assign")
     public String assignCaseToHandler(@PathVariable Long id, @RequestParam Long currentUserId) {
         visaService.assignHandler(id, currentUserId);
         return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+    }
+
+    // Helper methods
+
+    public void prepareApplyModel(Long currentUserId, Model model) {
+        UserDTO user = userService.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+        model.addAttribute("currentUser", user);
+        model.addAttribute("visaTypes", VisaType.values());
     }
 }

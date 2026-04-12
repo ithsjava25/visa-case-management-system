@@ -95,6 +95,18 @@
             transition: 0.2s;
         }
         .cancel-link:hover { color: #fff; }
+
+        .is-invalid {
+            border-color: #ff4d4d !important;
+        }
+
+        .error-text {
+            color: #ff4d4d;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            display: block;
+
+        }
     </style>
 </head>
 <body>
@@ -109,31 +121,56 @@
 
         <div class="form-group">
             <label>Visa Type</label>
-            <select name="visaType" required>
-                <option value="" disabled selected>Select type...</option>
+            <select name="visaType"
+                    th:classappend="${#fields.hasErrors('createVisaDTO.visaType')} ? 'is-invalid' : ''"
+                    required>
+                <option value="" disabled th:selected="${createVisaDTO?.visaType == null}">Select type...</option>
                 <option th:each="type : ${visaTypes}"
                         th:value="${type}"
-                        th:text="${type}">STUDENT</option>
+                        th:text="${type}"
+                        th:selected="${type == createVisaDTO?.visaType}">STUDENT</option>
             </select>
+            <span class="error-text"
+                  th:if="${#fields.hasErrors('createVisaDTO.visaType')}"
+                  th:errors="*{createVisaDTO.visaType}">Visa type must be specified</span>
         </div>
+
         <div class="form-group">
             <label>Nationality</label>
-            <input type="text" name="nationality" placeholder="e.g. Swedish" required>
+            <input type="text"
+                   name="nationality"
+                   placeholder="e.g. Swedish"
+                   th:value="${createVisaDTO?.nationality}"
+                   th:classappend="${#fields.hasErrors('createVisaDTO.nationality')} ? 'is-invalid' : ''"
+                   required>
+            <span class="error-text"
+                  th:if="${#fields.hasErrors('createVisaDTO.nationality')}"
+                  th:errors="*{createVisaDTO.nationality}">Nationality must be specified</span>
         </div>
 
         <div class="form-group">
             <label>Passport Number</label>
-            <input type="text" name="passportNumber" placeholder="e.g. AB123456" required>
+            <input type="text"
+                   name="passportNumber"
+                   placeholder="e.g. AB123456"
+                   th:value="${createVisaDTO?.passportNumber}"
+                   th:classappend="${#fields.hasErrors('createVisaDTO.passportNumber')} ? 'is-invalid' : ''"
+                   required>
+            <span class="error-text"
+                  th:if="${#fields.hasErrors('createVisaDTO.passportNumber')}"
+                  th:errors="*{createVisaDTO.passportNumber}">Passport number must be provided</span>
         </div>
 
         <div class="form-group">
             <label>Expected Travel Date</label>
-            <input type="date" name="travelDate" required>
-        </div>
-
-        <div class="form-group">
-            <label>Notes / Documentation Reference</label>
-            <textarea name="documentationReference" placeholder="e.g. Passport number or link to docs"></textarea>
+            <input type="date"
+                   name="travelDate"
+                   th:value="${createVisaDTO?.travelDate}"
+                   th:classappend="${#fields.hasErrors('createVisaDTO.travelDate')} ? 'is-invalid' : ''"
+                   required>
+            <span class="error-text"
+                  th:if="${#fields.hasErrors('createVisaDTO.travelDate')}"
+                  th:errors="*{createVisaDTO.travelDate}">Travel date must be provided</span>
         </div>
 
         <button type="submit" class="btn-submit">Submit Application</button>
