@@ -43,7 +43,7 @@ public class VisaService {
 
     // --- For filtering in Frontend list-view ---
     public List<VisaDTO> findAll() {
-        return visaRepository.findAll()
+        return visaRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();
@@ -62,7 +62,7 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisasByApplicant(Long applicantId) {
-        return visaRepository.findByApplicantId(applicantId, Sort.by("id").ascending())
+        return visaRepository.findByApplicantId(applicantId, Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();
