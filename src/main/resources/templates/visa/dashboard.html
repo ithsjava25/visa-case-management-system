@@ -4,40 +4,113 @@
     <meta charset="UTF-8">
     <title>Visa Dashboard</title>
     <style>
-        /* Modern Minimalist CSS */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #333; line-height: 1.6; background: #fff; margin: 0; padding: 40px; }
+        /* Monokrom Dark Mode Palette */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #f0f0f0; /* Ljusgrå text (inte kritvit) för bättre läsbarhet */
+            line-height: 1.6;
+            background: #000; /* Ren svart bakgrund */
+            margin: 0;
+            padding: 40px;
+        }
 
-        .container { max-width: 900px; margin: 0 auto; }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 32px;
+            background: #111; /* Mycket mörkgrå, nästan svart, för kortet */
+            border: 1px solid #222; /* Subtil ram */
+            border-radius: 12px;
+            box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.6); /* Mörk skugga */
+        }
 
-        header { display: flex; justify-content: space-between; align-items: baseline;
-            border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 40px; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #222;
+            padding-bottom: 24px;
+            margin-bottom: 40px;
+        }
 
-        h1 { font-size: 24px; font-weight: 500; margin: 0; }
+        h1 { font-size: 24px; font-weight: 500; color: #fff; margin: 0; }
 
-        .user-info { font-size: 14px; color: #666; }
+        .user-info { font-size: 14px; color: #888; }
 
-        .btn-new { text-decoration: none; color: #000; border: 1px solid #000;
-            padding: 8px 16px; font-size: 14px; border-radius: 4px; transition: 0.2s; }
-        .btn-new:hover { background: #000; color: #fff; }
+        /* Buttons & Header Actions */
+        .header-actions { display: flex; gap: 12px; }
+
+        .btn-new {
+            text-decoration: none;
+            color: #fff;
+            background: #222; /* Mörkgrå bas */
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border: 1px solid #333; /* Lite ljusare ram */
+        }
+        .btn-new:hover { background: #333; color: #fff; transform: translateY(-1px); }
+
+        /* Sign out specifik stil för att göra den diskretare */
+        .btn-signout {
+            background: transparent;
+            border: 1px solid #222;
+            color: #888;
+        }
+        .btn-signout:hover {
+            background: #181818;
+            color: #ccc;
+            border: 1px solid #333;
+        }
 
         /* Table Styling */
-        table { width: 100%; border-spacing: 0; }
-        th { text-align: left; font-size: 12px; text-transform: uppercase;
-            letter-spacing: 1px; color: #999; padding: 10px 0; border-bottom: 1px solid #eee; }
-        td { padding: 10px 0; border-bottom: 1px solid #f9f9f9; font-size: 15px; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #666;
+            padding: 12px 16px;
+            border-bottom: 1px solid #222;
+        }
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #181818;
+            font-size: 14px;
+            color: #ccc;
+            border-left: 2px solid transparent; /* Förbered en osynlig kant */
+            transition: all 0.2s;
+        }
 
-        /* Minimalist Status Indicators */
-        .status { font-size: 12px; padding: 4px 8px; border-radius: 12px; background: #f0f0f0; }
-        .status-submitted { background: #e8f0fe; color: #1967d2; } /* Ljusblå */
-        .status-unassigned { background: #f1f3f4; color: #5f6368; } /* Grå */
-        .status-assigned { background: #e7f3ff; color: #0061c1; }   /* Blå */
-        .status-incomplete { background: #fef7e0; color: #b06000; } /* Orange/Gul */
-        .status-granted { background: #e6f4ea; color: #1e7e34; }    /* Grön */
-        .status-rejected { background: #fce8e6; color: #d93025; }    /* Röd */
+        tr:hover td {
+            background: rgba(30, 30, 30, 0.4);
+        }
 
-        .view-link { color: #007bff; text-decoration: none; font-weight: 500; }
-        .view-link:hover { text-decoration: underline; }
+        /* Vid hover: ge den första cellen i raden en vit kant till vänster */
+        tr:hover td:first-child {
+            border-left: 2px solid #fff;
+        }
+        /* STATUS BADGES - Dina originalfärger anpassade för mörk bakgrund */
+        .status {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        /* Vi använder en svag bakgrundsfärg (20% opacitet) för att det ska se modernt ut mot svart */
+        .status-submitted { background: rgba(25, 103, 210, 0.2); color: #8ab4f8; }
+        .status-unassigned { background: rgba(95, 99, 104, 0.2); color: #bdc1c6; }
+        .status-assigned { background: rgba(0, 97, 193, 0.2); color: #66b2ff; }
+        .status-incomplete { background: rgba(176, 96, 0, 0.2); color: #fdd663; }
+        .status-granted { background: rgba(30, 126, 52, 0.2); color: #81c995; }
+        .status-rejected { background: rgba(217, 48, 37, 0.2); color: #f28b82; }
+
+        .view-link { color: #fff; text-decoration: none; font-weight: 500; transition: 0.2s; }
+        .view-link:hover { color: #888; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -48,13 +121,14 @@
             <h1>Visa Dashboard</h1>
             <span class="user-info">Logged in as: <span th:text="${currentUser.fullName}">User</span></span>
         </div>
-        <a th:if="${currentUser.userAuthorization.name() == 'USER'}"
-                th:href="@{/visas/apply(currentUserId=${currentUser.id})}" class="btn-new">
-            + New Application
-        </a>
-        <a th:href="@{/visas/apply(currentUserId=${currentUser.id})}" class="btn-new">
-            Sign Out
-        </a>
+        <div class="header-actions">
+            <a th:if="${currentUser.userAuthorization.name() == 'USER'}"
+               th:href="@{/visas/apply(currentUserId=${currentUser.id})}" class="btn-new">
+                + New Application
+            </a>
+            <a th:href="@{/visas/logout}" class="btn-new "> Sign Out
+            </a>
+        </div>
     </header>
 
     <main>
@@ -66,14 +140,14 @@
                 <th th:if="${currentUser.userAuthorization.name() != 'USER'}">Handler</th>
                 <th>Visa Type</th>
                 <th>Status</th>
-                <th>Submitted</th>
-                <th>Updated</th>
+                <th>Travel Date</th>
+                <th>Last updated</th>
                 <th></th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="visa : ${visas}">
-                <td th:text="'#' + ${visa.id}">#101</td>
+                <td th:text="'# ' + ${visa.id}">#101</td>
 
                 <td th:if="${currentUser.userAuthorization.name() != 'USER'}"
                     th:text="${visa.applicantName}">Anna Andersson</td>
@@ -88,10 +162,10 @@
                               th:text="${visa.visaStatus}">
                             SUBMITTED
                         </span>
+                <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
                 </td>
-                <td th:text="${#temporals.format(visa.createdAt, 'yyyy-MM-dd')}">-</td>
-                <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd')}">-</td>
-                <td style="text-align: right;">
+                <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
+                <td style="text-align: left;">
                     <a th:href="@{/visas/{id}(id=${visa.id}, currentUserId=${currentUser.id})}" class="view-link">
                         Details →
                     </a>

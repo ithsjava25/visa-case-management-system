@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.visa.dto;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record VisaDTO(
@@ -10,6 +11,8 @@ public record VisaDTO(
         VisaType visaType,
         VisaStatus visaStatus,
         String nationality,
+        String passportNumber,
+        LocalDate travelDate,
         Long applicantId,
         String applicantName,
         Long handlerId,

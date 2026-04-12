@@ -160,6 +160,11 @@ public class VisaService {
 
     @Transactional
     public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId) {
+        // Validate travel date
+        if (dto.travelDate().isBefore(LocalDate.now())) {
+            throw  new IllegalArgumentException("Travel date cannot be in the past");
+        }
+
         // Maps data
         Visa visa = visaMapper.toEntity(dto);
 

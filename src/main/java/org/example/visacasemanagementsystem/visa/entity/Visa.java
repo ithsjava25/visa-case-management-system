@@ -12,7 +12,9 @@ import org.example.visacasemanagementsystem.visa.VisaType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,11 @@ public class Visa {
     private VisaStatus visaStatus;
 
     @NotBlank private String nationality;
+
+    @NotBlank private String passportNumber;
+
+    @NotNull @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate travelDate;
 
     @ManyToOne
     @JoinColumn(name = "applicant_id", nullable = false)
