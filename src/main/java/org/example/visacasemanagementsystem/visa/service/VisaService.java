@@ -12,7 +12,7 @@ import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
-import org.example.visacasemanagementsystem.visa.VisaMapper;
+import org.example.visacasemanagementsystem.visa.mapper.VisaMapper;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;

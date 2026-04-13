@@ -1,12 +1,11 @@
-package org.example.visacasemanagementsystem.visa.mapper;
+package org.example.visacasemanagementsystem.visa;
 
 import org.example.visacasemanagementsystem.user.entity.User;
-import org.example.visacasemanagementsystem.visa.VisaStatus;
-import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
+import org.example.visacasemanagementsystem.visa.mapper.VisaMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
