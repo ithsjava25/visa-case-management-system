@@ -22,7 +22,6 @@ public class SecurityUser implements UserDetails, Serializable {
 
     @Getter
     private final String fullName;
-
     private final String email;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
