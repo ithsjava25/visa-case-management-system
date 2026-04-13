@@ -32,7 +32,6 @@ public class VisaViewController {
         this.userService = userService;
     }
 
-
     @GetMapping("/dashboard")
     public String showDashboard(@RequestParam Long currentUserId, Model model) {
         // Find current user
@@ -55,27 +54,6 @@ public class VisaViewController {
         model.addAttribute("currentUser", user);
 
         return "visa/dashboard";
-
-    }
-
-
-    @GetMapping("/{id}")
-    public String viewDetails(@PathVariable Long id, @RequestParam Long currentUserId, Model model) {
-        // Get visa
-        VisaDTO visa = visaService.findVisaDtoById(id);
-
-        // Get comments
-        var comments = commentService.getCommentsByVisaId(id);
-
-        // Get user
-        UserDTO user = userService.findById(currentUserId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found."));
-
-        model.addAttribute("visa", visa);
-        model.addAttribute("comments", comments);
-        model.addAttribute("currentUser", user);
-
-        return "visa/details";
     }
 
     @GetMapping("/apply")
@@ -86,7 +64,7 @@ public class VisaViewController {
         model.addAttribute("currentUser", user);
         model.addAttribute("visaTypes", VisaType.values());
 
-        if (!model.containsAttribute("CreateVisaDTO")) {
+        if (!model.containsAttribute("createVisaDTO")) {
             model.addAttribute("createVisaDTO", new CreateVisaDTO(null, "", "", null, currentUserId));
         }
 
@@ -128,7 +106,7 @@ public class VisaViewController {
                                          @RequestParam Long currentUserId,
                                          @RequestParam String reason) {
 
-        visaService.requestInformation(id, currentUserId, reason);
+        visaService.requestMoreInformation(id, currentUserId, reason);
 
         return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
     }
@@ -147,6 +125,25 @@ public class VisaViewController {
     public String assignCaseToHandler(@PathVariable Long id, @RequestParam Long currentUserId) {
         visaService.assignHandler(id, currentUserId);
         return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+    }
+
+    @GetMapping("/{id}")
+    public String viewDetails(@PathVariable Long id, @RequestParam Long currentUserId, Model model) {
+        // Get visa
+        VisaDTO visa = visaService.findVisaDtoById(id);
+
+        // Get comments
+        var comments = commentService.getCommentsByVisaId(id);
+
+        // Get user
+        UserDTO user = userService.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+        model.addAttribute("visa", visa);
+        model.addAttribute("comments", comments);
+        model.addAttribute("currentUser", user);
+
+        return "visa/details";
     }
 
     // Helper methods

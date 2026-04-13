@@ -159,7 +159,8 @@
                             SUBMITTED
                         </span>
                 <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
-                </td>
+
+
                 <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
                 <td style="text-align: left;">
                     <a th:href="@{/visas/{id}(id=${visa.id}, currentUserId=${currentUser.id})}" class="view-link">

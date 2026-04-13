@@ -114,66 +114,56 @@
         <p>Logged in as <span th:text="${currentUser.fullName}">User</span></p>
     </header>
 
-    <form th:action="@{/visas/apply(currentUserId=${currentUser.id})}" method="post">
+    <form th:action="@{/visas/apply(currentUserId=${currentUser.id})}" th:object="${createVisaDTO}" method="post">
+        <input type="hidden" name="applicantId" th:value="${createVisaDTO.applicantId}" />
 
         <div class="form-group">
             <label>Visa Type</label>
-            <select name="visaType"
-                    th:classappend="${#fields.hasErrors('createVisaDTO.visaType')} ? 'is-invalid' : ''"
+            <select th:field="*{visaType}"
+                    th:classappend="${#fields.hasErrors('visaType')} ? 'is-invalid' : ''"
                     required>
-                <option value="" disabled th:selected="${createVisaDTO?.visaType == null}">Select type...</option>
+                <option value="" disabled>Select type...</option>
                 <option th:each="type : ${visaTypes}"
                         th:value="${type}"
-                        th:text="${type}"
-                        th:selected="${type == createVisaDTO?.visaType}">STUDENT</option>
+                        th:text="${type}">STUDENT</option>
             </select>
-            <span class="error-text"
-                  th:if="${#fields.hasErrors('createVisaDTO.visaType')}"
-                  th:errors="*{createVisaDTO.visaType}">Visa type must be specified</span>
+            <span class="error-text" th:if="${#fields.hasErrors('visaType')}" th:errors="*{visaType}"></span>
         </div>
 
         <div class="form-group">
             <label>Nationality</label>
             <input type="text"
-                   name="nationality"
+                   th:field="*{nationality}"
                    placeholder="e.g. Swedish"
-                   th:value="${createVisaDTO?.nationality}"
-                   th:classappend="${#fields.hasErrors('createVisaDTO.nationality')} ? 'is-invalid' : ''"
+                   th:classappend="${#fields.hasErrors('nationality')} ? 'is-invalid' : ''"
                    required>
-            <span class="error-text"
-                  th:if="${#fields.hasErrors('createVisaDTO.nationality')}"
-                  th:errors="*{createVisaDTO.nationality}">Nationality must be specified</span>
+            <span class="error-text" th:if="${#fields.hasErrors('nationality')}" th:errors="*{nationality}"></span>
         </div>
 
         <div class="form-group">
             <label>Passport Number</label>
             <input type="text"
-                   name="passportNumber"
+                   th:field="*{passportNumber}"
                    placeholder="e.g. AB123456"
-                   th:value="${createVisaDTO?.passportNumber}"
-                   th:classappend="${#fields.hasErrors('createVisaDTO.passportNumber')} ? 'is-invalid' : ''"
+                   th:classappend="${#fields.hasErrors('passportNumber')} ? 'is-invalid' : ''"
                    required>
-            <span class="error-text"
-                  th:if="${#fields.hasErrors('createVisaDTO.passportNumber')}"
-                  th:errors="*{createVisaDTO.passportNumber}">Passport number must be provided</span>
+            <span class="error-text" th:if="${#fields.hasErrors('passportNumber')}" th:errors="*{passportNumber}"></span>
         </div>
 
         <div class="form-group">
             <label>Expected Travel Date</label>
             <input type="date"
-                   name="travelDate"
-                   th:value="${createVisaDTO?.travelDate}"
-                   th:classappend="${#fields.hasErrors('createVisaDTO.travelDate')} ? 'is-invalid' : ''"
+                   th:field="*{travelDate}"
+                   th:classappend="${#fields.hasErrors('travelDate')} ? 'is-invalid' : ''"
                    required>
-            <span class="error-text"
-                  th:if="${#fields.hasErrors('createVisaDTO.travelDate')}"
-                  th:errors="*{createVisaDTO.travelDate}">Travel date must be provided</span>
+            <span class="error-text" th:if="${#fields.hasErrors('travelDate')}" th:errors="*{travelDate}"></span>
         </div>
 
         <button type="submit" class="btn-submit">Submit Application</button>
 
         <a th:href="@{/visas/dashboard(currentUserId=${currentUser.id})}" class="cancel-link">Cancel</a>
     </form>
+
 </div>
 
 </body>

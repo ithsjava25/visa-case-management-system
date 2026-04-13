@@ -12,6 +12,6 @@ public record CreateVisaDTO(
         @NotBlank(message = "Nationality must be specified") String nationality,
         @NotBlank(message = "Passport number must be provided") String passportNumber,
         @NotNull(message = "Travel date must be provided") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate travelDate,
-        @NotNull Long applicantId
+        Long applicantId
 ) {
 }
