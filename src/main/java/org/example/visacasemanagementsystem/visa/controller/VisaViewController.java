@@ -3,11 +3,13 @@ package org.example.visacasemanagementsystem.visa.controller;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
+import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
+import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.springframework.stereotype.Controller;
@@ -93,6 +95,61 @@ public class VisaViewController {
         }
 
         return "redirect:/visas/dashboard?currentUserId=" + currentUserId;
+    }
+
+    @GetMapping("/{id}/edit")
+    public String showEditForm(@PathVariable Long id, @RequestParam Long currentUserId, Model model) {
+        UserDTO userDTO  = userService.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+        VisaDTO visa = visaService.findVisaDtoById(id);
+
+        if (!visa.applicantId().equals(currentUserId)) {
+            throw  new UnauthorizedException("You can only edit ypur own applications.");
+        }
+
+        UpdateVisaDTO updateDto = new UpdateVisaDTO(
+                visa.id(),
+                visa.visaType(),
+                visa.visaStatus(),
+                visa.nationality(),
+                visa.passportNumber(),
+                visa.travelDate(),
+                visa.handlerId()
+        );
+
+        model.addAttribute("updateVisaDto", updateDto);
+        model.addAttribute("currentUser", userDTO);
+        model.addAttribute("visaTypes", VisaType.values());
+        model.addAttribute("isEdit", true);
+        model.addAttribute("statusInformation", visa.statusInformation());
+
+        return "visa/edit-form";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String processUpdate(
+            @PathVariable Long id,
+            @Valid @ModelAttribute ("updateVisaDto") UpdateVisaDTO updateVisaDTO,
+            BindingResult bindingResult,
+            @RequestParam Long currentUserId,
+            Model model) {
+
+        if (bindingResult.hasErrors()) {
+            prepareApplyModel(currentUserId, model);
+            model.addAttribute("isEdit", true);
+            return "visa/edit-form";
+        }
+
+        try {
+            visaService.updateVisa(updateVisaDTO, currentUserId);
+        } catch (IllegalArgumentException e) {
+            bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
+            prepareApplyModel(currentUserId, model);
+            model.addAttribute("isEdit", true);
+            return "visa/edit-form";
+        }
+        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
     }
 
     @PostMapping("/{id}/approve")

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Visa Application</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #f0f0f0;
+            line-height: 1.6;
+            background: #000;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #111;
+            padding: 32px;
+            border-radius: 12px;
+            border: 1px solid #222;
+        }
+
+        header {
+            border-bottom: 1px solid #222;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+
+        h1 { font-size: 24px; font-weight: 500; color: #fff; margin: 0; }
+        header p { color: #666; font-size: 14px; margin-top: 5px; }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #666;
+            letter-spacing: 0.5px;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            background: #181818;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #ccc;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+            resize: none;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #666;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        ::placeholder { color: #444; }
+
+        .btn-submit {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover { background: #ccc; transform: translateY(-1px); }
+
+        .cancel-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .cancel-link:hover { color: #fff; }
+
+        .is-invalid {
+            border-color: #ff4d4d !important;
+        }
+
+        .error-text {
+            color: #ff4d4d;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Edit Application</h1>
+        <p>Updating case for <span th:text="${currentUser.fullName}">User</span></p>
+    </header>
+
+    <div th:if="${updateVisaDto != null && updateVisaDto.visaStatus != null && updateVisaDto.visaStatus.name() == 'INCOMPLETE'}"
+         style="margin-bottom: 30px; padding: 20px; background: #1a1500; border: 1px solid #332200; border-radius: 8px;">
+        <label style="color: #ffcc00; font-size: 11px; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 10px;">
+            Feedback from Handler
+        </label>
+        <p style="color: #ccc; margin: 0; font-style: italic;"
+           th:text="${statusInformation != null ? statusInformation : 'Please review and update your application details.'}">
+            Reason for incomplete status goes here.
+        </p>
+    </div>
+
+    <form th:action="@{/visas/{id}/edit(id=${updateVisaDto.id}, currentUserId=${currentUser.id})}"
+          th:object="${updateVisaDto}"
+          method="post">
+
+        <input type="hidden" th:field="*{id}" />
+        <input type="hidden" th:field="*{visaStatus}" />
+        <input type="hidden" th:field="*{handlerId}" />
+
+        <div class="form-group">
+            <label>Visa Type</label>
+            <select th:field="*{visaType}" th:classappend="${#fields.hasErrors('visaType')} ? 'is-invalid' : ''">
+                <option th:each="type : ${visaTypes}" th:value="${type}" th:text="${type}"></option>
+            </select>
+            <span class="error-text" th:if="${#fields.hasErrors('visaType')}" th:errors="*{visaType}"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Nationality</label>
+            <input type="text" th:field="*{nationality}" th:classappend="${#fields.hasErrors('nationality')} ? 'is-invalid' : ''">
+            <span class="error-text" th:if="${#fields.hasErrors('nationality')}" th:errors="*{nationality}"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Passport Number</label>
+            <input type="text" th:field="*{passportNumber}" th:classappend="${#fields.hasErrors('passportNumber')} ? 'is-invalid' : ''">
+            <span class="error-text" th:if="${#fields.hasErrors('passportNumber')}" th:errors="*{passportNumber}"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Expected Travel Date</label>
+            <input type="date" th:field="*{travelDate}" th:classappend="${#fields.hasErrors('travelDate')} ? 'is-invalid' : ''">
+            <span class="error-text" th:if="${#fields.hasErrors('travelDate')}" th:errors="*{travelDate}"></span>
+        </div>
+
+        <button type="submit" class="btn-submit">Save Changes</button>
+        <a th:href="@{/visas/{id}(id=${updateVisaDto.id}, currentUserId=${currentUser.id})}" class="cancel-link">Back to Details</a>
+    </form>
+</div>
+</body>
+</html>

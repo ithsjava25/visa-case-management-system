@@ -9,9 +9,10 @@ import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
+import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
-import org.example.visacasemanagementsystem.visa.mapper.VisaMapper;
+import org.example.visacasemanagementsystem.visa.VisaMapper;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -161,9 +162,7 @@ public class VisaService {
     @Transactional
     public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId) {
         // Validate travel date
-        if (dto.travelDate().isBefore(LocalDate.now())) {
-            throw  new IllegalArgumentException("Travel date cannot be in the past");
-        }
+        validateTravelDate(dto.travelDate());
 
         // Maps data
         Visa visa = visaMapper.toEntity(dto);
@@ -187,6 +186,36 @@ public class VisaService {
     }
 
     @Transactional
+    public VisaDTO updateVisa(UpdateVisaDTO dto, Long userId) {
+        Visa visa = visaRepository.findById(dto.id())
+                .orElseThrow(() -> new EntityNotFoundException("Visa not found"));
+
+        if (!visa.getApplicant().getId().equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to update this application.");
+        }
+
+       validateTravelDate(dto.travelDate());
+
+        visa.setVisaType(dto.visaType());
+        visa.setNationality(dto.nationality());
+        visa.setPassportNumber(dto.passportNumber());
+        visa.setTravelDate(dto.travelDate());
+
+        visa.setVisaStatus(VisaStatus.SUBMITTED);
+        visa.setStatusInformation(null);
+
+        Visa  savedVisa = visaRepository.save(visa);
+
+        auditService.createAuditLog(
+                userId,
+                savedVisa.getId(),
+                AuditEventType.UPDATED,
+                "Applicant updated application details."
+        );
+        return visaMapper.toDTO(savedVisa);
+    }
+
+    @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
         User admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
@@ -194,7 +223,6 @@ public class VisaService {
         if (visa.getHandler() == null) {
             visa.setHandler(admin);
         }
-
 
         visa.setVisaStatus(VisaStatus.GRANTED);
         visa.setStatusInformation(null);
@@ -239,7 +267,7 @@ public class VisaService {
     }
 
     @Transactional
-    public VisaDTO requestInformation (Long visaId, Long adminId, String infoText) {
+    public VisaDTO requestMoreInformation(Long visaId, Long adminId, String infoText) {
         User  admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
@@ -262,8 +290,6 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
-
-    // Assign Handler
     @Transactional
     public VisaDTO assignHandler(Long visaId, Long adminId) {
         User admin = validateHandler(adminId);
@@ -296,8 +322,15 @@ public class VisaService {
         boolean isSysAdmin = user.getUserAuthorization() == UserAuthorization.SYSADMIN;
 
         if (!isAdmin && !isSysAdmin) {
-            throw  new UnauthorizedException("User is not authorized to perform this action.");
+            throw new UnauthorizedException("User is not authorized to perform this action.");
         }
         return user;
     }
+
+    public void validateTravelDate(LocalDate travelDate) {
+        if (travelDate == null || travelDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Travel date cannot be in the past.");
+        }
+    }
+
 }

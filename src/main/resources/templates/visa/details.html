@@ -160,10 +160,25 @@
             <span class="label">Important Information / Notes</span>
             <span class="value" th:text="${visa.statusInformation}">-</span>
         </div>
-
     </div>
 
-    <div th:if="${currentUser.userAuthorization.name() != 'USER'}" class="admin-actions">
+    <div th:if="${visa.visaStatus.name() == 'INCOMPLETE' and visa.applicantId == currentUser.id}"
+         style="margin-bottom: 40px; padding: 24px; background: #1a1500; border: 1px solid #332200; border-radius: 12px; border-left: 4px solid #ffcc00;">
+
+        <h3 style="margin-top:0; color: #ffcc00; font-size: 18px;">Action Required</h3>
+        <p style="color: #ccc; margin-bottom: 20px;">
+            The handler has marked your application as <strong>incomplete</strong>.
+            Please review the notes above and update your application with the requested information.
+        </p>
+
+        <a th:href="@{/visas/{id}/edit(id=${visa.id}, currentUserId=${currentUser.id})}"
+           class="btn-submit"
+           style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto;">
+            Edit & Resubmit Application
+        </a>
+    </div>
+
+    <div th:if="${currentUser.userAuthorization.name() != 'USER' and visa.visaStatus.name() != 'GRANTED' and visa.visaStatus.name() != 'REJECTED'}" class="admin-actions">
         <h3 style="margin-top:0; font-size: 16px;">Case Management</h3>
 
         <div class="action-group">

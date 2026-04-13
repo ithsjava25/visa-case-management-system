@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 public record UpdateVisaDTO(
         @NotNull Long id,
-        @NotBlank(message = "Visa type must be specified") VisaType visaType,
+        @NotNull(message = "Visa type must be specified") VisaType visaType,
         @NotNull(message = "Application must have a status") VisaStatus visaStatus,
         @NotBlank(message = "Nationality must be specified") String nationality,
         @NotBlank(message = "Passport number must be provided") String passportNumber,
