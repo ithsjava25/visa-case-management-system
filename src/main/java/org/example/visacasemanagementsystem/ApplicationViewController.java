@@ -1,7 +1,23 @@
 package org.example.visacasemanagementsystem;
 
+import org.example.visacasemanagementsystem.user.security.SecurityUser;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import java.util.Objects;
 
 @Controller
 public class ApplicationViewController {
+    @GetMapping("/dashboard")
+    public String dashboard(@AuthenticationPrincipal SecurityUser principal) {
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
+
+        if (isSysAdmin) return "redirect:/dashboard/sysadmin";
+        if (isAdmin)    return "redirect:/dashboard/admin";
+        return "redirect:/dashboard/applicant";
+    }
 }

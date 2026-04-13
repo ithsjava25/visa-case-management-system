@@ -131,7 +131,7 @@ public class UserViewController {
         return "user/list";
     }
 
-    @GetMapping("/applicant/dashboard")
+    @GetMapping("/dashboard/applicant")
     public String applicantDashboard(@AuthenticationPrincipal SecurityUser principal,
                                      Model model) {
         List<VisaDTO> visas = visaService.findVisasByApplicantId(principal.getUserId());
@@ -140,7 +140,7 @@ public class UserViewController {
         return "dashboard/applicant";
     }
 
-    @GetMapping("/admin/dashboard")
+    @GetMapping("/dashboard/admin")
     public String adminDashboard(@AuthenticationPrincipal SecurityUser principal,
                                  Model model) {
         List<VisaDTO> assignedCases = visaService.findVisasByHandlerId(principal.getUserId());
@@ -151,7 +151,7 @@ public class UserViewController {
         return "dashboard/admin";
     }
 
-    @GetMapping("/sysadmin/dashboard")
+    @GetMapping("/dashboard/sysadmin")
     public String sysAdminDashboard(@AuthenticationPrincipal SecurityUser principal,
                                     Model model) {
         List<UserDTO> allUsers = userService.findAll();

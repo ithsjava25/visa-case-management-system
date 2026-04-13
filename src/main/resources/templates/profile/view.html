@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <style th:replace="~{fragments/header :: nav-style}"></style>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #f0f0f0;
+            line-height: 1.6;
+            background: #000;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-content { padding: 40px; }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        .back-link {
+            text-decoration: none;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: block;
+            transition: 0.2s;
+        }
+        .back-link:hover { color: #fff; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #222;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 { font-size: 24px; font-weight: 500; color: #fff; margin: 0; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .info-item {
+            border: 1px solid #222;
+            padding: 15px;
+            border-radius: 8px;
+            background: #111;
+        }
+
+        .info-item.full-width { grid-column: span 2; }
+
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .value { font-size: 16px; font-weight: 500; color: #ccc; }
+
+        .role-badge {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .role-user { background: rgba(25, 103, 210, 0.2); color: #8ab4f8; }
+        .role-admin { background: rgba(176, 96, 0, 0.2); color: #fdd663; }
+        .role-sysadmin { background: rgba(128, 0, 128, 0.2); color: #d7a8ff; }
+
+        .btn-edit {
+            text-decoration: none;
+            color: #fff;
+            background: #222;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border: 1px solid #333;
+        }
+        .btn-edit:hover { background: #333; transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/header :: nav}"></nav>
+
+<div class="page-content">
+    <div class="container">
+        <a th:href="@{/}" class="back-link">&larr; Back</a>
+
+        <header>
+            <h1 th:text="${user.fullName()}">Full Name</h1>
+            <a th:if="${canEdit}"
+               th:href="@{/profile/edit/{id}(id=${user.id()})}"
+               class="btn-edit">Edit Profile</a>
+        </header>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">Full Name</span>
+                <span class="value" th:text="${user.fullName()}">John Doe</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Email</span>
+                <span class="value" th:text="${user.email()}">john@example.com</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Role</span>
+                <span class="value">
+                    <span class="role-badge"
+                          th:classappend="${'role-' + #strings.toLowerCase(user.userAuthorization().name())}"
+                          th:text="${user.userAuthorization()}">USER</span>
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">User ID</span>
+                <span class="value" th:text="${user.id()}">1</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
