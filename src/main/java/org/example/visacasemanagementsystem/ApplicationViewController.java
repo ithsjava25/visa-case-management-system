@@ -11,6 +11,9 @@ import java.util.Objects;
 public class ApplicationViewController {
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal SecurityUser principal) {
+        if (principal == null) {
+            return "redirect:/user/login";
+        }
         boolean isSysAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
         boolean isAdmin = principal.getAuthorities().stream()

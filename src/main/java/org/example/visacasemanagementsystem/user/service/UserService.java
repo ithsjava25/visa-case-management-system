@@ -1,6 +1,7 @@
 package org.example.visacasemanagementsystem.user.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
@@ -48,9 +49,12 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO createUser(CreateUserDTO dto) {
+    public UserDTO createUser(@Valid CreateUserDTO dto) {
         User user = userMapper.toEntity(dto);
         user.setPassword(dto.password()); // mapper doesn't set this currently
+        if (dto.password().length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
         try {
             User savedUser = userRepository.save(user);
             savedUser.setUserAuthorization(UserAuthorization.USER);
@@ -120,6 +124,17 @@ public class UserService {
 
         if (!isSysAdmin) {
             throw new UnauthorizedException("Only system administrators can access this page.");
+        }
+    }
+
+    public void validateAdmin(SecurityUser principal) {
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
+
+        if (!isSysAdmin && !isAdmin) {
+            throw new UnauthorizedException("Only administrators or system administrators can access this page.");
         }
     }
 }

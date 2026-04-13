@@ -69,7 +69,7 @@ public class VisaService {
         VisaStatus status;
         try {
             status = VisaStatus.valueOf(visaStatus.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException _) {
+        } catch (IllegalArgumentException ignored) {
             throw new IllegalArgumentException("Invalid visa status: " + visaStatus);
         }
 
@@ -246,14 +246,16 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisasByApplicantId(Long applicantId) {
-        return visaRepository.findVisasByApplicantId(applicantId)
+        return visaRepository.findVisasByApplicantId(applicantId,
+                        Sort.by("updatedAt").descending())
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();
     }
 
     public List<VisaDTO> findVisasByHandlerId(Long handlerId) {
-        return visaRepository.findVisasByHandlerId(handlerId)
+        return visaRepository.findVisasByHandlerId(handlerId,
+                        Sort.by("updatedAt").descending())
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();

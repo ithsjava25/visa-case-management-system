@@ -77,6 +77,8 @@ public class UserViewController {
         UserDTO user = userService.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+        userService.validateProfileAccess(principal, userId);
+
         boolean isOwnProfile = principal.getUserId().equals(userId);
         boolean isSysAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
@@ -143,6 +145,7 @@ public class UserViewController {
     @GetMapping("/dashboard/admin")
     public String adminDashboard(@AuthenticationPrincipal SecurityUser principal,
                                  Model model) {
+        userService.validateAdmin(principal);
         List<VisaDTO> assignedCases = visaService.findVisasByHandlerId(principal.getUserId());
         List<VisaDTO> unassignedCases = visaService.findVisaByStatus("UNASSIGNED");
         model.addAttribute("name", principal.getFullName());
@@ -154,6 +157,7 @@ public class UserViewController {
     @GetMapping("/dashboard/sysadmin")
     public String sysAdminDashboard(@AuthenticationPrincipal SecurityUser principal,
                                     Model model) {
+        userService.validateSysAdmin(principal);
         List<UserDTO> allUsers = userService.findAll();
         List<AuditDTO> recentLogs = auditService.findAll();
         model.addAttribute("name", principal.getFullName());
@@ -161,5 +165,4 @@ public class UserViewController {
         model.addAttribute("auditLogs", recentLogs);
         return "dashboard/sysadmin";
     }
-
 }
