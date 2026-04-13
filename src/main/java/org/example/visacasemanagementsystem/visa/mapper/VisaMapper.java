@@ -1,4 +1,4 @@
-package org.example.visacasemanagementsystem.visa;
+package org.example.visacasemanagementsystem.visa.mapper;
 
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
