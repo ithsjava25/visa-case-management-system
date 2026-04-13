@@ -9,11 +9,13 @@ import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
+import org.example.visacasemanagementsystem.user.security.SecurityUser;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -99,6 +101,25 @@ public class UserService {
 
         if (requester.getUserAuthorization() != UserAuthorization.SYSADMIN) {
             throw new UnauthorizedException("User is not authorized to perform this action.");
+        }
+    }
+
+    public void validateProfileAccess(SecurityUser principal, Long userId) {
+        boolean isOwnProfile = principal.getUserId().equals(userId);
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+
+        if (!isOwnProfile && !isSysAdmin) {
+            throw new UnauthorizedException("You do not have permission to edit this profile.");
+        }
+    }
+
+    public void validateSysAdmin(SecurityUser principal) {
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+
+        if (!isSysAdmin) {
+            throw new UnauthorizedException("Only system administrators can access this page.");
         }
     }
 }

@@ -1,9 +1,11 @@
 package org.example.visacasemanagementsystem.user.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.example.visacasemanagementsystem.audit.dto.AuditDTO;
 import org.example.visacasemanagementsystem.audit.service.AuditService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
+import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.security.SecurityUser;
 import org.example.visacasemanagementsystem.user.service.UserService;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 public class UserViewController {
@@ -61,7 +64,7 @@ public class UserViewController {
 
     // Login page
     @GetMapping("/user/login")
-    public String userLoginForm(Model model){
+    public String userLoginForm(){
         return "user/login";
     }
 
@@ -70,7 +73,16 @@ public class UserViewController {
     @GetMapping("/profile/view/{userId}")
     public String viewProfile(@AuthenticationPrincipal SecurityUser principal,
                               @PathVariable Long userId,
-                              Model model){
+                              Model model) {
+        UserDTO user = userService.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        boolean isOwnProfile = principal.getUserId().equals(userId);
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+
+        model.addAttribute("user", user);
+        model.addAttribute("canEdit", isOwnProfile || isSysAdmin);
         return "profile/view";
     }
 
@@ -78,7 +90,13 @@ public class UserViewController {
     @GetMapping("/profile/edit/{userId}")
     public String showProfileEditForm(@AuthenticationPrincipal SecurityUser principal,
                                       @PathVariable Long userId,
-                                      Model model){
+                                      Model model) {
+        userService.validateProfileAccess(principal, userId);
+
+        UserDTO user = userService.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        model.addAttribute("user", user);
         return "profile/edit";
     }
 
@@ -86,14 +104,27 @@ public class UserViewController {
     @PostMapping("/profile/edit/{userId}")
     public String updateProfile(@AuthenticationPrincipal SecurityUser principal,
                                 @PathVariable Long userId,
-                                Model model){
-        return "redirect:/profile/view/" + userId;
+                                @RequestParam String fullName,
+                                @RequestParam String email,
+                                Model model) {
+        userService.validateProfileAccess(principal, userId);
+
+        try {
+            UpdateUserDTO dto = new UpdateUserDTO(userId, fullName, email);
+            userService.updateUser(dto);
+            return "redirect:/profile/view/" + userId;
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("user", new UserDTO(userId, fullName, email, null));
+            return "profile/edit";
+        }
     }
 
     // A list view of users only available to sysadmins
     @GetMapping("/user/list")
     public String userListView(@AuthenticationPrincipal SecurityUser principal,
                                Model model) {
+        userService.validateSysAdmin(principal);
         List<UserDTO> allUsers = userService.findAll();
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
