@@ -198,6 +198,10 @@ public class VisaService {
             throw new UnauthorizedException("You are not authorized to update this application.");
         }
 
+        if (visa.getVisaStatus() != VisaStatus.INCOMPLETE && visa.getVisaStatus() != VisaStatus.SUBMITTED ) {
+            throw new IllegalArgumentException("This application can no longer be edited.");
+        }
+
        validateTravelDate(dto.travelDate());
 
         visa.setVisaType(dto.visaType());

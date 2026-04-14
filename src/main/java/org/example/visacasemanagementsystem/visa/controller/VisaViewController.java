@@ -149,6 +149,9 @@ public class VisaViewController {
             bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
             prepareApplyModel(currentUserId, model);
             model.addAttribute("isEdit", true);
+            VisaDTO visa = visaService.findVisaDtoById(id);
+            model.addAttribute("statusInformation", visa.statusInformation());
+
             return "visa/edit-form";
         }
         return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
