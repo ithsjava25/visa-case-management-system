@@ -146,7 +146,12 @@ public class VisaViewController {
         try {
             visaService.updateVisa(id, updateVisaDTO, currentUserId);
         } catch (IllegalArgumentException e) {
-            bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
+            if (e.getMessage().contains("date")) {
+                bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
+            } else {
+                bindingResult.reject("globalError",e.getMessage());
+            }
+
             prepareApplyModel(currentUserId, model);
             model.addAttribute("isEdit", true);
             VisaDTO visa = visaService.findVisaDtoById(id);

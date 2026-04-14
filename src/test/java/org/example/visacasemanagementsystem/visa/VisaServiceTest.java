@@ -196,7 +196,6 @@ class VisaServiceTest {
                 .hasMessage("This application can no longer be edited.");
     }
 
-
     @Test
     void updateVisa_shouldThrowIllegalArgumentException_WhenTravelDateIsInPast() {
         // Arrange

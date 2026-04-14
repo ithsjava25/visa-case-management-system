@@ -127,6 +127,11 @@
           th:object="${updateVisaDto}"
           method="post">
 
+        <div th:if="${#fields.hasErrors('global')}"
+             style="background: #3a1111; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
+            <p style="margin: 0;" th:each="err : ${#fields.errors('global')}" th:text="${err}"></p>
+        </div>
+
         <input type="hidden" th:field="*{id}" />
         <input type="hidden" th:field="*{visaStatus}" />
         <input type="hidden" th:field="*{handlerId}" />
