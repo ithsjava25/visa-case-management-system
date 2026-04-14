@@ -105,7 +105,7 @@ public class VisaViewController {
         VisaDTO visa = visaService.findVisaDtoById(id);
 
         if (!visa.applicantId().equals(currentUserId)) {
-            throw  new UnauthorizedException("You can only edit ypur own applications.");
+            throw  new UnauthorizedException("You can only edit your own applications.");
         }
 
         UpdateVisaDTO updateDto = new UpdateVisaDTO(
@@ -138,6 +138,8 @@ public class VisaViewController {
         if (bindingResult.hasErrors()) {
             prepareApplyModel(currentUserId, model);
             model.addAttribute("isEdit", true);
+            VisaDTO visa = visaService.findVisaDtoById(id);
+            model.addAttribute("statusInformation", visa.statusInformation());
             return "visa/edit-form";
         }
 
@@ -189,12 +191,18 @@ public class VisaViewController {
         // Get visa
         VisaDTO visa = visaService.findVisaDtoById(id);
 
-        // Get comments
-        var comments = commentService.getCommentsByVisaId(id);
-
         // Get user
         UserDTO user = userService.findById(currentUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+        // Authorization check: regular users can only view their own applications
+        if (user.userAuthorization() == UserAuthorization.USER && !visa.applicantId().equals(currentUserId)) {
+            throw new UnauthorizedException("You can only view your own applications.");
+        }
+
+        // Get comments
+        var comments = commentService.getCommentsByVisaId(id);
+
 
         model.addAttribute("visa", visa);
         model.addAttribute("comments", comments);

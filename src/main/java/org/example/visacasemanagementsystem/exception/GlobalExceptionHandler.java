@@ -38,6 +38,6 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public String handleAllUncaughtErrors(Exception exception) {
         log.error("Unexpected Error: ", exception);
-        return exception.getMessage();
+        return "Unexpected server error.";
     }
 }

@@ -87,10 +87,10 @@ public class Visa {
                 ", visaType=" + visaType +
                 ", visaStatus=" + visaStatus +
                 ", nationality='" + nationality + '\'' +
-                ", passportNumber='" + passportNumber + '\'' +
+                ", passportNumber='***" + (passportNumber == null || passportNumber.length() < 2 ? "" : passportNumber.substring(passportNumber.length() - 2)) + '\'' +
                 ", travelDate=" + travelDate +
-                ", applicant=" + applicant +
-                ", handler=" + handler +
+                ", applicantId=" + (applicant != null ? applicant.getId() : null) +
+                ", handlerId=" + (handler != null ? handler.getId() : null) +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 ", statusInformation='" + statusInformation + '\'' +

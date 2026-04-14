@@ -63,7 +63,7 @@ public class VisaService {
     }
 
     public List<VisaDTO> findVisasByApplicant(Long applicantId) {
-        return visaRepository.findByApplicantId(applicantId, Sort.by(Sort.Direction.DESC, "updatedAt"))
+        return visaRepository.findByApplicant_Id(applicantId, Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();
@@ -268,6 +268,10 @@ public class VisaService {
 
     @Transactional
     public VisaDTO requestMoreInformation(Long visaId, Long adminId, String infoText) {
+        if (infoText == null || infoText.isBlank()) {
+            throw  new IllegalArgumentException("Information request text cannot be null or blank");
+        }
+
         User  admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
@@ -305,7 +309,7 @@ public class VisaService {
                 adminId,
                 visaId,
                 AuditEventType.ASSIGNED,
-                "Admin" + admin.getFullName() + " has been assigned to case and status is now ASSIGNED."
+                "Admin " + admin.getFullName() + " has been assigned to case and status is now ASSIGNED."
         );
         return visaMapper.toDTO(savedVisa);
     }
