@@ -1,5 +1,4 @@
 package org.example.visacasemanagementsystem.visa.service;
-import ch.qos.logback.core.joran.conditional.IfAction;
 import jakarta.persistence.EntityNotFoundException;
 import org.example.visacasemanagementsystem.audit.AuditEventType;
 import org.example.visacasemanagementsystem.audit.service.AuditService;
