@@ -341,7 +341,7 @@ public class VisaService {
 
     public void validateTravelDate(LocalDate travelDate) {
         if (travelDate == null) {
-            throw new IllegalArgumentException("Travel date cannot be in the past.");
+            throw new IllegalArgumentException("Travel date is required.");
         }
 
         if (travelDate.isBefore(LocalDate.now())) {
