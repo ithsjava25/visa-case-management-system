@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
+<head>
+    <style th:fragment="nav-style">
+        .site-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 32px;
+            background: #111;
+            border-bottom: 1px solid #222;
+        }
+        .site-nav .brand {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: 0.02em;
+        }
+        .site-nav .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .site-nav .nav-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        .site-nav .nav-links a:hover { color: #fff; }
+        .site-nav .nav-links a.active { color: #fff; font-weight: 500; }
+        .site-nav .nav-user {
+            font-size: 13px;
+            color: #555;
+            padding-left: 24px;
+            border-left: 1px solid #222;
+        }
+        .site-nav .btn-signout {
+            color: #666;
+            text-decoration: none;
+            font-size: 13px;
+            padding: 6px 14px;
+            border: 1px solid #222;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .site-nav .btn-signout:hover {
+            color: #ccc;
+            background: #181818;
+            border-color: #333;
+        }
+    </style>
+</head>
+<body>
+<nav th:fragment="nav" class="site-nav">
+    <a class="brand" th:href="@{/}">Visa Case Management</a>
+
+    <div class="nav-links">
+        <!-- Applicant nav -->
+        <th:block sec:authorize="hasRole('USER')">
+            <a th:href="@{/dashboard/applicant}">Dashboard</a>
+            <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
+        </th:block>
+
+        <!-- Admin nav -->
+        <th:block sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/dashboard/admin}">Dashboard</a>
+            <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
+        </th:block>
+
+        <!-- Sysadmin nav -->
+        <th:block sec:authorize="hasRole('SYSADMIN')">
+            <a th:href="@{/dashboard/sysadmin}">Dashboard</a>
+            <a th:href="@{/user/list}">Users</a>
+            <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
+        </th:block>
+
+        <span class="nav-user" sec:authentication="principal.fullName">User</span>
+        <a th:href="@{/logout}" class="btn-signout">Sign Out</a>
+    </div>
+</nav>
+</body>
+</html>

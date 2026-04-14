@@ -26,6 +26,8 @@ public interface VisaRepository extends JpaRepository<Visa,Long> {
 
     List<Visa> findByApplicant_Id(Long applicantId, Sort sort);
 
+    List<Visa> findVisasByApplicantId(Long applicantId, Sort sort);
 
+    List<Visa> findVisasByHandlerId(Long handlerId, Sort sort);
 
 }
