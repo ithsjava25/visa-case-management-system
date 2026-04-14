@@ -1,4 +1,5 @@
 package org.example.visacasemanagementsystem.visa.service;
+import ch.qos.logback.core.joran.conditional.IfAction;
 import jakarta.persistence.EntityNotFoundException;
 import org.example.visacasemanagementsystem.audit.AuditEventType;
 import org.example.visacasemanagementsystem.audit.service.AuditService;
@@ -186,8 +187,12 @@ public class VisaService {
     }
 
     @Transactional
-    public VisaDTO updateVisa(UpdateVisaDTO dto, Long userId) {
-        Visa visa = visaRepository.findById(dto.id())
+    public VisaDTO updateVisa(Long visaId, UpdateVisaDTO dto, Long userId) {
+        if (!visaId.equals(dto.id())) {
+            throw new IllegalArgumentException("Mismatched visa id.");
+        }
+
+        Visa visa = visaRepository.findById(visaId)
                 .orElseThrow(() -> new EntityNotFoundException("Visa not found"));
 
         if (!visa.getApplicant().getId().equals(userId)) {

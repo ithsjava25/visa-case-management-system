@@ -134,7 +134,7 @@ class VisaServiceTest {
         when(visaRepository.save(any(Visa.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        visaService.updateVisa(dto, userId);
+        visaService.updateVisa(visaId, dto, userId );
 
         // Assert
         assertThat(visa.getVisaType()).isEqualTo(VisaType.TOURIST);
@@ -149,6 +149,7 @@ class VisaServiceTest {
     @Test
     void updateVisa_shouldThrowUnauthorizedException_WhenUserIsNotTheApplicant() {
         // Arrange
+        Long visaId = 100L;
         Long actualApplicantId = 3L;
         Long unauthorizedUserId = 99L;
 
@@ -165,7 +166,7 @@ class VisaServiceTest {
         when(visaRepository.findById(anyLong())).thenReturn(Optional.of(visa));
 
         // Act & Assert
-        assertThatThrownBy(() -> visaService.updateVisa(dto, unauthorizedUserId))
+        assertThatThrownBy(() -> visaService.updateVisa(visaId, dto,unauthorizedUserId))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessage("You are not authorized to update this application.");
 
@@ -174,6 +175,7 @@ class VisaServiceTest {
     @Test
     void updateVisa_shouldThrowIllegalArgumentException_WhenTravelDateIsInPast() {
         // Arrange
+        Long visaId = 100L;
         Long userId = 1L;
         LocalDate pastDate = LocalDate.now().minusDays(1);
 
@@ -189,7 +191,7 @@ class VisaServiceTest {
         when(visaRepository.findById(anyLong())).thenReturn(Optional.of(visa));
 
         // Act & Assert
-        assertThatThrownBy(() -> visaService.updateVisa(dto, userId))
+        assertThatThrownBy(() -> visaService.updateVisa(visaId, dto, userId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Travel date cannot be in the past.");
 
