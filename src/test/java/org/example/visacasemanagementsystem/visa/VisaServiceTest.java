@@ -173,6 +173,31 @@ class VisaServiceTest {
     }
 
     @Test
+    void updateVisa_shouldThrowIllegalArgumentException_WhenStatusIsNotEditable() {
+        Long visaId = 100L;
+        Long userId = 1L;
+        UpdateVisaDTO dto = new UpdateVisaDTO(
+                visaId, VisaType.STUDY,
+                VisaStatus.SUBMITTED, "SE", "123",
+                LocalDate.now().plusDays(10), null);
+
+        User user  = new User();
+        user.setId(userId);
+
+        Visa visa = new Visa();
+        visa.setApplicant(user);
+        visa.setVisaStatus(VisaStatus.GRANTED);
+
+        when(visaRepository.findById(anyLong())).thenReturn(Optional.of(visa));
+
+        // Act & Assert
+        assertThatThrownBy(() -> visaService.updateVisa(visaId, dto,userId))
+        .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("This application can no longer be edited.");
+    }
+
+
+    @Test
     void updateVisa_shouldThrowIllegalArgumentException_WhenTravelDateIsInPast() {
         // Arrange
         Long visaId = 100L;
@@ -187,6 +212,7 @@ class VisaServiceTest {
 
         Visa visa = new Visa();
         visa.setApplicant(actualUser);
+        visa.setVisaStatus(VisaStatus.SUBMITTED);
 
         when(visaRepository.findById(anyLong())).thenReturn(Optional.of(visa));
 
