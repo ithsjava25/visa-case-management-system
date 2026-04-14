@@ -12,7 +12,9 @@ import org.example.visacasemanagementsystem.visa.VisaType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,11 @@ public class Visa {
 
     @NotBlank private String nationality;
 
+    @NotBlank private String passportNumber;
+
+    @NotNull @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate travelDate;
+
     @ManyToOne
     @JoinColumn(name = "applicant_id", nullable = false)
     private User applicant; // Den som söker visumet
@@ -54,14 +61,12 @@ public class Visa {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    private String rejectionReason;
+    private String statusInformation;
 
     @ElementCollection
     @CollectionTable(name = "visa_documents", joinColumns = @JoinColumn(name = "visa_id"))
     @Column(name = "s3_key")
     private List<String> s3Keys = new ArrayList<>();
-
-    //ToDo: Comments in the form of a discussion between applicant and administrator.
 
 
     @Override
@@ -82,11 +87,13 @@ public class Visa {
                 ", visaType=" + visaType +
                 ", visaStatus=" + visaStatus +
                 ", nationality='" + nationality + '\'' +
-                ", applicantId=" + (applicant != null ? applicant.getId() : "null") +
-                ", handlerId=" + (handler != null ? handler.getId() : "null") +
+                ", passportNumber='***" + (passportNumber == null || passportNumber.length() < 2 ? "" : passportNumber.substring(passportNumber.length() - 2)) + '\'' +
+                ", travelDate=" + travelDate +
+                ", applicantId=" + (applicant != null ? applicant.getId() : null) +
+                ", handlerId=" + (handler != null ? handler.getId() : null) +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
-                ", rejectionReason='" + rejectionReason + '\'' +
+                ", statusInformation='" + statusInformation + '\'' +
                 ", s3Keys=" + s3Keys +
                 '}';
     }

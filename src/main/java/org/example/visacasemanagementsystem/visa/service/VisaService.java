@@ -9,6 +9,7 @@ import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
+import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.example.visacasemanagementsystem.visa.mapper.VisaMapper;
@@ -43,7 +44,7 @@ public class VisaService {
 
     // --- For filtering in Frontend list-view ---
     public List<VisaDTO> findAll() {
-        return visaRepository.findAll()
+        return visaRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
                 .map(visaMapper::toDTO)
                 .toList();
@@ -52,6 +53,20 @@ public class VisaService {
     private Visa findVisaById(Long id) {
        return visaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
+    }
+
+    public VisaDTO findVisaDtoById(Long id) {
+        Visa visa = visaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
+
+        return visaMapper.toDTO(visa);
+    }
+
+    public List<VisaDTO> findVisasByApplicant(Long applicantId) {
+        return visaRepository.findByApplicant_Id(applicantId, Sort.by(Sort.Direction.DESC, "updatedAt"))
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
     }
 
     public List<VisaDTO> findVisaByType(VisaType visaType) {
@@ -113,6 +128,7 @@ public class VisaService {
 
     // -----
 
+    // Todo: Ta bort denna metod? --> då visa status sätts genom andra metoder/knappar
     @Transactional
     public VisaDTO updateVisaStatus(Long visaId, VisaStatus newStatus, Long adminId) {
         if (newStatus == null) {
@@ -128,10 +144,10 @@ public class VisaService {
 
         // Update visa status
         visa.setVisaStatus(newStatus);
-        visa.setRejectionReason(null);
+        visa.setStatusInformation(null);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
@@ -145,6 +161,9 @@ public class VisaService {
 
     @Transactional
     public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId) {
+        // Validate travel date
+        validateTravelDate(dto.travelDate());
+
         // Maps data
         Visa visa = visaMapper.toEntity(dto);
 
@@ -156,7 +175,7 @@ public class VisaService {
         visa.setVisaStatus(VisaStatus.SUBMITTED);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 userId,
                 savedVisa.getId(),
@@ -167,15 +186,57 @@ public class VisaService {
     }
 
     @Transactional
+    public VisaDTO updateVisa(Long visaId, UpdateVisaDTO dto, Long userId) {
+        if (!visaId.equals(dto.id())) {
+            throw new IllegalArgumentException("Mismatched visa id.");
+        }
+
+        Visa visa = visaRepository.findById(visaId)
+                .orElseThrow(() -> new EntityNotFoundException("Visa not found"));
+
+        if (!visa.getApplicant().getId().equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to update this application.");
+        }
+
+        if (visa.getVisaStatus() != VisaStatus.INCOMPLETE && visa.getVisaStatus() != VisaStatus.SUBMITTED ) {
+            throw new IllegalArgumentException("This application can no longer be edited.");
+        }
+
+       validateTravelDate(dto.travelDate());
+
+        visa.setVisaType(dto.visaType());
+        visa.setNationality(dto.nationality());
+        visa.setPassportNumber(dto.passportNumber());
+        visa.setTravelDate(dto.travelDate());
+
+        visa.setVisaStatus(VisaStatus.SUBMITTED);
+        visa.setStatusInformation(null);
+
+        Visa  savedVisa = visaRepository.save(visa);
+
+        auditService.createAuditLog(
+                userId,
+                savedVisa.getId(),
+                AuditEventType.UPDATED,
+                "Applicant updated application details."
+        );
+        return visaMapper.toDTO(savedVisa);
+    }
+
+    @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
-        validateHandler(adminId);
+        User admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
+        if (visa.getHandler() == null) {
+            visa.setHandler(admin);
+        }
+
         visa.setVisaStatus(VisaStatus.GRANTED);
-        visa.setRejectionReason(null);
+        visa.setStatusInformation(null);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
@@ -188,18 +249,22 @@ public class VisaService {
 
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId, String reason) {
-        if(reason == null || reason.isBlank()) {
+        if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("Reason for rejection cannot be null or blank");
         }
 
-        validateHandler(adminId);
+        User admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
+        if (visa.getHandler() == null) {
+            visa.setHandler(admin);
+        }
+
         visa.setVisaStatus(VisaStatus.REJECTED);
-        visa.setRejectionReason(reason);
+        visa.setStatusInformation(reason);
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
@@ -209,21 +274,50 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
-    // Assign Handler
+    @Transactional
+    public VisaDTO requestMoreInformation(Long visaId, Long adminId, String infoText) {
+        if (infoText == null || infoText.isBlank()) {
+            throw  new IllegalArgumentException("Information request text cannot be null or blank");
+        }
+
+        User  admin = validateHandler(adminId);
+        Visa visa = findVisaById(visaId);
+
+        if (visa.getHandler() == null) {
+            visa.setHandler(admin);
+        }
+
+        visa.setVisaStatus(VisaStatus.INCOMPLETE);
+        visa.setStatusInformation(infoText);
+        Visa savedVisa = visaRepository.save(visa);
+
+        // Create log in database
+        auditService.createAuditLog(
+                adminId,
+                visaId,
+                AuditEventType.UPDATED,
+                "Information requested: " + infoText
+        );
+
+        return visaMapper.toDTO(savedVisa);
+    }
+
     @Transactional
     public VisaDTO assignHandler(Long visaId, Long adminId) {
         User admin = validateHandler(adminId);
         Visa visa = findVisaById(visaId);
 
         visa.setHandler(admin); // Connects handler
+        visa.setVisaStatus(VisaStatus.ASSIGNED);
+
         Visa savedVisa = visaRepository.save(visa);
 
-        // Create log
+        // Create log in database
         auditService.createAuditLog(
                 adminId,
                 visaId,
                 AuditEventType.ASSIGNED,
-                "Admin has been assigned to case."
+                "Admin " + admin.getFullName() + " has been assigned to case and status is now ASSIGNED."
         );
         return visaMapper.toDTO(savedVisa);
     }
@@ -240,10 +334,21 @@ public class VisaService {
         boolean isSysAdmin = user.getUserAuthorization() == UserAuthorization.SYSADMIN;
 
         if (!isAdmin && !isSysAdmin) {
-            throw  new UnauthorizedException("User is not authorized to perform this action.");
+            throw new UnauthorizedException("User is not authorized to perform this action.");
         }
         return user;
     }
+
+    public void validateTravelDate(LocalDate travelDate) {
+        if (travelDate == null) {
+            throw new IllegalArgumentException("Travel date is required.");
+        }
+
+        if (travelDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Travel date cannot be in the past.");
+        }
+    }
+
 
     public List<VisaDTO> findVisasByApplicantId(Long applicantId) {
         return visaRepository.findVisasByApplicantId(applicantId,
