@@ -40,14 +40,11 @@ class VisaServiceIntegrationTest {
         // Arrange
        User user = createAndSaveValidUser();
 
-       user = userRepository.save(user);
-
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "PASS-INT-123",
                 LocalDate.now().plusDays(30),
                 user.getId()
         );
-
 
         // Act
         visaService.applyForVisa(dto, user.getId());
