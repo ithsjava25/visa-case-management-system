@@ -18,10 +18,15 @@ public class VisaMapper {
                 visa.getVisaType(),
                 visa.getVisaStatus(),
                 visa.getNationality(),
+                visa.getPassportNumber(),
+                visa.getTravelDate(),
                 visa.getApplicant() != null ? visa.getApplicant().getId() : null,
                 visa.getApplicant() != null ? visa.getApplicant().getFullName() : "Unknown",
                 visa.getHandler() != null ? visa.getHandler().getId() : null,
-                visa.getRejectionReason()
+                visa.getHandler() != null ? visa.getHandler().getFullName() : "Unassigned",
+                visa.getCreatedAt(),
+                visa.getUpdatedAt(),
+                visa.getStatusInformation()
 
         );
     }
@@ -33,6 +38,8 @@ public class VisaMapper {
         Visa visa = new Visa();
         visa.setVisaType(dto.visaType());
         visa.setNationality(dto.nationality());
+        visa.setPassportNumber(dto.passportNumber());
+        visa.setTravelDate(dto.travelDate());
         return visa;
     }
 
@@ -43,6 +50,8 @@ public class VisaMapper {
         visa.setVisaType(dto.visaType());
         visa.setVisaStatus(dto.visaStatus());
         visa.setNationality(dto.nationality());
+        visa.setPassportNumber(dto.passportNumber());
+        visa.setTravelDate(dto.travelDate());
 
     }
 
