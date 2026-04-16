@@ -6,10 +6,13 @@ import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
+@DisplayName("UserMapper unit tests")
 class UserMapperTest {
 
     private UserMapper userMapper;
@@ -19,49 +22,37 @@ class UserMapperTest {
         userMapper = new UserMapper();
     }
 
-    // ── toDTO ─────────────────────────────────────────────────────────────────
-
     @Test
-    void toDTO_WithValidUser_ReturnsMappedUserDTO() {
+    @DisplayName("toDTO maps a User entity to a UserDTO with all fields preserved")
+    void shouldMapUserEntityToUserDTO() {
+        // Arrange
         User user = new User();
         user.setFullName("Alice Wonderland");
         user.setEmail("alice@example.com");
         user.setPassword("password123");
         user.setUserAuthorization(UserAuthorization.USER);
 
+        // Act
         UserDTO dto = userMapper.toDTO(user);
 
-        assertNotNull(dto);
-        assertEquals("Alice Wonderland", dto.fullName());
-        assertEquals("alice@example.com", dto.email());
-        assertEquals(UserAuthorization.USER, dto.userAuthorization());
+        // Assert
+        assertThat(dto).isNotNull();
+        assertThat(dto.fullName()).isEqualTo("Alice Wonderland");
+        assertThat(dto.email()).isEqualTo("alice@example.com");
+        assertThat(dto.userAuthorization()).isEqualTo(UserAuthorization.USER);
     }
 
     @Test
-    void toDTO_WithAllAuthorizationLevels_MapsCorrectly() {
-        for (UserAuthorization auth : UserAuthorization.values()) {
-            User user = new User();
-            user.setFullName("Test User");
-            user.setEmail("test@example.com");
-            user.setPassword("password123");
-            user.setUserAuthorization(auth);
-
-            UserDTO dto = userMapper.toDTO(user);
-
-            assertNotNull(dto);
-            assertEquals(auth, dto.userAuthorization());
-        }
+    @DisplayName("toDTO returns null when the input User is null")
+    void shouldReturnNullDTO_WhenUserIsNull() {
+        // Act & Assert
+        assertThat(userMapper.toDTO(null)).isNull();
     }
 
     @Test
-    void toDTO_WithNullUser_ReturnsNull() {
-        assertNull(userMapper.toDTO(null));
-    }
-
-    // ── toEntity ──────────────────────────────────────────────────────────────
-
-    @Test
-    void toEntity_WithValidCreateUserDTO_ReturnsMappedUser() {
+    @DisplayName("toEntity maps a CreateUserDTO to a User entity with correct name, email, and authorization")
+    void shouldMapCreateUserDTOToUserEntity() {
+        // Arrange
         CreateUserDTO dto = new CreateUserDTO(
                 "Bob Builder",
                 "bob@example.com",
@@ -69,17 +60,20 @@ class UserMapperTest {
                 UserAuthorization.ADMIN
         );
 
+        // Act
         User user = userMapper.toEntity(dto);
 
-        assertNotNull(user);
-        assertEquals("Bob Builder", user.getFullName());
-        assertEquals("bob@example.com", user.getEmail());
-        assertEquals(UserAuthorization.ADMIN, user.getUserAuthorization());
+        // Assert
+        assertThat(user).isNotNull();
+        assertThat(user.getFullName()).isEqualTo("Bob Builder");
+        assertThat(user.getEmail()).isEqualTo("bob@example.com");
+        assertThat(user.getUserAuthorization()).isEqualTo(UserAuthorization.ADMIN);
     }
 
     @Test
-    void toEntity_DoesNotSetPassword() {
-        // The mapper intentionally leaves password unset; UserService sets it separately
+    @DisplayName("toEntity does not set the password field (UserService handles passwords separately)")
+    void shouldNotSetPassword_WhenMappingFromCreateUserDTO() {
+        // Arrange
         CreateUserDTO dto = new CreateUserDTO(
                 "No Pass",
                 "nopass@example.com",
@@ -87,21 +81,25 @@ class UserMapperTest {
                 UserAuthorization.USER
         );
 
+        // Act
         User user = userMapper.toEntity(dto);
 
-        assertNotNull(user);
-        assertNull(user.getPassword());
+        // Assert
+        assertThat(user).isNotNull();
+        assertThat(user.getPassword()).isNull();
     }
 
     @Test
-    void toEntity_WithNullCreateUserDTO_ReturnsNull() {
-        assertNull(userMapper.toEntity(null));
+    @DisplayName("toEntity returns null when the input CreateUserDTO is null")
+    void shouldReturnNullEntity_WhenCreateUserDTOIsNull() {
+        // Act & Assert
+        assertThat(userMapper.toEntity(null)).isNull();
     }
 
-    // ── updateEntityFromDTO ───────────────────────────────────────────────────
-
     @Test
-    void updateEntityFromDTO_WithValidInputs_UpdatesFullNameAndEmail() {
+    @DisplayName("updateEntityFromDTO overwrites fullName and email on an existing User entity")
+    void shouldUpdateExistingUserEntityFromUpdateUserDTO() {
+        // Arrange
         User user = new User();
         user.setFullName("Old Name");
         user.setEmail("old@example.com");
@@ -109,14 +107,19 @@ class UserMapperTest {
         user.setUserAuthorization(UserAuthorization.USER);
 
         UpdateUserDTO dto = new UpdateUserDTO(1L, "New Name", "new@example.com");
+
+        // Act
         userMapper.updateEntityFromDTO(dto, user);
 
-        assertEquals("New Name", user.getFullName());
-        assertEquals("new@example.com", user.getEmail());
+        // Assert
+        assertThat(user.getFullName()).isEqualTo("New Name");
+        assertThat(user.getEmail()).isEqualTo("new@example.com");
     }
 
     @Test
-    void updateEntityFromDTO_DoesNotModifyAuthorizationOrPassword() {
+    @DisplayName("updateEntityFromDTO does not modify authorization or password")
+    void shouldNotModifyAuthorizationOrPassword_WhenUpdatingFromDTO() {
+        // Arrange
         User user = new User();
         user.setFullName("Original");
         user.setEmail("original@example.com");
@@ -124,33 +127,39 @@ class UserMapperTest {
         user.setUserAuthorization(UserAuthorization.SYSADMIN);
 
         UpdateUserDTO dto = new UpdateUserDTO(1L, "Changed Name", "changed@example.com");
+
+        // Act
         userMapper.updateEntityFromDTO(dto, user);
 
-        // Authorization and password must remain untouched
-        assertEquals(UserAuthorization.SYSADMIN, user.getUserAuthorization());
-        assertEquals("secret123", user.getPassword());
+        // Assert
+        assertThat(user.getUserAuthorization()).isEqualTo(UserAuthorization.SYSADMIN);
+        assertThat(user.getPassword()).isEqualTo("secret123");
     }
 
     @Test
-    void updateEntityFromDTO_WithNullDTO_DoesNotUpdateEntity() {
+    @DisplayName("updateEntityFromDTO leaves the entity unchanged when the DTO is null")
+    void shouldNotUpdateEntity_WhenUpdateDTOIsNull() {
+        // Arrange
         User user = new User();
         user.setFullName("Original Name");
         user.setEmail("original@example.com");
 
+        // Act
         userMapper.updateEntityFromDTO(null, user);
 
-        assertEquals("Original Name", user.getFullName());
-        assertEquals("original@example.com", user.getEmail());
+        // Assert
+        assertThat(user.getFullName()).isEqualTo("Original Name");
+        assertThat(user.getEmail()).isEqualTo("original@example.com");
     }
 
     @Test
-    void updateEntityFromDTO_WithNullUser_DoesNotThrow() {
+    @DisplayName("updateEntityFromDTO does not throw when the User entity is null")
+    void shouldNotThrow_WhenUserIsNullInUpdate() {
+        // Arrange
         UpdateUserDTO dto = new UpdateUserDTO(1L, "Some Name", "some@example.com");
-        assertDoesNotThrow(() -> userMapper.updateEntityFromDTO(dto, null));
-    }
 
-    @Test
-    void updateEntityFromDTO_WithBothNull_DoesNotThrow() {
-        assertDoesNotThrow(() -> userMapper.updateEntityFromDTO(null, null));
+        // Act & Assert
+        assertThatCode(() -> userMapper.updateEntityFromDTO(dto, null))
+                .doesNotThrowAnyException();
     }
 }

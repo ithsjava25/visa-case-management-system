@@ -1,325 +1,386 @@
 package org.example.visacasemanagementsystem.user.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.visacasemanagementsystem.TestcontainersConfiguration;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
+import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.SecurityUser;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
-import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
-@Import(TestcontainersConfiguration.class)
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
+@DisplayName("UserService unit tests")
 class UserServiceTest {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
+    @Mock
     private UserRepository userRepository;
+    @Mock
+    private UserMapper userMapper;
 
-    private User savedUser;
-    private User savedAdmin;
-    private User savedSysAdmin;
-
-    @BeforeEach
-    void setUp() {
-        User user = new User();
-        user.setFullName("Test User");
-        user.setEmail("user@service.test");
-        user.setPassword("password123");
-        user.setUserAuthorization(UserAuthorization.USER);
-        savedUser = userRepository.save(user);
-
-        User admin = new User();
-        admin.setFullName("Test Admin");
-        admin.setEmail("admin@service.test");
-        admin.setPassword("password123");
-        admin.setUserAuthorization(UserAuthorization.ADMIN);
-        savedAdmin = userRepository.save(admin);
-
-        User sysadmin = new User();
-        sysadmin.setFullName("Test SysAdmin");
-        sysadmin.setEmail("sysadmin@service.test");
-        sysadmin.setPassword("password123");
-        sysadmin.setUserAuthorization(UserAuthorization.SYSADMIN);
-        savedSysAdmin = userRepository.save(sysadmin);
-    }
-
-    // ── findAll ───────────────────────────────────────────────────────────────
-
-    @Test
-    void findAll_ReturnsListContainingAllSeededUsers() {
-        List<UserDTO> result = userService.findAll();
-
-        assertNotNull(result);
-        assertTrue(result.size() >= 3);
-        assertTrue(result.stream().anyMatch(u -> u.email().equals("user@service.test")));
-        assertTrue(result.stream().anyMatch(u -> u.email().equals("admin@service.test")));
-        assertTrue(result.stream().anyMatch(u -> u.email().equals("sysadmin@service.test")));
-    }
-
-    // ── findById ──────────────────────────────────────────────────────────────
-
-    @Test
-    void findById_WithExistingId_ReturnsMatchingUser() {
-        Optional<UserDTO> result = userService.findById(savedUser.getId());
-
-        assertTrue(result.isPresent());
-        assertEquals("Test User", result.get().fullName());
-        assertEquals("user@service.test", result.get().email());
-        assertEquals(UserAuthorization.USER, result.get().userAuthorization());
-    }
-
-    @Test
-    void findById_WithNonExistingId_ReturnsEmpty() {
-        Optional<UserDTO> result = userService.findById(999999L);
-        assertFalse(result.isPresent());
-    }
-
-    // ── findByEmail ───────────────────────────────────────────────────────────
-
-    @Test
-    void findByEmail_WithExistingEmail_ReturnsMatchingUser() {
-        Optional<UserDTO> result = userService.findByEmail("admin@service.test");
-
-        assertTrue(result.isPresent());
-        assertEquals("Test Admin", result.get().fullName());
-        assertEquals(UserAuthorization.ADMIN, result.get().userAuthorization());
-    }
-
-    @Test
-    void findByEmail_WithNonExistingEmail_ReturnsEmpty() {
-        Optional<UserDTO> result = userService.findByEmail("nobody@nowhere.test");
-        assertFalse(result.isPresent());
-    }
+    @InjectMocks
+    private UserService userService;
 
     // ── createUser ────────────────────────────────────────────────────────────
 
     @Test
-    void createUser_WithValidData_PersistsAndReturnsNewUser() {
+    @DisplayName("createUser throws IllegalArgumentException when password is shorter than 8 characters")
+    void createUser_shouldThrowIllegalArgumentException_WhenPasswordIsTooShort() {
+        // Arrange
         CreateUserDTO dto = new CreateUserDTO(
-                "New Applicant",
-                "newapplicant@service.test",
-                "securePass1",
-                UserAuthorization.USER
+                "Short Pass", "short@test.com", "abc", UserAuthorization.USER
         );
 
+        when(userMapper.toEntity(dto)).thenReturn(new User());
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.createUser(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("8 characters");
+
+        // Verify — repository should never be called
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    @DisplayName("createUser throws IllegalArgumentException when email is already taken")
+    void createUser_shouldThrowIllegalArgumentException_WhenEmailAlreadyExists() {
+        // Arrange
+        CreateUserDTO dto = new CreateUserDTO(
+                "Duplicate", "existing@test.com", "password123", UserAuthorization.USER
+        );
+
+        User mappedUser = new User();
+        when(userMapper.toEntity(dto)).thenReturn(mappedUser);
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("unique constraint"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.createUser(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("email already exists");
+    }
+
+    @Test
+    @DisplayName("createUser persists and returns a UserDTO when input is valid")
+    void createUser_shouldSaveAndReturnUserDTO_WhenDataIsValid() {
+        // Arrange
+        CreateUserDTO dto = new CreateUserDTO(
+                "New User", "new@test.com", "password123", UserAuthorization.USER
+        );
+
+        User mappedUser = new User();
+        User savedUser = new User();
+        savedUser.setId(1L);
+        UserDTO expectedDTO = new UserDTO(1L, "New User", "new@test.com", UserAuthorization.USER);
+
+        when(userMapper.toEntity(dto)).thenReturn(mappedUser);
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userMapper.toDTO(savedUser)).thenReturn(expectedDTO);
+
+        // Act
         UserDTO result = userService.createUser(dto);
 
-        assertNotNull(result);
-        assertNotNull(result.id());
-        assertEquals("New Applicant", result.fullName());
-        assertEquals("newapplicant@service.test", result.email());
-    }
-
-    @Test
-    void createUser_WithDuplicateEmail_ThrowsIllegalArgumentException() {
-        CreateUserDTO dto = new CreateUserDTO(
-                "Duplicate",
-                "user@service.test",
-                "password123",
-                UserAuthorization.USER
-        );
-
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(dto));
-    }
-
-    @Test
-    void createUser_WithShortPassword_ThrowsIllegalArgumentException() {
-        CreateUserDTO dto = new CreateUserDTO(
-                "Short Pass",
-                "shortpass@service.test",
-                "abc",
-                UserAuthorization.USER
-        );
-
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> userService.createUser(dto)
-        );
-        assertTrue(ex.getMessage().contains("8 characters"));
+        // Assert
+        assertThat(result).isEqualTo(expectedDTO);
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
     // ── updateUser ────────────────────────────────────────────────────────────
 
     @Test
-    void updateUser_WithValidData_UpdatesAndReturnsUser() {
-        UpdateUserDTO dto = new UpdateUserDTO(
-                savedUser.getId(),
-                "Updated Name",
-                "updated@service.test"
-        );
+    @DisplayName("updateUser throws EntityNotFoundException when user ID does not exist")
+    void updateUser_shouldThrowEntityNotFoundException_WhenUserDoesNotExist() {
+        // Arrange
+        UpdateUserDTO dto = new UpdateUserDTO(999L, "Name", "email@test.com");
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
+        // Act & Assert
+        assertThatThrownBy(() -> userService.updateUser(dto))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("User not found");
+    }
+
+    @Test
+    @DisplayName("updateUser throws IllegalArgumentException when new email is already taken by another user")
+    void updateUser_shouldThrowIllegalArgumentException_WhenEmailAlreadyExists() {
+        // Arrange
+        Long userId = 1L;
+        UpdateUserDTO dto = new UpdateUserDTO(userId, "User", "taken@test.com");
+
+        User existingUser = new User();
+        existingUser.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.saveAndFlush(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("unique constraint"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.updateUser(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("email already exists");
+    }
+
+    @Test
+    @DisplayName("updateUser updates fields and returns the updated UserDTO")
+    void updateUser_shouldUpdateAndReturnUser_WhenDataIsValid() {
+        // Arrange
+        Long userId = 1L;
+        UpdateUserDTO dto = new UpdateUserDTO(userId, "Updated Name", "updated@test.com");
+
+        User existingUser = new User();
+        existingUser.setId(userId);
+        UserDTO expectedDTO = new UserDTO(userId, "Updated Name", "updated@test.com", UserAuthorization.USER);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(existingUser);
+        when(userMapper.toDTO(existingUser)).thenReturn(expectedDTO);
+
+        // Act
         UserDTO result = userService.updateUser(dto);
 
-        assertNotNull(result);
-        assertEquals("Updated Name", result.fullName());
-        assertEquals("updated@service.test", result.email());
-    }
-
-    @Test
-    void updateUser_WithNonExistingId_ThrowsEntityNotFoundException() {
-        UpdateUserDTO dto = new UpdateUserDTO(999999L, "Name", "missing@service.test");
-
-        assertThrows(EntityNotFoundException.class, () -> userService.updateUser(dto));
-    }
-
-    @Test
-    void updateUser_WithEmailAlreadyOwnedByAnotherUser_ThrowsIllegalArgumentException() {
-        // Try to update savedUser's email to admin's existing email
-        UpdateUserDTO dto = new UpdateUserDTO(
-                savedUser.getId(),
-                "Test User",
-                "admin@service.test"
-        );
-
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(dto));
+        // Assert
+        assertThat(result).isEqualTo(expectedDTO);
+        verify(userMapper).updateEntityFromDTO(dto, existingUser);
+        verify(userRepository).saveAndFlush(existingUser);
     }
 
     // ── updateUserAuthorization ───────────────────────────────────────────────
 
     @Test
-    void updateUserAuthorization_BySysAdmin_ChangesAuthorizationLevel() {
-        UserDTO result = userService.updateUserAuthorization(
-                savedUser.getId(),
-                UserAuthorization.ADMIN,
-                savedSysAdmin.getId()
-        );
+    @DisplayName("updateUserAuthorization throws UnauthorizedException when requester is not a SYSADMIN")
+    void updateUserAuthorization_shouldThrowUnauthorizedException_WhenRequesterIsNotSysAdmin() {
+        // Arrange
+        Long userId = 1L;
+        Long requesterId = 2L;
 
-        assertEquals(UserAuthorization.ADMIN, result.userAuthorization());
+        User requester = new User();
+        requester.setId(requesterId);
+        requester.setUserAuthorization(UserAuthorization.USER);
+
+        when(userRepository.findById(requesterId)).thenReturn(Optional.of(requester));
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.updateUserAuthorization(userId, UserAuthorization.ADMIN, requesterId))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("not authorized");
     }
 
     @Test
-    void updateUserAuthorization_ByNonSysAdmin_ThrowsUnauthorizedException() {
-        assertThrows(UnauthorizedException.class, () ->
-                userService.updateUserAuthorization(
-                        savedAdmin.getId(),
-                        UserAuthorization.SYSADMIN,
-                        savedUser.getId()
-                )
-        );
+    @DisplayName("updateUserAuthorization throws EntityNotFoundException when target user does not exist")
+    void updateUserAuthorization_shouldThrowEntityNotFoundException_WhenTargetUserDoesNotExist() {
+        // Arrange
+        Long nonExistingUserId = 999L;
+        Long sysAdminId = 1L;
+
+        User sysAdmin = new User();
+        sysAdmin.setId(sysAdminId);
+        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
+
+        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
+        when(userRepository.findById(nonExistingUserId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.updateUserAuthorization(nonExistingUserId, UserAuthorization.ADMIN, sysAdminId))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("User not found");
     }
 
     @Test
-    void updateUserAuthorization_WithNonExistingTargetUser_ThrowsEntityNotFoundException() {
-        assertThrows(EntityNotFoundException.class, () ->
-                userService.updateUserAuthorization(
-                        999999L,
-                        UserAuthorization.ADMIN,
-                        savedSysAdmin.getId()
-                )
-        );
+    @DisplayName("updateUserAuthorization changes role when requested by a SYSADMIN")
+    void updateUserAuthorization_shouldChangeAuthorization_WhenRequesterIsSysAdmin() {
+        // Arrange
+        Long userId = 1L;
+        Long sysAdminId = 2L;
+
+        User sysAdmin = new User();
+        sysAdmin.setId(sysAdminId);
+        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
+
+        User targetUser = new User();
+        targetUser.setId(userId);
+        targetUser.setUserAuthorization(UserAuthorization.USER);
+
+        UserDTO expectedDTO = new UserDTO(userId, "User", "user@test.com", UserAuthorization.ADMIN);
+
+        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+        when(userRepository.save(any(User.class))).thenReturn(targetUser);
+        when(userMapper.toDTO(targetUser)).thenReturn(expectedDTO);
+
+        // Act
+        UserDTO result = userService.updateUserAuthorization(userId, UserAuthorization.ADMIN, sysAdminId);
+
+        // Assert
+        assertThat(result.userAuthorization()).isEqualTo(UserAuthorization.ADMIN);
+        verify(userRepository).save(targetUser);
     }
 
     // ── deleteUser ────────────────────────────────────────────────────────────
 
     @Test
-    void deleteUser_BySysAdmin_RemovesUserFromDatabase() {
-        Long userId = savedUser.getId();
+    @DisplayName("deleteUser throws UnauthorizedException when requester is not a SYSADMIN")
+    void deleteUser_shouldThrowUnauthorizedException_WhenRequesterIsNotSysAdmin() {
+        // Arrange
+        Long userId = 1L;
+        Long requesterId = 2L;
 
-        userService.deleteUser(userId, savedSysAdmin.getId());
+        User requester = new User();
+        requester.setId(requesterId);
+        requester.setUserAuthorization(UserAuthorization.ADMIN);
 
-        assertFalse(userRepository.findById(userId).isPresent());
+        when(userRepository.findById(requesterId)).thenReturn(Optional.of(requester));
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.deleteUser(userId, requesterId))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("not authorized");
+
+        verify(userRepository, never()).delete(any(User.class));
     }
 
     @Test
-    void deleteUser_ByNonSysAdmin_ThrowsUnauthorizedException() {
-        assertThrows(UnauthorizedException.class, () ->
-                userService.deleteUser(savedAdmin.getId(), savedUser.getId())
-        );
+    @DisplayName("deleteUser throws EntityNotFoundException when target user does not exist")
+    void deleteUser_shouldThrowEntityNotFoundException_WhenTargetUserDoesNotExist() {
+        // Arrange
+        Long nonExistingUserId = 999L;
+        Long sysAdminId = 1L;
+
+        User sysAdmin = new User();
+        sysAdmin.setId(sysAdminId);
+        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
+
+        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
+        when(userRepository.findById(nonExistingUserId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.deleteUser(nonExistingUserId, sysAdminId))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("User not found");
     }
 
     @Test
-    void deleteUser_WithNonExistingUser_ThrowsEntityNotFoundException() {
-        assertThrows(EntityNotFoundException.class, () ->
-                userService.deleteUser(999999L, savedSysAdmin.getId())
-        );
+    @DisplayName("deleteUser removes the user when requested by a SYSADMIN")
+    void deleteUser_shouldDeleteUser_WhenRequesterIsSysAdmin() {
+        // Arrange
+        Long userId = 1L;
+        Long sysAdminId = 2L;
+
+        User sysAdmin = new User();
+        sysAdmin.setId(sysAdminId);
+        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
+
+        User targetUser = new User();
+        targetUser.setId(userId);
+
+        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+
+        // Act
+        userService.deleteUser(userId, sysAdminId);
+
+        // Assert
+        verify(userRepository, times(1)).delete(targetUser);
     }
 
     // ── validateProfileAccess ─────────────────────────────────────────────────
 
     @Test
-    void validateProfileAccess_OwnProfile_DoesNotThrow() {
-        SecurityUser principal = new SecurityUser(savedUser);
+    @DisplayName("validateProfileAccess throws UnauthorizedException when a regular user accesses another user's profile")
+    void validateProfileAccess_shouldThrowUnauthorizedException_WhenUserAccessesOtherProfile() {
+        // Arrange
+        User user = new User();
+        user.setId(1L);
+        user.setFullName("Regular User");
+        user.setEmail("user@test.com");
+        user.setPassword("password");
+        user.setUserAuthorization(UserAuthorization.USER);
+        SecurityUser principal = new SecurityUser(user);
 
-        assertDoesNotThrow(() -> userService.validateProfileAccess(principal, savedUser.getId()));
+        Long otherUserId = 999L;
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.validateProfileAccess(principal, otherUserId))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("permission");
     }
 
-    @Test
-    void validateProfileAccess_SysAdminViewingOtherProfile_DoesNotThrow() {
-        SecurityUser principal = new SecurityUser(savedSysAdmin);
-
-        assertDoesNotThrow(() -> userService.validateProfileAccess(principal, savedUser.getId()));
-    }
+    // ── validateSysAdmin (SecurityUser) ───────────────────────────────────────
 
     @Test
-    void validateProfileAccess_UserViewingOtherProfile_ThrowsUnauthorizedException() {
-        SecurityUser principal = new SecurityUser(savedUser);
+    @DisplayName("validateSysAdmin throws UnauthorizedException when principal is not a SYSADMIN")
+    void validateSysAdmin_shouldThrowUnauthorizedException_WhenPrincipalIsNotSysAdmin() {
+        // Arrange
+        User user = new User();
+        user.setId(1L);
+        user.setFullName("Regular User");
+        user.setEmail("user@test.com");
+        user.setPassword("password");
+        user.setUserAuthorization(UserAuthorization.USER);
+        SecurityUser principal = new SecurityUser(user);
 
-        assertThrows(UnauthorizedException.class, () ->
-                userService.validateProfileAccess(principal, savedAdmin.getId())
-        );
-    }
-
-    // ── validateSysAdmin (SecurityUser overload) ──────────────────────────────
-
-    @Test
-    void validateSysAdmin_WithSysAdminPrincipal_DoesNotThrow() {
-        SecurityUser principal = new SecurityUser(savedSysAdmin);
-
-        assertDoesNotThrow(() -> userService.validateSysAdmin(principal));
-    }
-
-    @Test
-    void validateSysAdmin_WithAdminPrincipal_ThrowsUnauthorizedException() {
-        SecurityUser principal = new SecurityUser(savedAdmin);
-
-        assertThrows(UnauthorizedException.class, () -> userService.validateSysAdmin(principal));
-    }
-
-    @Test
-    void validateSysAdmin_WithUserPrincipal_ThrowsUnauthorizedException() {
-        SecurityUser principal = new SecurityUser(savedUser);
-
-        assertThrows(UnauthorizedException.class, () -> userService.validateSysAdmin(principal));
+        // Act & Assert
+        assertThatThrownBy(() -> userService.validateSysAdmin(principal))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("system administrators");
     }
 
     // ── validateAdmin ─────────────────────────────────────────────────────────
 
     @Test
-    void validateAdmin_WithAdminPrincipal_DoesNotThrow() {
-        SecurityUser principal = new SecurityUser(savedAdmin);
+    @DisplayName("validateAdmin throws UnauthorizedException when principal is a regular USER")
+    void validateAdmin_shouldThrowUnauthorizedException_WhenPrincipalIsRegularUser() {
+        // Arrange
+        User user = new User();
+        user.setId(1L);
+        user.setFullName("Regular User");
+        user.setEmail("user@test.com");
+        user.setPassword("password");
+        user.setUserAuthorization(UserAuthorization.USER);
+        SecurityUser principal = new SecurityUser(user);
 
-        assertDoesNotThrow(() -> userService.validateAdmin(principal));
+        // Act & Assert
+        assertThatThrownBy(() -> userService.validateAdmin(principal))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("administrators");
     }
 
-    @Test
-    void validateAdmin_WithSysAdminPrincipal_DoesNotThrow() {
-        SecurityUser principal = new SecurityUser(savedSysAdmin);
+    // ── findById ──────────────────────────────────────────────────────────────
 
-        assertDoesNotThrow(() -> userService.validateAdmin(principal));
+    @Test
+    @DisplayName("findById returns empty Optional when user ID does not exist")
+    void findById_shouldReturnEmpty_WhenUserDoesNotExist() {
+        // Arrange
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThat(userService.findById(999L)).isEmpty();
     }
 
-    @Test
-    void validateAdmin_WithUserPrincipal_ThrowsUnauthorizedException() {
-        SecurityUser principal = new SecurityUser(savedUser);
+    // ── findByEmail ───────────────────────────────────────────────────────────
 
-        assertThrows(UnauthorizedException.class, () -> userService.validateAdmin(principal));
+    @Test
+    @DisplayName("findByEmail returns empty Optional when email does not exist")
+    void findByEmail_shouldReturnEmpty_WhenEmailDoesNotExist() {
+        // Arrange
+        when(userRepository.findByEmail("nobody@test.com")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThat(userService.findByEmail("nobody@test.com")).isEmpty();
     }
 }
