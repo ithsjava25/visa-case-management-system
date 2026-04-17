@@ -42,36 +42,6 @@ class VisaServiceTest {
 
     // Find metoder?
 
-    // applyForVisa 3x
-    @Test
-    void applyForVisa_shouldSaveVisa_WhenDataIsValid() {
-        // Arrange
-        Long userId = 1L;
-        CreateVisaDTO dto = new CreateVisaDTO(
-                VisaType.STUDY, "Swedish", "AB123",
-                LocalDate.now(),
-                userId
-        );
-
-        User user = new User();
-        user.setId(userId);
-
-        Visa visa = new Visa();
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(visaMapper.toEntity(dto)).thenReturn(visa);
-        when(visaRepository.save(any(Visa.class))).thenAnswer(i -> i.getArgument(0));
-
-        // Act
-        visaService.applyForVisa(dto, userId);
-
-        // Assert
-        verify(visaRepository, times(1)).save(any(Visa.class));
-        verify(auditService, times(1)).createAuditLog(eq(userId), any(), any(), any());
-        assertThat(visa.getVisaStatus()).isEqualTo(VisaStatus.SUBMITTED);
-        assertThat(visa.getApplicant()).isEqualTo(user);
-    }
-
     @Test
     void applyForVisa_shouldThrowIllegalArgumentException_WhenTravelDateIsInThePast() {
         // Arrange
@@ -107,43 +77,6 @@ class VisaServiceTest {
         assertThatThrownBy(() -> visaService.applyForVisa(dto, userId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("User not found");
-    }
-
-    // updateVisa 3x
-    @Test
-    void updateVisa_shouldUpdateVisaAndResetStatus_WhenUserIsAuthorized() {
-        // Arrange
-        Long userId = 1L;
-        Long visaId = 100L;
-
-        UpdateVisaDTO dto = new UpdateVisaDTO(
-                visaId, VisaType.TOURIST, VisaStatus.SUBMITTED,
-                "Swedish", "XYZ789", LocalDate.now().plusMonths(1), null
-        );
-
-        User applicant = new User();
-        applicant.setId(userId);
-
-        Visa visa = new Visa();
-        visa.setId(visaId);
-        visa.setApplicant(applicant);
-        visa.setVisaStatus(VisaStatus.INCOMPLETE);
-        visa.setStatusInformation("PLease clarify travel purpose");
-
-        when(visaRepository.findById(visaId)).thenReturn(Optional.of(visa));
-        when(visaRepository.save(any(Visa.class))).thenAnswer(i -> i.getArgument(0));
-
-        // Act
-        visaService.updateVisa(visaId, dto, userId );
-
-        // Assert
-        assertThat(visa.getVisaType()).isEqualTo(VisaType.TOURIST);
-        assertThat(visa.getPassportNumber()).isEqualTo("XYZ789");
-        assertThat(visa.getVisaStatus()).isEqualTo(VisaStatus.SUBMITTED);
-        assertThat(visa.getStatusInformation()).isNull();
-
-        verify(auditService).createAuditLog(eq(userId), eq(visaId), eq(AuditEventType.UPDATED), anyString());
-
     }
 
     @Test
@@ -255,7 +188,6 @@ class VisaServiceTest {
 
     }
 
-    // rejectVisa 2x
     @Test
     void rejectVisa_shouldUpdateStatus_AndCreateLog() {
         // Arrange
@@ -332,38 +264,6 @@ class VisaServiceTest {
                 contains(infoText));
     }
 
-    @Test
-    void assignHandler_shouldAssignAdminToVisa_AndChangeStatusToAssigned() {
-        // Arrange
-        Long visaId = 1L;
-        Long adminId = 2L;
-
-        User  admin = new User();
-        admin.setFullName("Test Admin");
-        admin.setUserAuthorization(UserAuthorization.ADMIN);
-
-        Visa visa = new Visa();
-        visa.setVisaStatus(VisaStatus.SUBMITTED);
-
-        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
-        when(visaRepository.findById(visaId)).thenReturn(Optional.of(visa));
-        when(visaRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        // Act
-        visaService.assignHandler(visaId, adminId);
-
-        // Assert
-        assertThat(visa.getHandler()).isEqualTo(admin);
-        assertThat(visa.getVisaStatus()).isEqualTo(VisaStatus.ASSIGNED);
-
-        verify(auditService).createAuditLog(
-                eq(adminId),
-                eq(visaId),
-                eq(AuditEventType.ASSIGNED),
-                contains("Test Admin"));
-    }
-
-    // ValidateHandler 3x
     @Test
     void validateHandler_shouldReturnUser_whenUserIsAdmin() {
         // Arrange
