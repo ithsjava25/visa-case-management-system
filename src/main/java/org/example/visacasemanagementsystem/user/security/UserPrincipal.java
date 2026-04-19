@@ -20,10 +20,10 @@ public class UserPrincipal implements UserDetails {
     @Override
     @NullMarked
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority(user.getUserAuthorization().toString()));
+        return Collections.singleton(new SimpleGrantedAuthority(user.getUserAuthorization().asAuthority()));
     }
 
-    public String getFullName(){
+    public String getFullName() {
         return user.getFullName();
     }
 
@@ -37,26 +37,6 @@ public class UserPrincipal implements UserDetails {
     @NullMarked
     public String getUsername() {
         return user.getUsername();
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
     }
 
     public Long getUserId() {

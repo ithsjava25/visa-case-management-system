@@ -57,9 +57,9 @@ public class UserService {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
         user.setPassword(passwordEncoder.encode(dto.password()));
+        user.setUserAuthorization(UserAuthorization.USER);
         try {
             User savedUser = userRepository.save(user);
-            savedUser.setUserAuthorization(UserAuthorization.USER);
             return userMapper.toDTO(savedUser);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);

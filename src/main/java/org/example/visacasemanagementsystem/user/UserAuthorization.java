@@ -5,8 +5,7 @@ public enum UserAuthorization {
     ADMIN,
     SYSADMIN;
 
-    @Override
-    public String toString() {
-        return "ROLE_" + this.name();
+    public String asAuthority() {
+        return "ROLE_" + name();
     }
 }
