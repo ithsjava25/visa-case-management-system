@@ -299,17 +299,23 @@
                 const noCommentsMsg = document.getElementById('noCommentsMessage');
                 if (noCommentsMsg) noCommentsMsg.remove();
 
-
                 const container = document.getElementById('commentContainer');
-                const newCommentHtml = `
-            <div class="comment-card" style="animation: fadeIn 0.5s;">
-                <div class="comment-meta">
-                    <strong>${comment.authorName}</strong> • Just now
-                </div>
-                <div class="comment-text">${comment.text}</div>
-            </div>
-        `;
-                container.insertAdjacentHTML('afterbegin', newCommentHtml);
+                const card = document.createElement('div');
+                card.className = 'comment-card';
+                card.style.animation = 'fadeIn 0.5s';
+                const meta = document.createElement('div');
+                meta.className = 'comment-meta';
+                const author = document.createElement('strong');
+                author.textContent = comment.authorName;
+                meta.appendChild(author);
+                meta.append(' • Just now');
+
+                const text = document.createElement('div');
+                text.className = 'comment-text';
+                text.textContent = comment.text;
+                card.appendChild(meta);
+                card.appendChild(text);
+                container.prepend(card);
             })
             .catch(error => {
                 alert('Error: ' + error.message);

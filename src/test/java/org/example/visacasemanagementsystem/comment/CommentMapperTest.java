@@ -32,7 +32,7 @@ class CommentMapperTest {
 
         );
 
-        // Arrange
+        // Act
         Comment result = commentMapper.toEntity(dto);
 
         // Assert
