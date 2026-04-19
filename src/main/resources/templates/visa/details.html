@@ -227,7 +227,7 @@
                 <strong th:text="${comment.authorName}">Admin</strong> •
                 <span th:text="${#temporals.format(comment.createdAt, 'MMM dd, HH:mm')}">Oct 27, 14:00</span>
             </div>
-            <div class="comment-text" th:text="${comment.content}">This is a comment</div>
+            <div class="comment-text" th:text="${comment.text}">This is a comment</div>
         </div>
 
         <div th:if="${#lists.isEmpty(comments)}" style="color: #999; padding: 20px 0;">
