@@ -126,7 +126,7 @@
             <label>Visa Type</label>
             <select th:field="*{visaType}"
                     th:classappend="${#fields.hasErrors('visaType')} ? 'is-invalid' : ''"
-                    required>
+                    >
                 <option value="" disabled>Select type...</option>
                 <option th:each="type : ${visaTypes}"
                         th:value="${type}"
@@ -141,7 +141,7 @@
                    th:field="*{nationality}"
                    placeholder="e.g. Swedish"
                    th:classappend="${#fields.hasErrors('nationality')} ? 'is-invalid' : ''"
-                   required>
+                  >
             <span class="error-text" th:if="${#fields.hasErrors('nationality')}" th:errors="*{nationality}"></span>
         </div>
 
@@ -151,7 +151,7 @@
                    th:field="*{passportNumber}"
                    placeholder="e.g. AB123456"
                    th:classappend="${#fields.hasErrors('passportNumber')} ? 'is-invalid' : ''"
-                   required>
+                  >
             <span class="error-text" th:if="${#fields.hasErrors('passportNumber')}" th:errors="*{passportNumber}"></span>
         </div>
 
@@ -160,7 +160,7 @@
             <input type="date"
                    th:field="*{travelDate}"
                    th:classappend="${#fields.hasErrors('travelDate')} ? 'is-invalid' : ''"
-                   required>
+                   >
             <span class="error-text" th:if="${#fields.hasErrors('travelDate')}" th:errors="*{travelDate}"></span>
         </div>
 
