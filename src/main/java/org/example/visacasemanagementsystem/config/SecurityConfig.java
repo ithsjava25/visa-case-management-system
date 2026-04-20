@@ -29,12 +29,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/").permitAll()
                         .requestMatchers("/user/signup").permitAll()
                         .requestMatchers("/user/login").permitAll()
+                        .requestMatchers("/logout").permitAll()
                         .requestMatchers("/dashboard").authenticated()
+                        .requestMatchers("/profile/**").authenticated()
+                        .requestMatchers("/visas/**").authenticated()
+                        .requestMatchers("/api/comments/**").authenticated()
                         .requestMatchers("/**/admin").hasRole("ADMIN")
                         .requestMatchers("/**/applicant").hasRole("USER")
-                        //TODO: requestMatchers for /**/{userId} endpoints, etc.
                         .anyRequest().hasRole("SYSADMIN")
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))

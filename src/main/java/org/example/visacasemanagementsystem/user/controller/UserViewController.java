@@ -11,6 +11,7 @@ import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.Objects;
 
+@PreAuthorize("isAuthenticated()")
 @Controller
 public class UserViewController {
     private final VisaService visaService;
@@ -36,6 +38,7 @@ public class UserViewController {
     }
 
     // Signup form for new users, accessible to all
+    @PreAuthorize("permitAll()")
     @GetMapping("/user/signup")
     public String userSignupForm(Model model) {
         return "user/signup";
@@ -44,6 +47,7 @@ public class UserViewController {
     // Posting a successful user creation then redirecting to the applicant dashboard since only applicants can be
     // created through the signup process. Admins or Sysadmins are created from applicant users by given authorization
     // from a sysadmin.
+    @PreAuthorize("permitAll()")
     @PostMapping("/user/signup")
     public String createUser(@RequestParam String fullName,
                              @RequestParam String email,
@@ -62,6 +66,7 @@ public class UserViewController {
     }
 
     // Login page
+    @PreAuthorize("permitAll()")
     @GetMapping("/user/login")
     public String userLoginForm(){
         return "user/login";
@@ -122,16 +127,17 @@ public class UserViewController {
     }
 
     // A list view of users only available to sysadmins
+    @PreAuthorize("hasRole('SYSADMIN')")
     @GetMapping("/user/list")
     public String userListView(@AuthenticationPrincipal UserPrincipal principal,
                                Model model) {
-        userService.validateSysAdmin(principal);
         List<UserDTO> allUsers = userService.findAll();
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
         return "user/list";
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/dashboard/applicant")
     public String applicantDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                      Model model) {
@@ -141,22 +147,22 @@ public class UserViewController {
         return "dashboard/applicant";
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/dashboard/admin")
     public String adminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                  Model model) {
-        userService.validateAdmin(principal);
         List<VisaDTO> assignedCases = visaService.findVisasByHandlerId(principal.getUserId());
-        List<VisaDTO> unassignedCases = visaService.findVisaByStatus("UNASSIGNED");
+        List<VisaDTO> unassignedCases = visaService.findVisaByStatus("SUBMITTED");
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("assignedCases", assignedCases);
         model.addAttribute("unassignedCases", unassignedCases);
         return "dashboard/admin";
     }
 
+    @PreAuthorize("hasRole('SYSADMIN')")
     @GetMapping("/dashboard/sysadmin")
     public String sysAdminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                     Model model) {
-        userService.validateSysAdmin(principal);
         List<UserDTO> allUsers = userService.findAll();
         List<AuditDTO> recentLogs = auditService.findAll();
         model.addAttribute("name", principal.getFullName());

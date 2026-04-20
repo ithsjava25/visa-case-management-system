@@ -12,6 +12,7 @@ import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,10 +82,9 @@ public class UserService {
         }
     }
 
+    @PreAuthorize("hasRole('SYSADMIN')")
     @Transactional
-    public UserDTO updateUserAuthorization(Long userId, UserAuthorization newAuth, Long requesterId) {
-        validateSysAdmin(requesterId); // confirm requester is SYSADMIN
-
+    public UserDTO updateUserAuthorization(Long userId, UserAuthorization newAuth) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
@@ -93,21 +93,12 @@ public class UserService {
         return userMapper.toDTO(savedUser);
     }
 
+    @PreAuthorize("hasRole('SYSADMIN')")
     @Transactional
-    public void deleteUser(Long id, Long requesterId) {
-        validateSysAdmin(requesterId); // confirm requester is SYSADMIN
+    public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
         userRepository.delete(user);
-    }
-
-    private void validateSysAdmin(Long requesterId) {
-        User requester = userRepository.findById(requesterId)
-                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
-
-        if (requester.getUserAuthorization() != UserAuthorization.SYSADMIN) {
-            throw new UnauthorizedException("User is not authorized to perform this action.");
-        }
     }
 
     public void validateProfileAccess(UserPrincipal principal, Long userId) {
@@ -117,26 +108,6 @@ public class UserService {
 
         if (!isOwnProfile && !isSysAdmin) {
             throw new UnauthorizedException("You do not have permission to edit this profile.");
-        }
-    }
-
-    public void validateSysAdmin(UserPrincipal principal) {
-        boolean isSysAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
-
-        if (!isSysAdmin) {
-            throw new UnauthorizedException("Only system administrators can access this page.");
-        }
-    }
-
-    public void validateAdmin(UserPrincipal principal) {
-        boolean isSysAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
-        boolean isAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
-
-        if (!isSysAdmin && !isAdmin) {
-            throw new UnauthorizedException("Only administrators or system administrators can access this page.");
         }
     }
 }
