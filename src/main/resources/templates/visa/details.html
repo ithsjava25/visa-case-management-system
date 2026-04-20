@@ -27,8 +27,8 @@
         }
         .back-link:hover { color: #fff; }
 
-        header { border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px; }
-        h1 { font-size: 28px; font-weight: 500; margin: 0; color: #fff; }
+        header { border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px;}
+        h1 { font-size: 38px; font-weight: 500; margin: 0; color: #fff; }
         .user-info { color: #666; font-size: 14px; margin-top: 5px; }
 
         /* Grid för info */
@@ -39,14 +39,14 @@
             border-radius: 8px;
             background: #111;
         }
-        .label { font-size: 11px; text-transform: uppercase; color: #666; display: block; margin-bottom: 5px; letter-spacing: 0.5px; }
-        .value { font-size: 16px; font-weight: 500; color: #ccc; }
+        .label { font-size: 12px; text-transform: uppercase; color: #666; display: block; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .value { font-size: 18px; font-weight: 500; color: #ccc; }
 
         /* Admin Actions & Buttons */
         .admin-actions {
             background: #111;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid #222;
             margin-bottom: 40px;
         }
@@ -55,9 +55,12 @@
             color: #fff;
             border: 1px solid #333;
             padding: 10px 20px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
+            font-weight: 600;
+            font-size: 12px;
+
         }
         .btn-assign:hover, .btn-approve:hover, button:hover {
             background: #fff;
@@ -70,11 +73,18 @@
             background: #181818;
             color: #fff;
             border: 1px solid #333 !important;
+            width: 100%;
+            box-sizing: border-box;
+            display: block;
+            border-radius: 8px;
+            font-size: 12px;
         }
         #infoReason:focus { outline: none; border-color: #666 !important; }
 
+        .action-group{ display: flex; gap: 10px; }
+
         /* Kommentar-sektion */
-        .comments-section { margin-top: 50px; border-top: 1px solid #222; padding-top: 30px; }
+        .comments-section { border-top: 1px solid #222; padding-top: 10px; font-size: 20px; font-weight: 600; }
         .comment-card { padding: 15px 0; border-bottom: 1px solid #111; }
         .comment-meta { font-size: 12px; color: #666; margin-bottom: 5px; }
         .comment-text { font-size: 14px; color: #ccc; }
@@ -86,6 +96,7 @@
             padding: 20px;
             border-radius: 8px;
             border: 1px solid #222;
+
         }
         textarea {
             width: 100%;
@@ -93,14 +104,15 @@
             color: #fff;
             border: 1px solid #333;
             padding: 10px;
-            border-radius: 4px;
+            border-radius: 8px;
             resize: vertical;
             min-height: 80px;
             margin-bottom: 10px;
             box-sizing: border-box;
+            font-size: 12px;
         }
         textarea:focus { outline: none; border-color: #666; }
-        .btn-submit { background: #fff; color: #000; font-weight: 600; border: none; }
+        .btn-submit { background: #fff; color: #000; font-weight: 600; border: none; transition: 0.2s ease; }
         .btn-submit:hover { background: #ccc; }
     </style>
 </head>
@@ -127,9 +139,10 @@
             <span class="value" th:text="${visa.visaStatus}">SUBMITTED</span>
         </div>
 
-        <div class="info-item" th:if="${visa.updatedAt != null && visa.updatedAt != visa.createdAt}">
-            <span class="label">Last Updated</span>
-            <span class="value" th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">2023-10-28 09:30</span>
+
+        <div class="info-item">
+            <span class="label">Nationality</span>
+            <span class="value" th:text="${visa.nationality}">-</span>
         </div>
 
         <div class="info-item">
@@ -151,9 +164,9 @@
             <span class="value" th:text="${#temporals.format(visa.createdAt, 'yyyy-MM-dd HH:mm')}">2023-10-27</span>
         </div>
 
-        <div class="info-item">
-            <span class="label">Nationality</span>
-            <span class="value" th:text="${visa.nationality}">-</span>
+        <div class="info-item" th:if="${visa.updatedAt != null && visa.updatedAt != visa.createdAt}">
+            <span class="label">Last Updated</span>
+            <span class="value" th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">2023-10-28 09:30</span>
         </div>
 
         <div class="info-item" style="grid-column: span 2;" th:if="${visa.statusInformation != null}">
@@ -173,13 +186,13 @@
 
         <a th:href="@{/visas/{id}/edit(id=${visa.id}, currentUserId=${currentUser.id})}"
            class="btn-submit"
-           style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto;">
+           style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto; border-radius: 8px;">
             Edit & Resubmit Application
         </a>
     </div>
 
     <div th:if="${currentUser.userAuthorization.name() != 'USER' and visa.visaStatus.name() != 'GRANTED' and visa.visaStatus.name() != 'REJECTED'}" class="admin-actions">
-        <h3 style="margin-top:0; font-size: 16px;">Case Management</h3>
+        <h3 style="  margin-top:0; font-size: 20px;">Case Management</h3>
 
         <div class="action-group">
             <form th:if="${visa.handlerName == 'Unassigned'}"
@@ -193,16 +206,17 @@
         </div>
 
 
-        <div class="decision-form" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+        <div class="decision-form" style="margin-top: 20px; border-top: 1px solid #222; padding-top: 20px;">
             <input type="text" id="infoReason"
-                   placeholder="Write reason for rejection or what info is missing..."
-                   style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                   placeholder="Write reason for rejection or what information is missing..."
+                   style="width: 100%; padding: 15px; margin-bottom: 20px; border: 1px solid #333; border-radius: 8px; box-sizing: border-box;"
+                   required>
 
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; width: 100%;">
                 <form th:action="@{/visas/{id}/request-info(id=${visa.id}, currentUserId=${currentUser.id})}" method="post" id="form-info" style="flex: 1;">
                     <input type="hidden" name="reason" id="hidden-info">
                     <button type="submit" onclick="document.getElementById('hidden-info').value = document.getElementById('infoReason').value"
-                            style="width: 100%">
+                            style="width: 100%; transition: 0.2s ease;">
                         Request More Info
                     </button>
                 </form>
@@ -216,34 +230,98 @@
                 </form>
             </div>
         </div>
-
     </div>
 
     <section class="comments-section">
         <h3>Comments</h3>
 
-        <div th:each="comment : ${comments}" class="comment-card">
-            <div class="comment-meta">
-                <strong th:text="${comment.authorName}">Admin</strong> •
-                <span th:text="${#temporals.format(comment.createdAt, 'MMM dd, HH:mm')}">Oct 27, 14:00</span>
+        <div id="commentContainer">
+            <div th:each="comment : ${comments}" class="comment-card">
+                <div class="comment-meta">
+                    <strong th:text="${comment.authorName}">Admin</strong> •
+                    <span th:text="${#temporals.format(comment.createdAt, 'MMM dd, HH:mm')}">Oct 27, 14:00</span>
+                </div>
+                <div class="comment-text" th:text="${comment.text}">This is a comment</div>
             </div>
-            <div class="comment-text" th:text="${comment.text}">This is a comment</div>
         </div>
 
-        <div th:if="${#lists.isEmpty(comments)}" style="color: #999; padding: 20px 0;">
+        <div id="noCommentsMessage" th:if="${#lists.isEmpty(comments)}" style="color: #999; padding: 20px 0;">
             No comments yet.
         </div>
 
         <div class="comment-form">
-            <form th:action="@{/api/comments}" method="post">
-                <input type="hidden" name="visaId" th:value="${visa.id}">
-                <input type="hidden" name="authorId" th:value="${currentUser.id}">
-                <textarea name="content" placeholder="Write a comment..."></textarea>
+            <form id="commentForm">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                <input type="hidden" name="_csrf_header" th:value="${_csrf.headerName}"/>
+
+                <input type="hidden" id="visaId" th:value="${visa.id}">
+                <input type="hidden" id="authorId" th:value="${currentUser.id}">
+
+                <textarea id="commentText" name="text" placeholder="Write a comment here..." required></textarea>
                 <button type="submit" class="btn-submit">Send</button>
             </form>
         </div>
     </section>
 </div>
+
+<script>
+    document.getElementById('commentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const visaId = document.getElementById('visaId').value;
+        const authorId = document.getElementById('authorId').value;
+        const text = document.getElementById('commentText').value;
+
+        const token = document.querySelector('input[name="_csrf"]').value
+        const header = document.querySelector('input[name="_csrf_header"]').value
+
+        const payload = {
+            visaId: parseInt(visaId),
+            authorId: parseInt(authorId),
+            text: text
+        };
+
+        fetch('/api/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [header]: token
+            },
+            body: JSON.stringify(payload)
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Could not save comment');
+                return response.json();
+            })
+            .then(comment => {
+                document.getElementById('commentText').value = '';
+
+                const noCommentsMsg = document.getElementById('noCommentsMessage');
+                if (noCommentsMsg) noCommentsMsg.remove();
+
+                const container = document.getElementById('commentContainer');
+                const card = document.createElement('div');
+                card.className = 'comment-card';
+                card.style.animation = 'fadeIn 0.5s';
+                const meta = document.createElement('div');
+                meta.className = 'comment-meta';
+                const author = document.createElement('strong');
+                author.textContent = comment.authorName;
+                meta.appendChild(author);
+                meta.append(' • Just now');
+
+                const text = document.createElement('div');
+                text.className = 'comment-text';
+                text.textContent = comment.text;
+                card.appendChild(meta);
+                card.appendChild(text);
+                container.prepend(card);
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+    });
+</script>
 
 </body>
 </html>
