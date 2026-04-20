@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.FORBIDDEN)
     @ExceptionHandler(UnauthorizedException.class)
     public String handleUnauthorizedException(UnauthorizedException exception, Model model) {
-        log.warn("Access denied: {}", exception.getMessage());
+        log.error("Access denied: {}", exception.getMessage());
         model.addAttribute("errorMessage","You do not have permission to perform this action.");
         model.addAttribute("errorTitle", "⚠️Access Denied.");
 
@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     @ExceptionHandler({EntityNotFoundException.class, ResourceNotFoundException.class})
     public String handleNotFoundException(RuntimeException exception, Model model) {
-        log.warn("Resource not found: {}", exception.getMessage());
+        log.error("Resource not found: {}", exception.getMessage());
         model.addAttribute("errorMessage", "The requested resource could not be found.");
         model.addAttribute("errorTitle", "⚠️Not Found.");
 
@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IllegalArgumentException.class)
     public String handleIllegalArgumentException(IllegalArgumentException exception,  Model model) {
-        log.warn("Bad request: {}", exception.getMessage());
+        log.error("Bad request: {}", exception.getMessage());
         String userMessage = exception.getMessage() != null
                 ? exception.getMessage()
                 : "The request contained invalid data.";
