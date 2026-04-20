@@ -22,14 +22,18 @@ public class User {
     @Column(nullable = false, updatable = false)
     private Long id;
 
+    @NotBlank @Column(unique = true, nullable = false)
+    private String username;
+
+    @NotBlank @Column(nullable = false)
+    private String password;
+
     @NotBlank @Column(nullable = false)
     private String fullName;
 
     @NotBlank @Column(unique = true)
     private String email;
 
-    //Placeholder password storage solution
-    @NotBlank private String password;
 
     @NotNull @Enumerated(EnumType.STRING)
     private UserAuthorization userAuthorization;

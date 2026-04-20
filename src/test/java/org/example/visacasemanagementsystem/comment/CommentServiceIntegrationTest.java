@@ -45,6 +45,7 @@ class CommentServiceIntegrationTest {
         testUser  = new User();
         testUser.setFullName("TestUser");
         testUser.setEmail("test@example.com");
+        testUser.setUsername("test@example.com");
         testUser.setPassword("password123");
         testUser.setUserAuthorization(UserAuthorization.USER);
         testUser  = userRepository.save(testUser);

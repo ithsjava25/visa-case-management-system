@@ -1,16 +1,15 @@
 package org.example.visacasemanagementsystem;
 
-import org.example.visacasemanagementsystem.user.security.SecurityUser;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-
 import java.util.Objects;
 
 @Controller
 public class ApplicationViewController {
     @GetMapping("/dashboard")
-    public String dashboard(@AuthenticationPrincipal SecurityUser principal) {
+    public String dashboard(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return "redirect:/user/login";
         }
