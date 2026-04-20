@@ -2,14 +2,16 @@ package org.example.visacasemanagementsystem.exception;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.example.visacasemanagementsystem.ApplicationViewController;
+import org.example.visacasemanagementsystem.user.controller.UserViewController;
+import org.example.visacasemanagementsystem.visa.controller.VisaViewController;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ControllerAdvice(annotations = Controller.class)
+@ControllerAdvice(assignableTypes = {VisaViewController.class, UserViewController.class, ApplicationViewController.class})
 @Slf4j
 public class GlobalExceptionHandler {
 
