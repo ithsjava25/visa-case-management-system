@@ -6,20 +6,22 @@ import org.example.visacasemanagementsystem.comment.service.CommentService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import java.util.List;
 
+@PreAuthorize("isAuthenticated()")
 @Controller
 @RequestMapping("/visas")
 public class VisaViewController {
@@ -35,20 +37,17 @@ public class VisaViewController {
     }
 
     @GetMapping("/dashboard")
-    public String showDashboard(@RequestParam Long currentUserId, Model model) {
-        // Find current user
-        UserDTO user = userService.findById(currentUserId)
+    public String showDashboard(@AuthenticationPrincipal UserPrincipal principal, Model model) {
+        UserDTO user = userService.findById(principal.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
-
         List<VisaDTO> visas;
-
         // If the current user = ADMIN/SYSADMIN show everything
-        if (user.userAuthorization() == UserAuthorization.ADMIN ||
+        if (  user.userAuthorization() == UserAuthorization.ADMIN ||
                 user.userAuthorization() == UserAuthorization.SYSADMIN) {
             visas = visaService.findAll();
         } else {
             // Normal user/applicant can only se their own visa applications
-            visas = visaService.findVisasByApplicant(currentUserId);
+            visas = visaService.findVisasByApplicant(principal.getUserId());
         }
 
         // Send data to Thymeleaf
@@ -59,15 +58,20 @@ public class VisaViewController {
     }
 
     @GetMapping("/apply")
-    public String showApplyForm(@RequestParam Long currentUserId, Model model) {
-        UserDTO user = userService.findById(currentUserId)
+    public String showApplyForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
+        UserDTO user = userService.findById(principal.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
 
         model.addAttribute("currentUser", user);
         model.addAttribute("visaTypes", VisaType.values());
 
         if (!model.containsAttribute("createVisaDTO")) {
-            model.addAttribute("createVisaDTO", new CreateVisaDTO(null, "", "", null, currentUserId));
+            model.addAttribute("createVisaDTO",
+                    new CreateVisaDTO(null,
+                            "",
+                            "",
+                            null,
+                            principal.getUserId()));
         }
 
         return "visa/apply-form";
@@ -77,34 +81,33 @@ public class VisaViewController {
     public String submitApplication(
             @Valid @ModelAttribute("createVisaDTO") CreateVisaDTO createVisaDTO,
             BindingResult bindingResult,
-            @RequestParam Long currentUserId,
-            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal UserPrincipal principal,
             Model model) {
 
         if (bindingResult.hasErrors()) {
-            prepareApplyModel(currentUserId, model);
+            prepareApplyModel(principal.getUserId(), model);
             return "visa/apply-form";
         }
 
         try {
-            visaService.applyForVisa(createVisaDTO, currentUserId);
+            visaService.applyForVisa(createVisaDTO, principal.getUserId());
         } catch (IllegalArgumentException e) {
             bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
-            prepareApplyModel(currentUserId, model);
+            prepareApplyModel(principal.getUserId(), model);
             return "visa/apply-form";
         }
 
-        return "redirect:/visas/dashboard?currentUserId=" + currentUserId;
+        return "redirect:/visas/dashboard";
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, @RequestParam Long currentUserId, Model model) {
-        UserDTO userDTO  = userService.findById(currentUserId)
+    public String showEditForm(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal, Model model) {
+        UserDTO userDTO  = userService.findById(principal.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
 
         VisaDTO visa = visaService.findVisaDtoById(id);
 
-        if (!visa.applicantId().equals(currentUserId)) {
+        if (!visa.applicantId().equals(principal.getUserId())) {
             throw  new UnauthorizedException("You can only edit your own applications.");
         }
 
@@ -132,11 +135,11 @@ public class VisaViewController {
             @PathVariable Long id,
             @Valid @ModelAttribute ("updateVisaDto") UpdateVisaDTO updateVisaDTO,
             BindingResult bindingResult,
-            @RequestParam Long currentUserId,
+            @AuthenticationPrincipal UserPrincipal principal,
             Model model) {
 
         if (bindingResult.hasErrors()) {
-            prepareApplyModel(currentUserId, model);
+            prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
             VisaDTO visa = visaService.findVisaDtoById(id);
             model.addAttribute("statusInformation", visa.statusInformation());
@@ -144,7 +147,7 @@ public class VisaViewController {
         }
 
         try {
-            visaService.updateVisa(id, updateVisaDTO, currentUserId);
+            visaService.updateVisa(id, updateVisaDTO, principal.getUserId());
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("date")) {
                 bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
@@ -152,65 +155,66 @@ public class VisaViewController {
                 bindingResult.reject("globalError",e.getMessage());
             }
 
-            prepareApplyModel(currentUserId, model);
+            prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
             VisaDTO visa = visaService.findVisaDtoById(id);
             model.addAttribute("statusInformation", visa.statusInformation());
 
             return "visa/edit-form";
         }
-        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+        return "redirect:/visas/" + id;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/approve")
-    public String approveVisa(@PathVariable Long id, @RequestParam Long currentUserId) {
-        visaService.approveVisa(id, currentUserId);
-        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+    public String approveVisa(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
+        visaService.approveVisa(id, principal.getUserId());
+        return "redirect:/visas/" + id;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/request-info")
     public String requestMoreInformation(@PathVariable Long id,
-                                         @RequestParam Long currentUserId,
+                                         @AuthenticationPrincipal UserPrincipal principal,
                                          @RequestParam String reason) {
 
-        visaService.requestMoreInformation(id, currentUserId, reason);
+        visaService.requestMoreInformation(id, principal.getUserId(), reason);
 
-        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+        return "redirect:/visas/" + id;
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/reject")
     public String rejectVisa(@PathVariable Long id,
-                             @RequestParam Long currentUserId,
+                             @AuthenticationPrincipal UserPrincipal principal,
                              @RequestParam String reason) {
-        visaService.rejectVisa(id, currentUserId, reason);
-        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+        visaService.rejectVisa(id, principal.getUserId(), reason);
+        return "redirect:/visas/" + id;
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/assign")
-    public String assignCaseToHandler(@PathVariable Long id, @RequestParam Long currentUserId) {
-        visaService.assignHandler(id, currentUserId);
-        return "redirect:/visas/" + id + "?currentUserId=" + currentUserId;
+    public String assignCaseToHandler(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
+        visaService.assignHandler(id, principal.getUserId());
+        return "redirect:/visas/" + id;
     }
 
     @GetMapping("/{id}")
-    public String viewDetails(@PathVariable Long id, @RequestParam Long currentUserId, Model model) {
+    public String viewDetails(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal, Model model) {
         // Get visa
         VisaDTO visa = visaService.findVisaDtoById(id);
 
         // Get user
-        UserDTO user = userService.findById(currentUserId)
+        UserDTO user = userService.findById(principal.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
 
         // Authorization check: regular users can only view their own applications
-        if (user.userAuthorization() == UserAuthorization.USER && !visa.applicantId().equals(currentUserId)) {
+        if (user.userAuthorization() == UserAuthorization.USER && !visa.applicantId().equals(principal.getUserId())) {
             throw new UnauthorizedException("You can only view your own applications.");
         }
 
         // Get comments
         var comments = commentService.getCommentsByVisaId(id);
-
 
         model.addAttribute("visa", visa);
         model.addAttribute("comments", comments);

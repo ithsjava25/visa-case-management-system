@@ -119,7 +119,7 @@
 <body>
 
 <div class="container">
-    <a th:href="@{/visas/dashboard(currentUserId=${currentUser.id})}" class="back-link">← Back to Dashboard</a>
+    <a th:href="@{/visas/dashboard}" class="back-link">← Back to Dashboard</a>
 
     <header>
         <h1 th:text="'Case #' + ${visa.id}">Case #101</h1>
@@ -184,7 +184,7 @@
             Please review the notes above and update your application with the requested information.
         </p>
 
-        <a th:href="@{/visas/{id}/edit(id=${visa.id}, currentUserId=${currentUser.id})}"
+        <a th:href="@{/visas/{id}/edit(id=${visa.id})}"
            class="btn-submit"
            style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto; border-radius: 8px;">
             Edit & Resubmit Application
@@ -196,11 +196,11 @@
 
         <div class="action-group">
             <form th:if="${visa.handlerName == 'Unassigned'}"
-                  th:action="@{/visas/{id}/assign(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+                  th:action="@{/visas/{id}/assign(id=${visa.id})}" method="post">
                 <button type="submit" class="btn-assign">Assign to Me</button>
             </form>
 
-            <form th:action="@{/visas/{id}/approve(id=${visa.id}, currentUserId=${currentUser.id})}" method="post">
+            <form th:action="@{/visas/{id}/approve(id=${visa.id})}" method="post">
                 <button type="submit" class="btn-approve">Approve Visa</button>
             </form>
         </div>
@@ -213,7 +213,7 @@
                    required>
 
             <div style="display: flex; gap: 10px; width: 100%;">
-                <form th:action="@{/visas/{id}/request-info(id=${visa.id}, currentUserId=${currentUser.id})}" method="post" id="form-info" style="flex: 1;">
+                <form th:action="@{/visas/{id}/request-info(id=${visa.id})}" method="post" id="form-info" style="flex: 1;">
                     <input type="hidden" name="reason" id="hidden-info">
                     <button type="submit" onclick="document.getElementById('hidden-info').value = document.getElementById('infoReason').value"
                             style="width: 100%; transition: 0.2s ease;">
@@ -221,7 +221,7 @@
                     </button>
                 </form>
 
-                <form th:action="@{/visas/{id}/reject(id=${visa.id}, currentUserId=${currentUser.id})}" method="post" id="form-reject" style="flex: 1;">
+                <form th:action="@{/visas/{id}/reject(id=${visa.id})}" method="post" id="form-reject" style="flex: 1;">
                     <input type="hidden" name="reason" id="hidden-reject">
                     <button type="submit" onclick="document.getElementById('hidden-reject').value = document.getElementById('infoReason').value"
                             style="width: 100%;">
