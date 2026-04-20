@@ -114,7 +114,7 @@
         <p>Logged in as <span th:text="${currentUser.fullName}">User</span></p>
     </header>
 
-    <form th:action="@{/visas/apply(currentUserId=${currentUser.id})}" th:object="${createVisaDTO}" method="post">
+    <form th:action="@{/visas/apply}" th:object="${createVisaDTO}" method="post">
         <input type="hidden" name="applicantId" th:value="${createVisaDTO.applicantId}" />
 
         <div th:if="${#fields.hasErrors('global')}"
@@ -166,7 +166,7 @@
 
         <button type="submit" class="btn-submit">Submit Application</button>
 
-        <a th:href="@{/visas/dashboard(currentUserId=${currentUser.id})}" class="cancel-link">Cancel</a>
+        <a th:href="@{/visas/dashboard}" class="cancel-link">Cancel</a>
     </form>
 
 </div>

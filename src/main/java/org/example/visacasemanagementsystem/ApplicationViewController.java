@@ -8,6 +8,12 @@ import java.util.Objects;
 
 @Controller
 public class ApplicationViewController {
+
+    @GetMapping("/")
+    public String index() {
+        return "redirect:/dashboard";
+    }
+
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {

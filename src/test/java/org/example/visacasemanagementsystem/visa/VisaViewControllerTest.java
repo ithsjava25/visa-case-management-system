@@ -4,6 +4,8 @@ import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
+import org.example.visacasemanagementsystem.user.entity.User;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.controller.VisaViewController;
@@ -15,6 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -55,8 +60,7 @@ class VisaViewControllerTest {
         when(visaService.findAll()).thenReturn(List.of());
 
         // Act & Assert
-        mockMvc.perform(get("/visas/dashboard")
-                        .param("currentUserId", adminId.toString()))
+        mockMvc.perform(get("/visas/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("visa/dashboard"))
                 .andExpect(model().attributeExists("visas"))
@@ -91,13 +95,12 @@ class VisaViewControllerTest {
     void showApplyForm_ShouldReturnApplyViewWithEmptyDto() throws Exception {
         // Arrange
         Long userId = 1L;
-        UserDTO mockUser = new UserDTO(userId ,"Mock User", "mock@test.com",UserAuthorization.USER);
+        UserDTO mockUser = createMockUser(userId, UserAuthorization.USER);
 
         when(userService.findById(userId)).thenReturn(Optional.of(mockUser));
 
         // Act & Assert
-        mockMvc.perform(get("/visas/apply")
-                .param("currentUserId", userId.toString()))
+        mockMvc.perform(get("/visas/apply"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("visa/apply-form"))
                 .andExpect(model().attributeExists("currentUser"))
@@ -112,6 +115,7 @@ class VisaViewControllerTest {
     void submitApplication_WithValidData_ShouldRedirectToDashboard() throws Exception {
         // Arrange
         Long userId = 1L;
+        UserDTO mockUser = createMockUser(userId, UserAuthorization.USER);
 
         // Act & Assert
         mockMvc.perform(post("/visas/apply")
@@ -122,7 +126,7 @@ class VisaViewControllerTest {
                 .param("travelDate", "2026-12-01")
                 .with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/visas/dashboard?currentUserId=" + userId));
+                .andExpect(redirectedUrl("/visas/dashboard"));
 
         verify(visaService).applyForVisa(any(CreateVisaDTO.class), eq(userId));
     }
@@ -132,7 +136,7 @@ class VisaViewControllerTest {
     void submitApplication_WithInvalidData_ShouldReturnForm() throws Exception {
         // Arrange
         Long userId = 1L;
-        UserDTO mockUser = new UserDTO(userId ,"Mock User", "mock@test.com",UserAuthorization.USER);
+        UserDTO mockUser = createMockUser(userId, UserAuthorization.USER);
 
         when(userService.findById(userId)).thenReturn(Optional.of(mockUser));
 
@@ -167,8 +171,7 @@ class VisaViewControllerTest {
         when(visaService.findVisaDtoById(visaId)).thenReturn(createMockVisa(visaId, userId));
 
         // Act
-        var result = mockMvc.perform(get("/visas/{id}/edit", visaId)
-                .param("currentUserId", userId.toString()));
+        var result = mockMvc.perform(get("/visas/{id}/edit", visaId));
 
         // Assert
         result.andExpect(status().isOk())
@@ -190,8 +193,7 @@ class VisaViewControllerTest {
         when(visaService.findVisaDtoById(visaId)).thenReturn(createMockVisa(visaId, actualUserId));
 
         // Act & Assert
-        mockMvc.perform(get("/visas/{id}/edit", visaId)
-                .param("currentUserId", loggedInUserId.toString()))
+        mockMvc.perform(get("/visas/{id}/edit", visaId))
                 .andExpect(status().isForbidden());
     }
 
@@ -201,7 +203,7 @@ class VisaViewControllerTest {
         // Arrange
         Long  visaId = 100L;
         Long userId = 1L;
-        String expectedUrl = "/visas/" + visaId + "?currentUserId=" + userId;
+        String expectedUrl = "/visas/" + visaId;
 
         when(userService.findById(userId)).thenReturn(Optional.of(createMockUser(userId, UserAuthorization.USER)));
         when(visaService.findVisaDtoById(visaId)).thenReturn(createMockVisa(visaId, userId));
@@ -258,6 +260,7 @@ class VisaViewControllerTest {
         // Arrange
         Long visaId = 100L;
         Long userId = 1L;
+        UserDTO mockUser = createMockUser(userId, UserAuthorization.USER);
 
         doThrow(new UnauthorizedException("You are not authorized to update this application."))
                 .when(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId));
@@ -316,17 +319,17 @@ class VisaViewControllerTest {
         // Arrange
         Long visaId = 100L;
         Long adminId = 1L;
+        UserDTO mockAdmin = createMockUser(adminId, UserAuthorization.ADMIN);
 
         when(visaService.approveVisa(visaId,adminId)).thenReturn(null);
 
         // Act
         var result = mockMvc.perform(post("/visas/{id}/approve", visaId)
-                .param("currentUserId", adminId.toString())
                 .with(csrf()));
 
         // Assert
         result.andExpect(status().is3xxRedirection())
-        .andExpect(redirectedUrl("/visas/" + visaId + "?currentUserId=" + adminId));
+        .andExpect(redirectedUrl("/visas/" + visaId));
 
         verify(visaService, times(1)).approveVisa(visaId,adminId);
     }
@@ -337,11 +340,11 @@ class VisaViewControllerTest {
         // Arrange
         Long  visaId = 100L;
         Long adminId = 1L;
-        String expectedUrl = "/visas/" + visaId + "?currentUserId=" + adminId;
+        UserDTO mockAdmin = createMockUser(adminId, UserAuthorization.ADMIN);
+        String expectedUrl = "/visas/" + visaId;
 
         // Act & Assert
         mockMvc.perform(post("/visas/{id}/assign",visaId)
-                .param("currentUserId", adminId.toString())
                 .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(expectedUrl));
@@ -356,12 +359,12 @@ class VisaViewControllerTest {
         // Arrange
         Long visaId = 100L;
         Long adminId = 1L;
+        UserDTO mockAdmin = createMockUser(adminId, UserAuthorization.ADMIN);
         String reason = "Please upload a clearer image of your passport";
-        String expectedUrl = "/visas/" + visaId + "?currentUserId=" + adminId;
+        String expectedUrl = "/visas/" + visaId;
 
         // Act & Assert
         mockMvc.perform(post("/visas/{id}/request-info", visaId)
-                        .param("currentUserId", adminId.toString())
                         .param("reason", reason)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
@@ -377,19 +380,19 @@ class VisaViewControllerTest {
         // Arrange
         Long visaId = 100L;
         Long adminId = 1L;
+        UserDTO mockAdmin = createMockUser(adminId, UserAuthorization.ADMIN);
         String reason = "Missing details about your purpose of travel";
 
         when(visaService.rejectVisa(visaId,adminId,reason)).thenReturn(null);
 
         // Act
         var result = mockMvc.perform(post("/visas/{id}/reject", visaId)
-                .param("currentUserId", adminId.toString())
                 .param("reason", reason)
                 .with(csrf()));
 
         // Assert
         result.andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/visas/" + visaId + "?currentUserId=" + adminId));
+                .andExpect(redirectedUrl("/visas/" + visaId));
 
         verify(visaService, times(1)).rejectVisa(visaId,adminId,reason);
 
@@ -401,20 +404,19 @@ class VisaViewControllerTest {
         // Arrange
         Long  visaId = 100L;
         Long userId = 1L;
+        UserDTO mockUser = createMockUser(userId, UserAuthorization.USER);
 
-        UserDTO mockUser = new UserDTO(userId ,"Mock User", "mock@test.com",UserAuthorization.USER);
         when(userService.findById(userId)).thenReturn(Optional.of(mockUser));
 
         VisaDTO mockVisa = createMockVisa(visaId, userId);
 
        when(visaService.findVisaDtoById(visaId)).thenReturn(mockVisa);
 
-       var mockComments = List.of(new CommentDTO(1L,100L,"Admin", "Looks god!", LocalDateTime.now()));
+       var mockComments = List.of(new CommentDTO(1L,100L,"Admin", "Looks good!", LocalDateTime.now()));
        when(commentService.getCommentsByVisaId(visaId)).thenReturn(mockComments);
 
        // Act
-        var result = mockMvc.perform(get("/visas/{id}", visaId)
-                .param("currentUserId", userId.toString()));
+        var result = mockMvc.perform(get("/visas/{id}", visaId));
 
         // Assert
         result.andExpect(status().isOk())
@@ -434,7 +436,7 @@ class VisaViewControllerTest {
         Long hackerId = 1L;
         Long userId = 99L;
 
-        UserDTO hacker = new UserDTO(hackerId, "Hacker", "hacker@test.com",UserAuthorization.USER);
+        UserDTO hacker = createMockUser(hackerId, UserAuthorization.USER);
 
         VisaDTO othersVisa = createMockVisa(visaId, userId);
 
@@ -442,8 +444,7 @@ class VisaViewControllerTest {
         when(visaService.findVisaDtoById(visaId)).thenReturn(othersVisa);
 
         // Act & Assert
-        mockMvc.perform(get("/visas/{id}", visaId)
-                .param("currentUserId", hackerId.toString()))
+        mockMvc.perform(get("/visas/{id}", visaId))
                 .andExpect(status().isForbidden());
 
     }
@@ -456,16 +457,15 @@ class VisaViewControllerTest {
         Long adminId = 50L;
         Long applicantId = 1L;
 
-        UserDTO admin = new UserDTO(adminId, "Admin", "admin@test.com", UserAuthorization.ADMIN);
+        UserDTO mockAdmin = createMockUser(adminId, UserAuthorization.ADMIN);
         VisaDTO applicantVisa = createMockVisa(visaId, applicantId);
 
-        when(userService.findById(adminId)).thenReturn(Optional.of(admin));
+        when(userService.findById(adminId)).thenReturn(Optional.of(mockAdmin));
         when(visaService.findVisaDtoById(visaId)).thenReturn(applicantVisa);
         when(commentService.getCommentsByVisaId(visaId)).thenReturn(List.of());
 
         // Act & Assert
-        mockMvc.perform(get("/visas/{id}", visaId)
-                .param("currentUserId", adminId.toString()))
+        mockMvc.perform(get("/visas/{id}", visaId))
                 .andExpect(status().isOk())
                 .andExpect(view().name("visa/details"));
 
@@ -473,6 +473,16 @@ class VisaViewControllerTest {
 
     // Helper methods
     private UserDTO createMockUser(Long id, UserAuthorization role) {
+        User testUser = new User();
+        testUser.setId(id);
+        testUser.setUsername("test@test.com");
+        testUser.setEmail("test@test.com");
+        testUser.setPassword("password");
+        testUser.setUserAuthorization(role);
+        UserPrincipal principal = new UserPrincipal(testUser);
+        Authentication authentication = new TestingAuthenticationToken(principal, "password", principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         return  new UserDTO(id,"Test User", "test@test.com", role);
     }
 

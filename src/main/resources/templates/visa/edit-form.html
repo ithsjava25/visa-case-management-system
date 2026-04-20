@@ -123,7 +123,7 @@
         </p>
     </div>
 
-    <form th:action="@{/visas/{id}/edit(id=${updateVisaDto.id}, currentUserId=${currentUser.id})}"
+    <form th:action="@{/visas/{id}/edit(id=${updateVisaDto.id})}"
           th:object="${updateVisaDto}"
           method="post">
 
@@ -163,7 +163,7 @@
         </div>
 
         <button type="submit" class="btn-submit">Save Changes</button>
-        <a th:href="@{/visas/{id}(id=${updateVisaDto.id}, currentUserId=${currentUser.id})}" class="cancel-link">Back to Details</a>
+        <a th:href="@{/visas/{id}(id=${updateVisaDto.id})}" class="cancel-link">Back to Details</a>
     </form>
 </div>
 </body>
