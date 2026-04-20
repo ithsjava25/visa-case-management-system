@@ -27,7 +27,6 @@ class CommentMapperTest {
         // Arrange
         CreateCommentDTO dto = new CreateCommentDTO(
                 100L,
-                50L,
                 "This is a comment text."
 
         );
@@ -79,7 +78,6 @@ class CommentMapperTest {
         CommentDTO result = commentMapper.toDTO(comment);
 
         // Assert
-        assertThat(result.id()).isEqualTo(1L);
         assertThat(result.text()).isEqualTo("This is a comment text.");
         assertThat(result.visaId()).isEqualTo(100L);
         assertThat(result.authorName()).isEqualTo("Test User");

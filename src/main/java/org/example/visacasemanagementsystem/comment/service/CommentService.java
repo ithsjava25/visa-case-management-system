@@ -10,12 +10,15 @@ import org.example.visacasemanagementsystem.comment.repository.CommentRepository
 import org.example.visacasemanagementsystem.exception.ResourceNotFoundException;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CommentService {
@@ -36,8 +39,6 @@ public class CommentService {
 
 
      // Create Comment
-     // TODO: Security Risk - Replace authorId from DTO with authenticated user from
-     // SecurityContext once Spring Security is integrated to prevent IDOR vulnerabilities.
     @Transactional
     public CommentDTO createComment(CreateCommentDTO dto) {
         if (dto == null) {
@@ -49,8 +50,15 @@ public class CommentService {
         }
 
         // Get User and Visa from database
-        User author = userRepository.findById(dto.authorId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + dto.authorId()));
+        Long authorId = ((UserPrincipal) Objects
+                .requireNonNull(Objects
+                        .requireNonNull(SecurityContextHolder
+                                .getContext()
+                                .getAuthentication())
+                        .getPrincipal()))
+                .getUserId();
+        User author = userRepository.findById(authorId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + authorId));
 
         Visa visa = visaRepository.findById(dto.visaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Visa case not found with id: " + dto.visaId()));

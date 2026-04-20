@@ -7,6 +7,7 @@ import org.example.visacasemanagementsystem.exception.ResourceNotFoundException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
@@ -15,6 +16,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +41,7 @@ class CommentServiceIntegrationTest {
     private UserRepository userRepository;
 
     private User testUser;
+    private User nonExistentUser;
     private Visa testVisa;
 
     @BeforeEach
@@ -49,6 +54,15 @@ class CommentServiceIntegrationTest {
         testUser.setPassword("password123");
         testUser.setUserAuthorization(UserAuthorization.USER);
         testUser  = userRepository.save(testUser);
+
+        // Create nonexistent user
+        nonExistentUser  = new User();
+        nonExistentUser.setId(999L);
+        nonExistentUser.setFullName("NonUser");
+        nonExistentUser.setEmail("test@example.com");
+        nonExistentUser.setUsername("test@example.com");
+        nonExistentUser.setPassword("password123");
+        nonExistentUser.setUserAuthorization(UserAuthorization.USER);
 
         // Create test visa
         testVisa = new Visa();
@@ -67,45 +81,45 @@ class CommentServiceIntegrationTest {
         // Arrange
         CreateCommentDTO dto = new CreateCommentDTO(
                 testVisa.getId(),
-                testUser.getId(),
                 "This is a test comment"
         );
 
         // Act
+        authenticateTestUser();
         CommentDTO savedComment = commentService.createComment(dto);
 
         // Assert
          assertThat(savedComment).isNotNull();
-         assertThat(savedComment.id()).isNotNull();
          assertThat(savedComment.text()).isEqualTo("This is a test comment");
 
         List<CommentDTO> comments = commentService.getCommentsByVisaId(testVisa.getId());
 
         assertThat(comments).isNotEmpty();
         assertThat(comments).hasSize(1);
-        assertThat(comments.get(0).text()).isEqualTo("This is a test comment");
+        assertThat(comments.getFirst().text()).isEqualTo("This is a test comment");
 
     }
 
     @Test
     void createComment_shouldThrowException_WhenUserDoesNotExist() {
         // Arrange
-        Long nonExistentUserId = 999L;
-        CreateCommentDTO dto = new CreateCommentDTO(testVisa.getId(), nonExistentUserId, "Valid comment text");
+        CreateCommentDTO dto = new CreateCommentDTO(testVisa.getId(), "Valid comment text");
 
         // Act & Assert
+        authenticateNonExistentUser();
         assertThatThrownBy(() -> commentService.createComment(dto))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("User not found with id: " + nonExistentUserId);
+                .hasMessageContaining("User not found with id: " + nonExistentUser.getId());
     }
 
     @Test
     void createComment_shouldThrowException_WhenVisaDoesNotExist() {
         // Arrange
-        Long nonExistentVisaId = 999L;
-        CreateCommentDTO dto = new CreateCommentDTO(nonExistentVisaId, testUser.getId(), "Some text");
+        long nonExistentVisaId = 999L;
+        CreateCommentDTO dto = new CreateCommentDTO(nonExistentVisaId, "Some text");
 
         // Act & Assert
+        authenticateTestUser();
         assertThatThrownBy(() -> commentService.createComment(dto))
         .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Visa case not found with id: " + nonExistentVisaId);
@@ -114,7 +128,7 @@ class CommentServiceIntegrationTest {
     @Test
     void createComment_shouldThrowException_WhenTextIsBlank() {
         // Arrange
-        CreateCommentDTO dto = new CreateCommentDTO(testVisa.getId(), testUser.getId(), " ");
+        CreateCommentDTO dto = new CreateCommentDTO(testVisa.getId(), " ");
 
         // Act & Assert
         assertThatThrownBy(() -> commentService.createComment(dto))
@@ -146,5 +160,18 @@ class CommentServiceIntegrationTest {
         // Assert
         assertThat(comments).isEmpty();
 
+    }
+
+    // Helper method
+    private void authenticateTestUser() {
+        UserPrincipal principal = new UserPrincipal(testUser);
+        Authentication authentication = new TestingAuthenticationToken(principal, "password123", principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private void authenticateNonExistentUser() {
+        UserPrincipal principal = new UserPrincipal(nonExistentUser);
+        Authentication authentication = new TestingAuthenticationToken(principal, "password123", principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

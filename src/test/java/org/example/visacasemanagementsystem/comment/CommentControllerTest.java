@@ -41,8 +41,8 @@ class CommentControllerTest {
     @WithMockUser
     void createComment_shouldReturnCreated() throws Exception {
         // Arrange
-        CreateCommentDTO createDto= new CreateCommentDTO(1L, 1L, "Test message");
-        CommentDTO responseDto = new CommentDTO(100L, 1L,"Test User", "Test message", LocalDateTime.now());
+        CreateCommentDTO createDto= new CreateCommentDTO(1L, "Test message");
+        CommentDTO responseDto = new CommentDTO(1L,"Test User", "Test message", LocalDateTime.now());
 
         when(commentService.createComment(any(CreateCommentDTO.class))).thenReturn(responseDto);
 
@@ -52,7 +52,7 @@ class CommentControllerTest {
                 .contentType((MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(100L))
+                .andExpect(jsonPath("$.visaId").value(1L))
                 .andExpect(jsonPath("$.text").value("Test message"))
                 .andExpect(jsonPath("$.authorName").value("Test User"));
     }
@@ -62,7 +62,7 @@ class CommentControllerTest {
     void getCommentsByVisa_ShouldReturnList() throws Exception {
         // Arrange
         String expectedText = "Hello World";
-        CommentDTO comment = new CommentDTO(1L, 2L, "Admin", expectedText, LocalDateTime.now());
+        CommentDTO comment = new CommentDTO(1L, "Admin", expectedText, LocalDateTime.now());
 
         when(commentService.getCommentsByVisaId(1L)).thenReturn(List.of(comment));
 

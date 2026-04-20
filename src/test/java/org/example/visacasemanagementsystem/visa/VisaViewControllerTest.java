@@ -412,7 +412,7 @@ class VisaViewControllerTest {
 
        when(visaService.findVisaDtoById(visaId)).thenReturn(mockVisa);
 
-       var mockComments = List.of(new CommentDTO(1L,100L,"Admin", "Looks good!", LocalDateTime.now()));
+       var mockComments = List.of(new CommentDTO(100L,"Admin", "Looks good!", LocalDateTime.now()));
        when(commentService.getCommentsByVisaId(visaId)).thenReturn(mockComments);
 
        // Act
