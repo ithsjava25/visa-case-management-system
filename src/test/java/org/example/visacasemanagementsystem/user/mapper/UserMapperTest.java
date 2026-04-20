@@ -23,12 +23,13 @@ class UserMapperTest {
     }
 
     @Test
-    @DisplayName("toDTO maps a User entity to a UserDTO with all fields preserved")
+    @DisplayName("Checking if toDTO maps a User entity to a UserDTO with all fields preserved")
     void shouldMapUserEntityToUserDTO() {
         // Arrange
         User user = new User();
         user.setFullName("Alice Wonderland");
         user.setEmail("alice@example.com");
+        user.setUsername("alice@example.com");
         user.setPassword("password123");
         user.setUserAuthorization(UserAuthorization.USER);
 
@@ -43,14 +44,14 @@ class UserMapperTest {
     }
 
     @Test
-    @DisplayName("toDTO returns null when the input User is null")
+    @DisplayName("Checking if toDTO returns null when the input User is null")
     void shouldReturnNullDTO_WhenUserIsNull() {
         // Act & Assert
         assertThat(userMapper.toDTO(null)).isNull();
     }
 
     @Test
-    @DisplayName("toEntity maps a CreateUserDTO to a User entity with correct name, email, and authorization")
+    @DisplayName("Checking if toEntity maps a CreateUserDTO to a User entity with correct name, email, username, and authorization")
     void shouldMapCreateUserDTOToUserEntity() {
         // Arrange
         CreateUserDTO dto = new CreateUserDTO(
@@ -67,11 +68,12 @@ class UserMapperTest {
         assertThat(user).isNotNull();
         assertThat(user.getFullName()).isEqualTo("Bob Builder");
         assertThat(user.getEmail()).isEqualTo("bob@example.com");
+        assertThat(user.getUsername()).isEqualTo("bob@example.com");
         assertThat(user.getUserAuthorization()).isEqualTo(UserAuthorization.ADMIN);
     }
 
     @Test
-    @DisplayName("toEntity does not set the password field (UserService handles passwords separately)")
+    @DisplayName("Checking if toEntity does not set the password field (UserService handles passwords separately)")
     void shouldNotSetPassword_WhenMappingFromCreateUserDTO() {
         // Arrange
         CreateUserDTO dto = new CreateUserDTO(
@@ -90,19 +92,20 @@ class UserMapperTest {
     }
 
     @Test
-    @DisplayName("toEntity returns null when the input CreateUserDTO is null")
+    @DisplayName("Checking if toEntity returns null when the input CreateUserDTO is null")
     void shouldReturnNullEntity_WhenCreateUserDTOIsNull() {
         // Act & Assert
         assertThat(userMapper.toEntity(null)).isNull();
     }
 
     @Test
-    @DisplayName("updateEntityFromDTO overwrites fullName and email on an existing User entity")
+    @DisplayName("Checking if updateEntityFromDTO overwrites fullName, email, and username on an existing User entity")
     void shouldUpdateExistingUserEntityFromUpdateUserDTO() {
         // Arrange
         User user = new User();
         user.setFullName("Old Name");
         user.setEmail("old@example.com");
+        user.setUsername("old@example.com");
         user.setPassword("password123");
         user.setUserAuthorization(UserAuthorization.USER);
 
@@ -114,15 +117,17 @@ class UserMapperTest {
         // Assert
         assertThat(user.getFullName()).isEqualTo("New Name");
         assertThat(user.getEmail()).isEqualTo("new@example.com");
+        assertThat(user.getUsername()).isEqualTo("new@example.com");
     }
 
     @Test
-    @DisplayName("updateEntityFromDTO does not modify authorization or password")
+    @DisplayName("Checking if updateEntityFromDTO does not modify authorization or password")
     void shouldNotModifyAuthorizationOrPassword_WhenUpdatingFromDTO() {
         // Arrange
         User user = new User();
         user.setFullName("Original");
         user.setEmail("original@example.com");
+        user.setUsername("original@example.com");
         user.setPassword("secret123");
         user.setUserAuthorization(UserAuthorization.SYSADMIN);
 
@@ -137,12 +142,13 @@ class UserMapperTest {
     }
 
     @Test
-    @DisplayName("updateEntityFromDTO leaves the entity unchanged when the DTO is null")
+    @DisplayName("Checking if updateEntityFromDTO leaves the entity unchanged when the DTO is null")
     void shouldNotUpdateEntity_WhenUpdateDTOIsNull() {
         // Arrange
         User user = new User();
         user.setFullName("Original Name");
         user.setEmail("original@example.com");
+        user.setUsername("original@example.com");
 
         // Act
         userMapper.updateEntityFromDTO(null, user);
@@ -150,10 +156,11 @@ class UserMapperTest {
         // Assert
         assertThat(user.getFullName()).isEqualTo("Original Name");
         assertThat(user.getEmail()).isEqualTo("original@example.com");
+        assertThat(user.getUsername()).isEqualTo("original@example.com");
     }
 
     @Test
-    @DisplayName("updateEntityFromDTO does not throw when the User entity is null")
+    @DisplayName("Checking if updateEntityFromDTO does not throw when the User entity is null")
     void shouldNotThrow_WhenUserIsNullInUpdate() {
         // Arrange
         UpdateUserDTO dto = new UpdateUserDTO(1L, "Some Name", "some@example.com");

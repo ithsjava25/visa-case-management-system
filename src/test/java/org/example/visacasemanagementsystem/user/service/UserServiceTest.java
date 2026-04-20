@@ -9,7 +9,7 @@ import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
-import org.example.visacasemanagementsystem.user.security.SecurityUser;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -32,6 +33,8 @@ class UserServiceTest {
     private UserRepository userRepository;
     @Mock
     private UserMapper userMapper;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -39,7 +42,7 @@ class UserServiceTest {
     // ── createUser ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("createUser throws IllegalArgumentException when password is shorter than 8 characters")
+    @DisplayName("Checking if createUser throws IllegalArgumentException when password is shorter than 8 characters")
     void createUser_shouldThrowIllegalArgumentException_WhenPasswordIsTooShort() {
         // Arrange
         CreateUserDTO dto = new CreateUserDTO(
@@ -58,7 +61,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("createUser throws IllegalArgumentException when email is already taken")
+    @DisplayName("Checking if createUser throws IllegalArgumentException when email is already taken")
     void createUser_shouldThrowIllegalArgumentException_WhenEmailAlreadyExists() {
         // Arrange
         CreateUserDTO dto = new CreateUserDTO(
@@ -67,6 +70,7 @@ class UserServiceTest {
 
         User mappedUser = new User();
         when(userMapper.toEntity(dto)).thenReturn(mappedUser);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException("unique constraint"));
 
@@ -77,7 +81,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("createUser persists and returns a UserDTO when input is valid")
+    @DisplayName("Checking if createUser persists and returns a UserDTO when input is valid")
     void createUser_shouldSaveAndReturnUserDTO_WhenDataIsValid() {
         // Arrange
         CreateUserDTO dto = new CreateUserDTO(
@@ -90,6 +94,7 @@ class UserServiceTest {
         UserDTO expectedDTO = new UserDTO(1L, "New User", "new@test.com", UserAuthorization.USER);
 
         when(userMapper.toEntity(dto)).thenReturn(mappedUser);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(userMapper.toDTO(savedUser)).thenReturn(expectedDTO);
 
@@ -104,7 +109,7 @@ class UserServiceTest {
     // ── updateUser ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("updateUser throws EntityNotFoundException when user ID does not exist")
+    @DisplayName("Checking if updateUser throws EntityNotFoundException when user ID does not exist")
     void updateUser_shouldThrowEntityNotFoundException_WhenUserDoesNotExist() {
         // Arrange
         UpdateUserDTO dto = new UpdateUserDTO(999L, "Name", "email@test.com");
@@ -117,7 +122,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("updateUser throws IllegalArgumentException when new email is already taken by another user")
+    @DisplayName("Checking if updateUser throws IllegalArgumentException when new email is already taken by another user")
     void updateUser_shouldThrowIllegalArgumentException_WhenEmailAlreadyExists() {
         // Arrange
         Long userId = 1L;
@@ -137,7 +142,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("updateUser updates fields and returns the updated UserDTO")
+    @DisplayName("Checking if updateUser updates fields and returns the updated UserDTO")
     void updateUser_shouldUpdateAndReturnUser_WhenDataIsValid() {
         // Arrange
         Long userId = 1L;
@@ -163,7 +168,7 @@ class UserServiceTest {
     // ── updateUserAuthorization ───────────────────────────────────────────────
 
     @Test
-    @DisplayName("updateUserAuthorization throws UnauthorizedException when requester is not a SYSADMIN")
+    @DisplayName("Checking if updateUserAuthorization throws UnauthorizedException when requester is not a SYSADMIN")
     void updateUserAuthorization_shouldThrowUnauthorizedException_WhenRequesterIsNotSysAdmin() {
         // Arrange
         Long userId = 1L;
@@ -182,7 +187,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("updateUserAuthorization throws EntityNotFoundException when target user does not exist")
+    @DisplayName("Checking if updateUserAuthorization throws EntityNotFoundException when target user does not exist")
     void updateUserAuthorization_shouldThrowEntityNotFoundException_WhenTargetUserDoesNotExist() {
         // Arrange
         Long nonExistingUserId = 999L;
@@ -202,7 +207,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("updateUserAuthorization changes role when requested by a SYSADMIN")
+    @DisplayName("Checking if updateUserAuthorization changes role when requested by a SYSADMIN")
     void updateUserAuthorization_shouldChangeAuthorization_WhenRequesterIsSysAdmin() {
         // Arrange
         Long userId = 1L;
@@ -234,7 +239,7 @@ class UserServiceTest {
     // ── deleteUser ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("deleteUser throws UnauthorizedException when requester is not a SYSADMIN")
+    @DisplayName("Checking if deleteUser throws UnauthorizedException when requester is not a SYSADMIN")
     void deleteUser_shouldThrowUnauthorizedException_WhenRequesterIsNotSysAdmin() {
         // Arrange
         Long userId = 1L;
@@ -255,7 +260,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("deleteUser throws EntityNotFoundException when target user does not exist")
+    @DisplayName("Checking if deleteUser throws EntityNotFoundException when target user does not exist")
     void deleteUser_shouldThrowEntityNotFoundException_WhenTargetUserDoesNotExist() {
         // Arrange
         Long nonExistingUserId = 999L;
@@ -275,7 +280,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("deleteUser removes the user when requested by a SYSADMIN")
+    @DisplayName("Checking if deleteUser removes the user when requested by a SYSADMIN")
     void deleteUser_shouldDeleteUser_WhenRequesterIsSysAdmin() {
         // Arrange
         Long userId = 1L;
@@ -301,16 +306,17 @@ class UserServiceTest {
     // ── validateProfileAccess ─────────────────────────────────────────────────
 
     @Test
-    @DisplayName("validateProfileAccess throws UnauthorizedException when a regular user accesses another user's profile")
+    @DisplayName("Checking if validateProfileAccess throws UnauthorizedException when a regular user accesses another user's profile")
     void validateProfileAccess_shouldThrowUnauthorizedException_WhenUserAccessesOtherProfile() {
         // Arrange
         User user = new User();
         user.setId(1L);
         user.setFullName("Regular User");
         user.setEmail("user@test.com");
+        user.setUsername("user@test.com");
         user.setPassword("password");
         user.setUserAuthorization(UserAuthorization.USER);
-        SecurityUser principal = new SecurityUser(user);
+        UserPrincipal principal = new UserPrincipal(user);
 
         Long otherUserId = 999L;
 
@@ -320,19 +326,20 @@ class UserServiceTest {
                 .hasMessageContaining("permission");
     }
 
-    // ── validateSysAdmin (SecurityUser) ───────────────────────────────────────
+    // ── validateSysAdmin (UserPrincipal) ──────────────────────────────────────
 
     @Test
-    @DisplayName("validateSysAdmin throws UnauthorizedException when principal is not a SYSADMIN")
+    @DisplayName("Checking if validateSysAdmin throws UnauthorizedException when principal is not a SYSADMIN")
     void validateSysAdmin_shouldThrowUnauthorizedException_WhenPrincipalIsNotSysAdmin() {
         // Arrange
         User user = new User();
         user.setId(1L);
         user.setFullName("Regular User");
         user.setEmail("user@test.com");
+        user.setUsername("user@test.com");
         user.setPassword("password");
         user.setUserAuthorization(UserAuthorization.USER);
-        SecurityUser principal = new SecurityUser(user);
+        UserPrincipal principal = new UserPrincipal(user);
 
         // Act & Assert
         assertThatThrownBy(() -> userService.validateSysAdmin(principal))
@@ -343,16 +350,17 @@ class UserServiceTest {
     // ── validateAdmin ─────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("validateAdmin throws UnauthorizedException when principal is a regular USER")
+    @DisplayName("Checking if validateAdmin throws UnauthorizedException when principal is a regular USER")
     void validateAdmin_shouldThrowUnauthorizedException_WhenPrincipalIsRegularUser() {
         // Arrange
         User user = new User();
         user.setId(1L);
         user.setFullName("Regular User");
         user.setEmail("user@test.com");
+        user.setUsername("user@test.com");
         user.setPassword("password");
         user.setUserAuthorization(UserAuthorization.USER);
-        SecurityUser principal = new SecurityUser(user);
+        UserPrincipal principal = new UserPrincipal(user);
 
         // Act & Assert
         assertThatThrownBy(() -> userService.validateAdmin(principal))
@@ -363,7 +371,7 @@ class UserServiceTest {
     // ── findById ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("findById returns empty Optional when user ID does not exist")
+    @DisplayName("Checking if findById returns empty Optional when user ID does not exist")
     void findById_shouldReturnEmpty_WhenUserDoesNotExist() {
         // Arrange
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
@@ -375,7 +383,7 @@ class UserServiceTest {
     // ── findByEmail ───────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("findByEmail returns empty Optional when email does not exist")
+    @DisplayName("Checking if findByEmail returns empty Optional when email does not exist")
     void findByEmail_shouldReturnEmpty_WhenEmailDoesNotExist() {
         // Arrange
         when(userRepository.findByEmail("nobody@test.com")).thenReturn(Optional.empty());

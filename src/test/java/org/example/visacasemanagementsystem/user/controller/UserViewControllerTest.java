@@ -5,7 +5,7 @@ import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
-import org.example.visacasemanagementsystem.user.security.SecurityUser;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +48,7 @@ class UserViewControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /user/signup returns the signup view")
+    @DisplayName("Checking if GET /user/signup returns the signup view")
     void userSignupForm_ShouldReturnSignupView() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/user/signup"))
@@ -60,7 +60,7 @@ class UserViewControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("POST /user/signup with valid data redirects to the login page")
+    @DisplayName("Checking if POST /user/signup with valid data redirects to the login page")
     void createUser_WithValidData_ShouldRedirectToLogin() throws Exception {
         // Arrange
         when(userService.createUser(any())).thenReturn(
@@ -81,7 +81,7 @@ class UserViewControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("POST /user/signup with a duplicate email re-renders the signup form with an error")
+    @DisplayName("Checking if POST /user/signup with a duplicate email re-renders the signup form with an error")
     void createUser_WithDuplicateEmail_ShouldReturnSignupViewWithError() throws Exception {
         // Arrange
         when(userService.createUser(any()))
@@ -100,7 +100,7 @@ class UserViewControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("POST /user/signup with a short password re-renders the signup form with an error")
+    @DisplayName("Checking if POST /user/signup with a short password re-renders the signup form with an error")
     void createUser_WithShortPassword_ShouldReturnSignupViewWithError() throws Exception {
         // Arrange
         when(userService.createUser(any()))
@@ -121,7 +121,7 @@ class UserViewControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /user/login returns the login view")
+    @DisplayName("Checking if GET /user/login returns the login view")
     void userLoginForm_ShouldReturnLoginView() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/user/login"))
@@ -132,7 +132,7 @@ class UserViewControllerTest {
     // ── GET /profile/view/{userId} ────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /profile/view/{id} viewed by the profile owner shows 'canEdit = true'")
+    @DisplayName("Checking if GET /profile/view/{id} viewed by the profile owner shows 'canEdit = true'")
     void viewProfile_AsOwnUser_ShouldReturnProfileViewWithCanEditTrue() throws Exception {
         // Arrange
         Long userId = 1L;
@@ -149,7 +149,7 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /profile/view/{id} viewed by a SYSADMIN shows 'canEdit = true'")
+    @DisplayName("Checking if GET /profile/view/{id} viewed by a SYSADMIN shows 'canEdit = true'")
     void viewProfile_AsSysAdmin_ShouldReturnProfileViewWithCanEditTrue() throws Exception {
         // Arrange
         Long targetUserId = 1L;
@@ -166,13 +166,13 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /profile/view/{id} returns 403 when a regular user tries to view another user's profile")
+    @DisplayName("Checking if GET /profile/view/{id} returns 403 when a regular user tries to view another user's profile")
     void viewProfile_AsUnauthorizedUser_ShouldReturnForbidden() throws Exception {
         // Arrange
         Long targetUserId = 999L;
 
         doThrow(new UnauthorizedException("You do not have permission to edit this profile."))
-                .when(userService).validateProfileAccess(any(SecurityUser.class), eq(targetUserId));
+                .when(userService).validateProfileAccess(any(UserPrincipal.class), eq(targetUserId));
 
         UserDTO userDTO = new UserDTO(targetUserId, "Other User", "other@test.com", UserAuthorization.USER);
         when(userService.findById(targetUserId)).thenReturn(Optional.of(userDTO));
@@ -186,7 +186,7 @@ class UserViewControllerTest {
     // ── GET /profile/edit/{userId} ────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /profile/edit/{id} returns the edit form when accessed by the profile owner")
+    @DisplayName("Checking if GET /profile/edit/{id} returns the edit form when accessed by the profile owner")
     void showProfileEditForm_AsOwnUser_ShouldReturnEditView() throws Exception {
         // Arrange
         Long userId = 1L;
@@ -202,13 +202,13 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /profile/edit/{id} returns 403 when accessed by an unauthorized user")
+    @DisplayName("Checking if GET /profile/edit/{id} returns 403 when accessed by an unauthorized user")
     void showProfileEditForm_AsUnauthorizedUser_ShouldReturnForbidden() throws Exception {
         // Arrange
         Long targetUserId = 999L;
 
         doThrow(new UnauthorizedException("You do not have permission to edit this profile."))
-                .when(userService).validateProfileAccess(any(SecurityUser.class), eq(targetUserId));
+                .when(userService).validateProfileAccess(any(UserPrincipal.class), eq(targetUserId));
 
         // Act & Assert
         mockMvc.perform(get("/profile/edit/" + targetUserId)
@@ -219,7 +219,7 @@ class UserViewControllerTest {
     // ── POST /profile/edit/{userId} ───────────────────────────────────────────
 
     @Test
-    @DisplayName("POST /profile/edit/{id} with valid data redirects to the profile view")
+    @DisplayName("Checking if POST /profile/edit/{id} with valid data redirects to the profile view")
     void updateProfile_WithValidData_ShouldRedirectToProfileView() throws Exception {
         // Arrange
         Long userId = 1L;
@@ -240,7 +240,7 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("POST /profile/edit/{id} with a duplicate email re-renders the edit form with an error")
+    @DisplayName("Checking if POST /profile/edit/{id} with a duplicate email re-renders the edit form with an error")
     void updateProfile_WithDuplicateEmail_ShouldReturnEditViewWithError() throws Exception {
         // Arrange
         Long userId = 1L;
@@ -259,13 +259,13 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("POST /profile/edit/{id} returns 403 when submitted by an unauthorized user")
+    @DisplayName("Checking if POST /profile/edit/{id} returns 403 when submitted by an unauthorized user")
     void updateProfile_AsUnauthorizedUser_ShouldReturnForbidden() throws Exception {
         // Arrange
         Long targetUserId = 999L;
 
         doThrow(new UnauthorizedException("You do not have permission to edit this profile."))
-                .when(userService).validateProfileAccess(any(SecurityUser.class), eq(targetUserId));
+                .when(userService).validateProfileAccess(any(UserPrincipal.class), eq(targetUserId));
 
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + targetUserId)
@@ -279,7 +279,7 @@ class UserViewControllerTest {
     // ── GET /user/list ────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /user/list returns the user list view when accessed by a SYSADMIN")
+    @DisplayName("Checking if GET /user/list returns the user list view when accessed by a SYSADMIN")
     void userListView_AsSysAdmin_ShouldReturnListViewWithUsers() throws Exception {
         // Arrange
         Long sysAdminId = 1L;
@@ -298,11 +298,11 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /user/list returns 403 when accessed by a non-SYSADMIN")
+    @DisplayName("Checking if GET /user/list returns 403 when accessed by a non-SYSADMIN")
     void userListView_AsNonSysAdmin_ShouldReturnForbidden() throws Exception {
         // Arrange
         doThrow(new UnauthorizedException("Only system administrators can access this page."))
-                .when(userService).validateSysAdmin(any(SecurityUser.class));
+                .when(userService).validateSysAdmin(any(UserPrincipal.class));
 
         // Act & Assert
         mockMvc.perform(get("/user/list")
@@ -313,7 +313,7 @@ class UserViewControllerTest {
     // ── GET /dashboard/applicant ──────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /dashboard/applicant returns the applicant dashboard with their visa list")
+    @DisplayName("Checking if GET /dashboard/applicant returns the applicant dashboard with their visa list")
     void applicantDashboard_AsUser_ShouldReturnDashboardWithVisas() throws Exception {
         // Arrange
         Long userId = 1L;
@@ -333,7 +333,7 @@ class UserViewControllerTest {
     // ── GET /dashboard/admin ──────────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /dashboard/admin returns assigned and unassigned cases for an ADMIN")
+    @DisplayName("Checking if GET /dashboard/admin returns assigned and unassigned cases for an ADMIN")
     void adminDashboard_AsAdmin_ShouldReturnDashboardWithCases() throws Exception {
         // Arrange
         Long adminId = 1L;
@@ -351,11 +351,11 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /dashboard/admin returns 403 when accessed by a regular USER")
+    @DisplayName("Checking if GET /dashboard/admin returns 403 when accessed by a regular USER")
     void adminDashboard_AsRegularUser_ShouldReturnForbidden() throws Exception {
         // Arrange
         doThrow(new UnauthorizedException("Only administrators or system administrators can access this page."))
-                .when(userService).validateAdmin(any(SecurityUser.class));
+                .when(userService).validateAdmin(any(UserPrincipal.class));
 
         // Act & Assert
         mockMvc.perform(get("/dashboard/admin")
@@ -366,7 +366,7 @@ class UserViewControllerTest {
     // ── GET /dashboard/sysadmin ───────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /dashboard/sysadmin returns users and audit logs for a SYSADMIN")
+    @DisplayName("Checking if GET /dashboard/sysadmin returns users and audit logs for a SYSADMIN")
     void sysAdminDashboard_AsSysAdmin_ShouldReturnDashboardWithUsersAndLogs() throws Exception {
         // Arrange
         Long sysAdminId = 1L;
@@ -384,11 +384,11 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /dashboard/sysadmin returns 403 when accessed by an ADMIN")
+    @DisplayName("Checking if GET /dashboard/sysadmin returns 403 when accessed by an ADMIN")
     void sysAdminDashboard_AsAdmin_ShouldReturnForbidden() throws Exception {
         // Arrange
         doThrow(new UnauthorizedException("Only system administrators can access this page."))
-                .when(userService).validateSysAdmin(any(SecurityUser.class));
+                .when(userService).validateSysAdmin(any(UserPrincipal.class));
 
         // Act & Assert
         mockMvc.perform(get("/dashboard/sysadmin")
@@ -397,11 +397,11 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /dashboard/sysadmin returns 403 when accessed by a regular USER")
+    @DisplayName("Checking if GET /dashboard/sysadmin returns 403 when accessed by a regular USER")
     void sysAdminDashboard_AsRegularUser_ShouldReturnForbidden() throws Exception {
         // Arrange
         doThrow(new UnauthorizedException("Only system administrators can access this page."))
-                .when(userService).validateSysAdmin(any(SecurityUser.class));
+                .when(userService).validateSysAdmin(any(UserPrincipal.class));
 
         // Act & Assert
         mockMvc.perform(get("/dashboard/sysadmin")
@@ -416,9 +416,10 @@ class UserViewControllerTest {
         user.setId(id);
         user.setFullName(fullName);
         user.setEmail(email);
+        user.setUsername(email);
         user.setPassword("password");
         user.setUserAuthorization(auth);
-        SecurityUser principal = new SecurityUser(user);
+        UserPrincipal principal = new UserPrincipal(user);
         return new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
     }
 }
