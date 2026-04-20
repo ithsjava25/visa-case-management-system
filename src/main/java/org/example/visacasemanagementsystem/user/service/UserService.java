@@ -10,11 +10,11 @@ import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
-import org.example.visacasemanagementsystem.user.security.SecurityUser;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,10 +25,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private static final String USER_NOT_FOUND = "User not found";
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UserDTO> findAll() {
@@ -51,13 +53,13 @@ public class UserService {
     @Transactional
     public UserDTO createUser(@Valid CreateUserDTO dto) {
         User user = userMapper.toEntity(dto);
-        user.setPassword(dto.password()); // mapper doesn't set this currently
         if (dto.password().length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
+        user.setPassword(passwordEncoder.encode(dto.password()));
+        user.setUserAuthorization(UserAuthorization.USER);
         try {
             User savedUser = userRepository.save(user);
-            savedUser.setUserAuthorization(UserAuthorization.USER);
             return userMapper.toDTO(savedUser);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);
@@ -108,7 +110,7 @@ public class UserService {
         }
     }
 
-    public void validateProfileAccess(SecurityUser principal, Long userId) {
+    public void validateProfileAccess(UserPrincipal principal, Long userId) {
         boolean isOwnProfile = principal.getUserId().equals(userId);
         boolean isSysAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
@@ -118,7 +120,7 @@ public class UserService {
         }
     }
 
-    public void validateSysAdmin(SecurityUser principal) {
+    public void validateSysAdmin(UserPrincipal principal) {
         boolean isSysAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
 
@@ -127,7 +129,7 @@ public class UserService {
         }
     }
 
-    public void validateAdmin(SecurityUser principal) {
+    public void validateAdmin(UserPrincipal principal) {
         boolean isSysAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
         boolean isAdmin = principal.getAuthorities().stream()

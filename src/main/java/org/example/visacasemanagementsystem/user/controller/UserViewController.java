@@ -7,7 +7,7 @@ import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
-import org.example.visacasemanagementsystem.user.security.SecurityUser;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -71,7 +70,7 @@ public class UserViewController {
     // Uneditable profile view from where the user themselves or a sysadmin can access the profile edit view through a
     // button only available to them
     @GetMapping("/profile/view/{userId}")
-    public String viewProfile(@AuthenticationPrincipal SecurityUser principal,
+    public String viewProfile(@AuthenticationPrincipal UserPrincipal principal,
                               @PathVariable Long userId,
                               Model model) {
         UserDTO user = userService.findById(userId)
@@ -90,7 +89,7 @@ public class UserViewController {
 
     // Form for editing a users information, only available to the user themselves and sysadmins
     @GetMapping("/profile/edit/{userId}")
-    public String showProfileEditForm(@AuthenticationPrincipal SecurityUser principal,
+    public String showProfileEditForm(@AuthenticationPrincipal UserPrincipal principal,
                                       @PathVariable Long userId,
                                       Model model) {
         userService.validateProfileAccess(principal, userId);
@@ -104,7 +103,7 @@ public class UserViewController {
 
     // Posting information from user edit form
     @PostMapping("/profile/edit/{userId}")
-    public String updateProfile(@AuthenticationPrincipal SecurityUser principal,
+    public String updateProfile(@AuthenticationPrincipal UserPrincipal principal,
                                 @PathVariable Long userId,
                                 @RequestParam String fullName,
                                 @RequestParam String email,
@@ -124,7 +123,7 @@ public class UserViewController {
 
     // A list view of users only available to sysadmins
     @GetMapping("/user/list")
-    public String userListView(@AuthenticationPrincipal SecurityUser principal,
+    public String userListView(@AuthenticationPrincipal UserPrincipal principal,
                                Model model) {
         userService.validateSysAdmin(principal);
         List<UserDTO> allUsers = userService.findAll();
@@ -134,7 +133,7 @@ public class UserViewController {
     }
 
     @GetMapping("/dashboard/applicant")
-    public String applicantDashboard(@AuthenticationPrincipal SecurityUser principal,
+    public String applicantDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                      Model model) {
         List<VisaDTO> visas = visaService.findVisasByApplicantId(principal.getUserId());
         model.addAttribute("name", principal.getFullName());
@@ -143,7 +142,7 @@ public class UserViewController {
     }
 
     @GetMapping("/dashboard/admin")
-    public String adminDashboard(@AuthenticationPrincipal SecurityUser principal,
+    public String adminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                  Model model) {
         userService.validateAdmin(principal);
         List<VisaDTO> assignedCases = visaService.findVisasByHandlerId(principal.getUserId());
@@ -155,7 +154,7 @@ public class UserViewController {
     }
 
     @GetMapping("/dashboard/sysadmin")
-    public String sysAdminDashboard(@AuthenticationPrincipal SecurityUser principal,
+    public String sysAdminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                     Model model) {
         userService.validateSysAdmin(principal);
         List<UserDTO> allUsers = userService.findAll();

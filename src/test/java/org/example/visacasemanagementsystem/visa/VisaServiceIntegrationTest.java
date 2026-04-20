@@ -106,8 +106,10 @@ class VisaServiceIntegrationTest {
     void assignHandler_shouldAssignAdminToVisa_AndChangeStatusToAssigned() {
         // Arrange
         User admin = new User();
+        String adminEmail = "admin@test2.com";
         admin.setFullName("Test Admin");
-        admin.setEmail("admin@test2.com");
+        admin.setEmail(adminEmail);
+        admin.setUsername(adminEmail);
         admin.setPassword("password123");
         admin.setUserAuthorization(UserAuthorization.ADMIN);
         admin = userRepository.save(admin);
@@ -146,8 +148,10 @@ class VisaServiceIntegrationTest {
 
     private User createAndSaveValidUser() {
         User user = new User();
+        String testEmail = java.util.UUID.randomUUID() + "@test.com"; // Unik mail varje gång
         user.setFullName("Test User");
-        user.setEmail(java.util.UUID.randomUUID() + "@test.com"); // Unik mail varje gång
+        user.setEmail(testEmail);
+        user.setUsername(testEmail);
         user.setPassword("password");
         user.setUserAuthorization(UserAuthorization.USER);
         return userRepository.save(user);
