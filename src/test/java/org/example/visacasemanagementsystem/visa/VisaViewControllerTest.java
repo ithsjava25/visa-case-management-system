@@ -275,7 +275,9 @@ class VisaViewControllerTest {
 
         // Assert
         result.andExpect(status().isForbidden())
-                .andExpect(content().string("Access Denied: You are not authorized to update this application."));
+                .andExpect(view().name("error/error"))
+                .andExpect(model().attribute("errorTitle", "⚠️Access Denied."))
+                .andExpect(model().attribute("errorMessage", "You are not authorized to update this application."));
     }
 
     @Test
@@ -300,7 +302,7 @@ class VisaViewControllerTest {
                 .param("visaStatus", "INCOMPLETE")
                 .param("nationality", "Sweden")
                 .param("passportNumber", "ABC12345")
-                .param("travelDate", "2020-01-01") // Datum i dåtid
+                .param("travelDate", "2020-01-01")
                 .with(csrf()));
 
         // Assert
