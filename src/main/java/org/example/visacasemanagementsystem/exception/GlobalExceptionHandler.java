@@ -16,7 +16,8 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.FORBIDDEN)
     @ExceptionHandler(UnauthorizedException.class)
     public String handleUnauthorizedException(UnauthorizedException exception, Model model) {
-        model.addAttribute("errorMessage", exception.getMessage());
+        log.warn("Access denied: {}", exception.getMessage());
+        model.addAttribute("errorMessage","You do not have permission to perform this action.");
         model.addAttribute("errorTitle", "⚠️Access Denied.");
 
         // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
@@ -28,7 +29,8 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     @ExceptionHandler({EntityNotFoundException.class, ResourceNotFoundException.class})
     public String handleNotFoundException(RuntimeException exception, Model model) {
-        model.addAttribute("errorMessage", exception.getMessage());
+        log.warn("Resource not found: {}", exception.getMessage());
+        model.addAttribute("errorMessage", "The requested resource could not be found.");
         model.addAttribute("errorTitle", "⚠️Not Found.");
 
         // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
@@ -40,7 +42,11 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IllegalArgumentException.class)
     public String handleIllegalArgumentException(IllegalArgumentException exception,  Model model) {
-        model.addAttribute("errorMessage", exception.getMessage());
+        log.warn("Bad request: {}", exception.getMessage());
+        String userMessage = exception.getMessage() != null
+                ? exception.getMessage()
+                : "The request contained invalid data.";
+        model.addAttribute("errorMessage", userMessage);
         model.addAttribute("errorTitle", "⚠️Bad Request.");
 
         // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
@@ -52,13 +58,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)
     public String handleAllUncaughtErrors(Exception exception,  Model model) {
+        log.error("Unexpected Error: ", exception);
         model.addAttribute("errorMessage","Something went wrong. Try again later.");
         model.addAttribute("errorTitle", "⚠️Internal Server Error.");
 
         // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
         // model.addAttribute("dashboardUrl", determineDashboardUrl());
-
-        log.error("Unexpected Error: ", exception);
 
         return "error/error";
     }

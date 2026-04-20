@@ -277,7 +277,7 @@ class VisaViewControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(view().name("error/error"))
                 .andExpect(model().attribute("errorTitle", "⚠️Access Denied."))
-                .andExpect(model().attribute("errorMessage", "You are not authorized to update this application."));
+                .andExpect(model().attribute("errorMessage", "You do not have permission to perform this action."));
     }
 
     @Test
