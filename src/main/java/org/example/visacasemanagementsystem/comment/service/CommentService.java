@@ -36,10 +36,8 @@ public class CommentService {
 
 
      // Create Comment
-     // TODO: Security Risk - Replace authorId from DTO with authenticated user from
-     // SecurityContext once Spring Security is integrated to prevent IDOR vulnerabilities.
     @Transactional
-    public CommentDTO createComment(CreateCommentDTO dto) {
+    public CommentDTO createComment(CreateCommentDTO dto, Long userId) {
         if (dto == null) {
             throw new IllegalArgumentException("Comment payload cannot be null");
         }
@@ -49,8 +47,8 @@ public class CommentService {
         }
 
         // Get User and Visa from database
-        User author = userRepository.findById(dto.authorId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + dto.authorId()));
+        User author = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         Visa visa = visaRepository.findById(dto.visaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Visa case not found with id: " + dto.visaId()));

@@ -13,7 +13,6 @@ public class CommentMapper {
         if  (comment == null) return null;
 
         return new CommentDTO(
-                comment.getId(),
                 comment.getVisa() != null ? comment.getVisa().getId() : null,
                 comment.getAuthor() != null ? comment.getAuthor().getFullName() : "System", // autofallback
                 comment.getText(),

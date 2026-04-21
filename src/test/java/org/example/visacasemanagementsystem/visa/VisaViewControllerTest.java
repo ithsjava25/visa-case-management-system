@@ -13,6 +13,7 @@ import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,11 @@ class VisaViewControllerTest {
     private UserService userService;
     @MockitoBean
     private CommentService commentService;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     @WithMockUser
@@ -414,7 +420,7 @@ class VisaViewControllerTest {
 
        when(visaService.findVisaDtoById(visaId)).thenReturn(mockVisa);
 
-       var mockComments = List.of(new CommentDTO(1L,100L,"Admin", "Looks good!", LocalDateTime.now()));
+       var mockComments = List.of(new CommentDTO(100L,"Admin", "Looks good!", LocalDateTime.now()));
        when(commentService.getCommentsByVisaId(visaId)).thenReturn(mockComments);
 
        // Act
