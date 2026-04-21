@@ -1,6 +1,7 @@
 package org.example.visacasemanagementsystem.user.controller;
 
 import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.config.SecurityConfig;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
@@ -12,9 +13,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,13 +34,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserViewController.class)
-@EnableMethodSecurity
+@Import(SecurityConfig.class)
 @DisplayName("UserViewController web-layer tests")
 class UserViewControllerTest {
 
     @Autowired
     MockMvc mockMvc;
 
+    @MockitoBean
+    private UserDetailsService userDetailsService;
     @MockitoBean
     private UserService userService;
     @MockitoBean
@@ -300,11 +304,13 @@ class UserViewControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("Checking if GET /user/list returns 403 when accessed by a non-SYSADMIN")
     void userListView_AsNonSysAdmin_ShouldReturnForbidden() throws Exception {
         // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects USER
+
         mockMvc.perform(get("/user/list")
-                        .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
+                .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
                 .andExpect(status().isForbidden());
     }
 
@@ -396,6 +402,7 @@ class UserViewControllerTest {
     }
 
     // ── Helper methods ────────────────────────────────────────────────────────
+
 
     private Authentication authFor(Long id, String fullName, String email, UserAuthorization auth) {
         User user = new User();
