@@ -85,7 +85,7 @@ class UserServiceTest {
     void createUser_shouldSaveAndReturnUserDTO_WhenDataIsValid() {
         // Arrange
         CreateUserDTO dto = new CreateUserDTO(
-                "New User", "new@test.com", "password123", UserAuthorization.USER
+                "New User", "new@test.com", "password123", UserAuthorization.SYSADMIN
         );
 
         User mappedUser = new User();
@@ -95,7 +95,7 @@ class UserServiceTest {
 
         when(userMapper.toEntity(dto)).thenReturn(mappedUser);
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.save(mappedUser)).thenReturn(savedUser);
         when(userMapper.toDTO(savedUser)).thenReturn(expectedDTO);
 
         // Act
@@ -103,7 +103,10 @@ class UserServiceTest {
 
         // Assert
         assertThat(result).isEqualTo(expectedDTO);
-        verify(userRepository, times(1)).save(any(User.class));
+        assertThat(mappedUser.getPassword()).isEqualTo("encodedPassword");
+        assertThat(mappedUser.getUserAuthorization()).isEqualTo(UserAuthorization.USER);
+        verify(passwordEncoder).encode("password123");
+        verify(userRepository).save(mappedUser);
     }
 
     // ── updateUser ────────────────────────────────────────────────────────────
@@ -201,6 +204,8 @@ class UserServiceTest {
         UserDTO result = userService.updateUserAuthorization(userId, UserAuthorization.ADMIN);
 
         // Assert
+        assertThat(result).isEqualTo(expectedDTO);
+        assertThat(targetUser.getUserAuthorization()).isEqualTo(UserAuthorization.ADMIN);
         assertThat(result.userAuthorization()).isEqualTo(UserAuthorization.ADMIN);
         verify(userRepository).save(targetUser);
     }
