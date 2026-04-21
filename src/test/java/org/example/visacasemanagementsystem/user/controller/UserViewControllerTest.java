@@ -53,7 +53,6 @@ class UserViewControllerTest {
     // ── GET /user/signup ──────────────────────────────────────────────────────
 
     @Test
-    @WithMockUser
     @DisplayName("Checking if GET /user/signup returns the signup view")
     void userSignupForm_ShouldReturnSignupView() throws Exception {
         // Act & Assert
@@ -65,7 +64,6 @@ class UserViewControllerTest {
     // ── POST /user/signup ─────────────────────────────────────────────────────
 
     @Test
-    @WithMockUser
     @DisplayName("Checking if POST /user/signup with valid data redirects to the login page")
     void createUser_WithValidData_ShouldRedirectToLogin() throws Exception {
         // Arrange
@@ -86,7 +84,6 @@ class UserViewControllerTest {
     }
 
     @Test
-    @WithMockUser
     @DisplayName("Checking if POST /user/signup with a duplicate email re-renders the signup form with an error")
     void createUser_WithDuplicateEmail_ShouldReturnSignupViewWithError() throws Exception {
         // Arrange
@@ -105,7 +102,6 @@ class UserViewControllerTest {
     }
 
     @Test
-    @WithMockUser
     @DisplayName("Checking if POST /user/signup with a short password re-renders the signup form with an error")
     void createUser_WithShortPassword_ShouldReturnSignupViewWithError() throws Exception {
         // Arrange
@@ -126,7 +122,6 @@ class UserViewControllerTest {
     // ── GET /user/login ───────────────────────────────────────────────────────
 
     @Test
-    @WithMockUser
     @DisplayName("Checking if GET /user/login returns the login view")
     void userLoginForm_ShouldReturnLoginView() throws Exception {
         // Act & Assert
