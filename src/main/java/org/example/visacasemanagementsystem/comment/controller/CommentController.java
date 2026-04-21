@@ -4,9 +4,11 @@ import jakarta.validation.Valid;
 import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.dto.CreateCommentDTO;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +26,8 @@ public class CommentController {
 
     // Create new comment
     @PostMapping
-    public ResponseEntity<CommentDTO> createComment(@Valid @RequestBody CreateCommentDTO dto){
-        CommentDTO createComment =  commentService.createComment(dto);
+    public ResponseEntity<CommentDTO> createComment(@Valid @RequestBody CreateCommentDTO dto, @AuthenticationPrincipal UserPrincipal principal){
+        CommentDTO createComment =  commentService.createComment(dto, principal.getUserId());
         return new ResponseEntity<>(createComment, HttpStatus.CREATED);
     }
 

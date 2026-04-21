@@ -10,15 +10,12 @@ import org.example.visacasemanagementsystem.comment.repository.CommentRepository
 import org.example.visacasemanagementsystem.exception.ResourceNotFoundException;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
-import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class CommentService {
@@ -40,7 +37,7 @@ public class CommentService {
 
      // Create Comment
     @Transactional
-    public CommentDTO createComment(CreateCommentDTO dto) {
+    public CommentDTO createComment(CreateCommentDTO dto, Long userId) {
         if (dto == null) {
             throw new IllegalArgumentException("Comment payload cannot be null");
         }
@@ -50,15 +47,8 @@ public class CommentService {
         }
 
         // Get User and Visa from database
-        Long authorId = ((UserPrincipal) Objects
-                .requireNonNull(Objects
-                        .requireNonNull(SecurityContextHolder
-                                .getContext()
-                                .getAuthentication())
-                        .getPrincipal()))
-                .getUserId();
-        User author = userRepository.findById(authorId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + authorId));
+        User author = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         Visa visa = visaRepository.findById(dto.visaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Visa case not found with id: " + dto.visaId()));

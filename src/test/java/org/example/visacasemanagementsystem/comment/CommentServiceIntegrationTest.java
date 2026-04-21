@@ -12,6 +12,7 @@ import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
-class CommentServiceIntegrationTest {
+class CommentServiceIntegrationTest{
 
     @Autowired
     private CommentService commentService;
@@ -57,10 +58,10 @@ class CommentServiceIntegrationTest {
 
         // Create nonexistent user
         nonExistentUser  = new User();
-        nonExistentUser.setId(999L);
+        nonExistentUser.setId(Long.MAX_VALUE);
         nonExistentUser.setFullName("NonUser");
-        nonExistentUser.setEmail("test@example.com");
-        nonExistentUser.setUsername("test@example.com");
+        nonExistentUser.setEmail("non@example.com");
+        nonExistentUser.setUsername("non@example.com");
         nonExistentUser.setPassword("password123");
         nonExistentUser.setUserAuthorization(UserAuthorization.USER);
 
@@ -76,6 +77,11 @@ class CommentServiceIntegrationTest {
 
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void createComment_shouldSaveAndRetrieveComment() {
         // Arrange
@@ -86,7 +92,7 @@ class CommentServiceIntegrationTest {
 
         // Act
         authenticateTestUser();
-        CommentDTO savedComment = commentService.createComment(dto);
+        CommentDTO savedComment = commentService.createComment(dto, testUser.getId());
 
         // Assert
          assertThat(savedComment).isNotNull();
@@ -107,7 +113,7 @@ class CommentServiceIntegrationTest {
 
         // Act & Assert
         authenticateNonExistentUser();
-        assertThatThrownBy(() -> commentService.createComment(dto))
+        assertThatThrownBy(() -> commentService.createComment(dto, nonExistentUser.getId()))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found with id: " + nonExistentUser.getId());
     }
@@ -120,7 +126,7 @@ class CommentServiceIntegrationTest {
 
         // Act & Assert
         authenticateTestUser();
-        assertThatThrownBy(() -> commentService.createComment(dto))
+        assertThatThrownBy(() -> commentService.createComment(dto, testUser.getId()))
         .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Visa case not found with id: " + nonExistentVisaId);
     }
@@ -131,7 +137,7 @@ class CommentServiceIntegrationTest {
         CreateCommentDTO dto = new CreateCommentDTO(testVisa.getId(), " ");
 
         // Act & Assert
-        assertThatThrownBy(() -> commentService.createComment(dto))
+        assertThatThrownBy(() -> commentService.createComment(dto, testUser.getId()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Comment text cannot be empty");
     }
