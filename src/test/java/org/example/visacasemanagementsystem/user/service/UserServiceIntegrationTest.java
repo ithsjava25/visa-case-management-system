@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,15 +75,15 @@ class UserServiceIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "SYSADMIN")
     @DisplayName("Checking if updateUserAuthorization promotes a USER to ADMIN when requested by a SYSADMIN")
     void updateUserAuthorization_shouldChangeAuthorization_WhenRequestedBySysAdmin() {
         // Arrange
-        User sysAdmin = createAndSaveUser("SysAdmin", UserAuthorization.SYSADMIN);
         User targetUser = createAndSaveValidUser();
 
         // Act
         UserDTO result = userService.updateUserAuthorization(
-                targetUser.getId(), UserAuthorization.ADMIN, sysAdmin.getId()
+                targetUser.getId(), UserAuthorization.ADMIN
         );
 
         // Assert
@@ -93,15 +94,15 @@ class UserServiceIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "SYSADMIN")
     @DisplayName("Checking if deleteUser removes the user row from the database when requested by a SYSADMIN")
     void deleteUser_shouldRemoveUser_WhenRequestedBySysAdmin() {
         // Arrange
-        User sysAdmin = createAndSaveUser("SysAdmin", UserAuthorization.SYSADMIN);
         User targetUser = createAndSaveValidUser();
         Long targetId = targetUser.getId();
 
         // Act
-        userService.deleteUser(targetId, sysAdmin.getId());
+        userService.deleteUser(targetId);
 
         // Assert
         assertThat(userRepository.findById(targetId)).isEmpty();
@@ -184,39 +185,6 @@ class UserServiceIntegrationTest {
         Long otherUserId = otherUser.getId();
         assertThatExceptionOfType(UnauthorizedException.class)
                 .isThrownBy(() -> userService.validateProfileAccess(principal, otherUserId));
-    }
-
-    @Test
-    @DisplayName("Checking if validateSysAdmin passes when principal has the SYSADMIN role")
-    void validateSysAdmin_shouldNotThrow_WhenPrincipalIsSysAdmin() {
-        // Arrange
-        User sysAdmin = createAndSaveUser("SysAdmin", UserAuthorization.SYSADMIN);
-        UserPrincipal principal = new UserPrincipal(sysAdmin);
-
-        // Act & Assert — should complete without exception
-        userService.validateSysAdmin(principal);
-    }
-
-    @Test
-    @DisplayName("Checking if validateAdmin passes when principal has the ADMIN role")
-    void validateAdmin_shouldNotThrow_WhenPrincipalIsAdmin() {
-        // Arrange
-        User admin = createAndSaveUser("Admin", UserAuthorization.ADMIN);
-        UserPrincipal principal = new UserPrincipal(admin);
-
-        // Act & Assert — should complete without exception
-        userService.validateAdmin(principal);
-    }
-
-    @Test
-    @DisplayName("Checking if validateAdmin also passes when principal has the SYSADMIN role")
-    void validateAdmin_shouldNotThrow_WhenPrincipalIsSysAdmin() {
-        // Arrange
-        User sysAdmin = createAndSaveUser("SysAdmin", UserAuthorization.SYSADMIN);
-        UserPrincipal principal = new UserPrincipal(sysAdmin);
-
-        // Act & Assert — should complete without exception
-        userService.validateAdmin(principal);
     }
 
     // ── Helper methods ────────────────────────────────────────────────────────

@@ -168,54 +168,24 @@ class UserServiceTest {
     // ── updateUserAuthorization ───────────────────────────────────────────────
 
     @Test
-    @DisplayName("Checking if updateUserAuthorization throws UnauthorizedException when requester is not a SYSADMIN")
-    void updateUserAuthorization_shouldThrowUnauthorizedException_WhenRequesterIsNotSysAdmin() {
-        // Arrange
-        Long userId = 1L;
-        Long requesterId = 2L;
-
-        User requester = new User();
-        requester.setId(requesterId);
-        requester.setUserAuthorization(UserAuthorization.USER);
-
-        when(userRepository.findById(requesterId)).thenReturn(Optional.of(requester));
-
-        // Act & Assert
-        assertThatThrownBy(() -> userService.updateUserAuthorization(userId, UserAuthorization.ADMIN, requesterId))
-                .isInstanceOf(UnauthorizedException.class)
-                .hasMessageContaining("not authorized");
-    }
-
-    @Test
     @DisplayName("Checking if updateUserAuthorization throws EntityNotFoundException when target user does not exist")
     void updateUserAuthorization_shouldThrowEntityNotFoundException_WhenTargetUserDoesNotExist() {
         // Arrange
         Long nonExistingUserId = 999L;
-        Long sysAdminId = 1L;
 
-        User sysAdmin = new User();
-        sysAdmin.setId(sysAdminId);
-        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
-
-        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
         when(userRepository.findById(nonExistingUserId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.updateUserAuthorization(nonExistingUserId, UserAuthorization.ADMIN, sysAdminId))
+        assertThatThrownBy(() -> userService.updateUserAuthorization(nonExistingUserId, UserAuthorization.ADMIN))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("User not found");
     }
 
     @Test
-    @DisplayName("Checking if updateUserAuthorization changes role when requested by a SYSADMIN")
-    void updateUserAuthorization_shouldChangeAuthorization_WhenRequesterIsSysAdmin() {
+    @DisplayName("Checking if updateUserAuthorization changes role and returns updated UserDTO")
+    void updateUserAuthorization_shouldChangeAuthorization_WhenUserExists() {
         // Arrange
         Long userId = 1L;
-        Long sysAdminId = 2L;
-
-        User sysAdmin = new User();
-        sysAdmin.setId(sysAdminId);
-        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
 
         User targetUser = new User();
         targetUser.setId(userId);
@@ -223,13 +193,12 @@ class UserServiceTest {
 
         UserDTO expectedDTO = new UserDTO(userId, "User", "user@test.com", UserAuthorization.ADMIN);
 
-        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
         when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
         when(userRepository.save(any(User.class))).thenReturn(targetUser);
         when(userMapper.toDTO(targetUser)).thenReturn(expectedDTO);
 
         // Act
-        UserDTO result = userService.updateUserAuthorization(userId, UserAuthorization.ADMIN, sysAdminId);
+        UserDTO result = userService.updateUserAuthorization(userId, UserAuthorization.ADMIN);
 
         // Assert
         assertThat(result.userAuthorization()).isEqualTo(UserAuthorization.ADMIN);
@@ -239,65 +208,32 @@ class UserServiceTest {
     // ── deleteUser ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("Checking if deleteUser throws UnauthorizedException when requester is not a SYSADMIN")
-    void deleteUser_shouldThrowUnauthorizedException_WhenRequesterIsNotSysAdmin() {
-        // Arrange
-        Long userId = 1L;
-        Long requesterId = 2L;
-
-        User requester = new User();
-        requester.setId(requesterId);
-        requester.setUserAuthorization(UserAuthorization.ADMIN);
-
-        when(userRepository.findById(requesterId)).thenReturn(Optional.of(requester));
-
-        // Act & Assert
-        assertThatThrownBy(() -> userService.deleteUser(userId, requesterId))
-                .isInstanceOf(UnauthorizedException.class)
-                .hasMessageContaining("not authorized");
-
-        verify(userRepository, never()).delete(any(User.class));
-    }
-
-    @Test
     @DisplayName("Checking if deleteUser throws EntityNotFoundException when target user does not exist")
     void deleteUser_shouldThrowEntityNotFoundException_WhenTargetUserDoesNotExist() {
         // Arrange
         Long nonExistingUserId = 999L;
-        Long sysAdminId = 1L;
 
-        User sysAdmin = new User();
-        sysAdmin.setId(sysAdminId);
-        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
-
-        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
         when(userRepository.findById(nonExistingUserId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.deleteUser(nonExistingUserId, sysAdminId))
+        assertThatThrownBy(() -> userService.deleteUser(nonExistingUserId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("User not found");
     }
 
     @Test
-    @DisplayName("Checking if deleteUser removes the user when requested by a SYSADMIN")
-    void deleteUser_shouldDeleteUser_WhenRequesterIsSysAdmin() {
+    @DisplayName("Checking if deleteUser removes the user when the user exists")
+    void deleteUser_shouldDeleteUser_WhenUserExists() {
         // Arrange
         Long userId = 1L;
-        Long sysAdminId = 2L;
-
-        User sysAdmin = new User();
-        sysAdmin.setId(sysAdminId);
-        sysAdmin.setUserAuthorization(UserAuthorization.SYSADMIN);
 
         User targetUser = new User();
         targetUser.setId(userId);
 
-        when(userRepository.findById(sysAdminId)).thenReturn(Optional.of(sysAdmin));
         when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
 
         // Act
-        userService.deleteUser(userId, sysAdminId);
+        userService.deleteUser(userId);
 
         // Assert
         verify(userRepository, times(1)).delete(targetUser);
@@ -326,48 +262,6 @@ class UserServiceTest {
                 .hasMessageContaining("permission");
     }
 
-    // ── validateSysAdmin (UserPrincipal) ──────────────────────────────────────
-
-    @Test
-    @DisplayName("Checking if validateSysAdmin throws UnauthorizedException when principal is not a SYSADMIN")
-    void validateSysAdmin_shouldThrowUnauthorizedException_WhenPrincipalIsNotSysAdmin() {
-        // Arrange
-        User user = new User();
-        user.setId(1L);
-        user.setFullName("Regular User");
-        user.setEmail("user@test.com");
-        user.setUsername("user@test.com");
-        user.setPassword("password");
-        user.setUserAuthorization(UserAuthorization.USER);
-        UserPrincipal principal = new UserPrincipal(user);
-
-        // Act & Assert
-        assertThatThrownBy(() -> userService.validateSysAdmin(principal))
-                .isInstanceOf(UnauthorizedException.class)
-                .hasMessageContaining("system administrators");
-    }
-
-    // ── validateAdmin ─────────────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("Checking if validateAdmin throws UnauthorizedException when principal is a regular USER")
-    void validateAdmin_shouldThrowUnauthorizedException_WhenPrincipalIsRegularUser() {
-        // Arrange
-        User user = new User();
-        user.setId(1L);
-        user.setFullName("Regular User");
-        user.setEmail("user@test.com");
-        user.setUsername("user@test.com");
-        user.setPassword("password");
-        user.setUserAuthorization(UserAuthorization.USER);
-        UserPrincipal principal = new UserPrincipal(user);
-
-        // Act & Assert
-        assertThatThrownBy(() -> userService.validateAdmin(principal))
-                .isInstanceOf(UnauthorizedException.class)
-                .hasMessageContaining("administrators");
-    }
-
     // ── findById ──────────────────────────────────────────────────────────────
 
     @Test
@@ -392,3 +286,4 @@ class UserServiceTest {
         assertThat(userService.findByEmail("nobody@test.com")).isEmpty();
     }
 }
+   

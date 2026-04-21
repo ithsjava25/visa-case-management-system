@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserViewController.class)
+@EnableMethodSecurity
 @DisplayName("UserViewController web-layer tests")
 class UserViewControllerTest {
 
@@ -300,11 +302,7 @@ class UserViewControllerTest {
     @Test
     @DisplayName("Checking if GET /user/list returns 403 when accessed by a non-SYSADMIN")
     void userListView_AsNonSysAdmin_ShouldReturnForbidden() throws Exception {
-        // Arrange
-        doThrow(new UnauthorizedException("Only system administrators can access this page."))
-                .when(userService).validateSysAdmin(any(UserPrincipal.class));
-
-        // Act & Assert
+        // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects USER
         mockMvc.perform(get("/user/list")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
                 .andExpect(status().isForbidden());
@@ -338,7 +336,7 @@ class UserViewControllerTest {
         // Arrange
         Long adminId = 1L;
         when(visaService.findVisasByHandlerId(adminId)).thenReturn(List.of());
-        when(visaService.findVisaByStatus("UNASSIGNED")).thenReturn(List.of());
+        when(visaService.findVisaByStatus("SUBMITTED")).thenReturn(List.of());
 
         // Act & Assert
         mockMvc.perform(get("/dashboard/admin")
@@ -353,11 +351,7 @@ class UserViewControllerTest {
     @Test
     @DisplayName("Checking if GET /dashboard/admin returns 403 when accessed by a regular USER")
     void adminDashboard_AsRegularUser_ShouldReturnForbidden() throws Exception {
-        // Arrange
-        doThrow(new UnauthorizedException("Only administrators or system administrators can access this page."))
-                .when(userService).validateAdmin(any(UserPrincipal.class));
-
-        // Act & Assert
+        // Act & Assert — @PreAuthorize("hasRole('ADMIN')") rejects USER
         mockMvc.perform(get("/dashboard/admin")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
                 .andExpect(status().isForbidden());
@@ -386,11 +380,7 @@ class UserViewControllerTest {
     @Test
     @DisplayName("Checking if GET /dashboard/sysadmin returns 403 when accessed by an ADMIN")
     void sysAdminDashboard_AsAdmin_ShouldReturnForbidden() throws Exception {
-        // Arrange
-        doThrow(new UnauthorizedException("Only system administrators can access this page."))
-                .when(userService).validateSysAdmin(any(UserPrincipal.class));
-
-        // Act & Assert
+        // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects ADMIN
         mockMvc.perform(get("/dashboard/sysadmin")
                         .with(authentication(authFor(1L, "Test Admin", "admin@test.com", UserAuthorization.ADMIN))))
                 .andExpect(status().isForbidden());
@@ -399,11 +389,7 @@ class UserViewControllerTest {
     @Test
     @DisplayName("Checking if GET /dashboard/sysadmin returns 403 when accessed by a regular USER")
     void sysAdminDashboard_AsRegularUser_ShouldReturnForbidden() throws Exception {
-        // Arrange
-        doThrow(new UnauthorizedException("Only system administrators can access this page."))
-                .when(userService).validateSysAdmin(any(UserPrincipal.class));
-
-        // Act & Assert
+        // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects USER
         mockMvc.perform(get("/dashboard/sysadmin")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
                 .andExpect(status().isForbidden());
