@@ -2,6 +2,7 @@ package org.example.visacasemanagementsystem.visa;
 
 import org.example.visacasemanagementsystem.audit.AuditEventType;
 import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -34,6 +36,9 @@ class VisaServiceIntegrationTest {
 
     @Autowired
     private AuditService auditService;
+
+    @MockitoBean
+    private FileService fileService;
 
     @Test
     void applyForVisa_shouldSaveVisa_WhenDataIsValid() {
