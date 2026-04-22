@@ -333,7 +333,8 @@ class VisaViewControllerTest {
         // Assert
         result.andExpect(status().isOk())
                 .andExpect(view().name("visa/edit-form"))
-                .andExpect(model().hasErrors());
+                .andExpect(model().hasErrors())
+                .andExpect(model().attributeExists("statusInformation"));
 
     }
 

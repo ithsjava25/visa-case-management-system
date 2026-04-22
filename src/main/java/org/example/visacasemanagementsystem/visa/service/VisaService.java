@@ -211,7 +211,7 @@ public class VisaService {
                 userId,
                 savedVisa.getId(),
                 AuditEventType.CREATED,
-                "Visa application submitted." + (s3Key != null ? "Document attached." : "")
+                "Visa application submitted." + (s3Key != null ? " Document attached." : "")
         );
         return visaMapper.toDTO(savedVisa);
     }
@@ -240,7 +240,7 @@ public class VisaService {
         visa.setPassportNumber(dto.passportNumber());
         visa.setTravelDate(dto.travelDate());
 
-        if (newS3Key != null) {
+        if (newS3Key != null && !newS3Key.isBlank()) {
             visa.getS3Keys().add(newS3Key);
         }
 
@@ -269,6 +269,10 @@ public class VisaService {
 
         if (!isOwner && !isAdmin) {
             throw new UnauthorizedException("You cannot delete this document.");
+        }
+
+        if (!visa.getS3Keys().contains(s3Key)) {
+            throw new IllegalArgumentException("Document does not belong to this visa application.");
         }
 
         if (visa.getS3Keys().remove(s3Key)) {

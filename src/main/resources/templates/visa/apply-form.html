@@ -216,9 +216,9 @@
     document.getElementById('passportFile').addEventListener('change', function() {
         const fileNameDisplay = document.getElementById('file-name');
         if (this.files && this.files.length > 0) {
-            fileNameDisplay.innerHTML = '📎 Selected: ' + this.files[0].name;
+            fileNameDisplay.textContent = '📎 Selected: ' + this.files[0].name;
         } else {
-            fileNameDisplay.innerHTML = '';
+            fileNameDisplay.textContent = '';
         }
     });
 </script>

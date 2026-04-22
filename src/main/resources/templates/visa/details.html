@@ -184,11 +184,11 @@
             <span class="label">Attached Documents</span>
 
             <div th:if="${not #lists.isEmpty(visa.downloadUrls)}" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-                <div th:each="url : ${visa.downloadUrls}">
+                <div th:each="url,iter : ${visa.downloadUrls}">
                     <a th:href="${url}" target="_blank" class="btn-assign"
                        style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        View Passport Copy
+                        <span th:text="${#strings.substring(visa.s3Keys[iter.index], 37)}">filename.pdf</span>
                     </a>
                 </div>
             </div>
@@ -366,13 +366,17 @@
                         card.className = 'comment-card';
                         card.style.animation = 'fadeIn 0.5s';
 
-                        card.innerHTML = `
-                    <div class="comment-meta">
-                        <strong>${comment.authorName}</strong> • Just now
-                    </div>
-                    <div class="comment-text">${comment.text}</div>
-                `;
-                        container.prepend(card);
+                        const meta = document.createElement('div');
+                        meta.className = 'comment-meta';
+                        const nameEl = document.createElement('strong');
+                        nameEl.textContent = comment.authorName;
+                        meta.append(nameEl, ' • Just now');
+                        const textEl = document.createElement('div');
+                        textEl.className = 'comment-text';
+                        textEl.textContent = comment.text;
+
+                        +card.append(meta, textEl);
+                        +container.prepend(card);
                     })
                     .catch(error => {
                         alert('System Message: ' + error.message);

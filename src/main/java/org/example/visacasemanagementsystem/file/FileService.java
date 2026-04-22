@@ -13,6 +13,9 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -22,9 +25,19 @@ public class FileService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
 
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "application/pdf",
+            "image/jpeg",
+            "image/png");
+
+    private static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
 
     @Value("${minio.bucketName}")
     private String bucketName;
+
+    @Value("${minio.corsAllowedOrigins:http://localhost:8080}")
+    private String corsAllowedOrigins;
 
     public FileService(S3Client s3Client, S3Presigner s3Presigner) {
         this.s3Client = s3Client;
@@ -52,11 +65,16 @@ public class FileService {
             log.error("Failed to verify/create bucket: {}", e.getMessage());
         }
 
-
         try {
+
+            List<String> origins = Arrays.stream(corsAllowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .toList();
+
             CORSRule corsRule = CORSRule.builder()
-                    .allowedOrigins("*")
-                    .allowedMethods("GET", "PUT", "POST", "DELETE", "HEAD")
+                    .allowedOrigins(origins)
+                    .allowedMethods("GET","HEAD")
                     .allowedHeaders("*")
                     .build();
 
@@ -71,13 +89,29 @@ public class FileService {
     }
 
     public String uploadFile(MultipartFile file) throws IOException {
-        // Generate a unique file name
-        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        // Validate file size
+        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
+            throw  new IOException("File exceeds maximum allowed size of 10 MB");
+        }
+
+        // Validate content type
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            throw new IOException("Unsupported document type: " + contentType
+                    + ". Allowed: PDF, JPEG, PNG");
+        }
+
+        // Sanitize filename
+        String original = file.getOriginalFilename();
+        String safeName = (original == null ? "file"
+                : original.replaceAll("[^A-Za-z0-9._-]", "_"));
+
+        String fileName = UUID.randomUUID() + "_" + safeName;
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(fileName)
-                .contentType(file.getContentType())
+                .contentType(contentType)
                 .build();
 
         s3Client.putObject(putObjectRequest,
