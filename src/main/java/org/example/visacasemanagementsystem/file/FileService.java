@@ -2,6 +2,7 @@ package org.example.visacasemanagementsystem.file;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.example.visacasemanagementsystem.config.S3Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,7 @@ public class FileService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
 
+
     @Value("${minio.bucketName}")
     private String bucketName;
 
@@ -32,6 +34,11 @@ public class FileService {
 
     @PostConstruct
     public void initializeBucket() {
+
+        if (bucketName == null || bucketName.equals("test-bucket")) {
+            log.info("Skipping bucket initialization (test profile or missing config)");
+            return;
+        }
         try {
             try {
                 s3Client.headBucket(HeadBucketRequest.builder().bucket(bucketName).build());
