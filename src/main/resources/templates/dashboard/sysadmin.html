@@ -228,6 +228,49 @@
         </table>
     </div>
 
+    <!-- User Logs -->
+    <div class="container">
+        <header>
+            <div>
+                <h2>User Log</h2>
+                <span class="row-count"
+                      th:text="${#lists.size(userLogs) + ' event' + (#lists.size(userLogs) == 1 ? '' : 's')}">
+                    0 events
+                </span>
+            </div>
+        </header>
+
+        <div th:if="${userLogs.isEmpty()}" class="empty-state">
+            No user events recorded yet.
+        </div>
+
+        <table th:if="${!userLogs.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Event</th>
+                <th>Actor ID</th>
+                <th>Target ID</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="log : ${userLogs}">
+                <td class="timestamp"
+                    th:text="${#temporals.format(log.timeStamp(), 'yyyy-MM-dd HH:mm:ss')}">
+                    2024-01-01 10:00:00
+                </td>
+                <td>
+                    <span class="event-badge" th:text="${log.userEventType()}">CREATED</span>
+                </td>
+                <td th:text="${log.actorUserId()}">1</td>
+                <td th:text="${log.targetUserId()}">1</td>
+                <td class="description" th:text="${log.description()}">Description</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
 </div>
 
 </body>

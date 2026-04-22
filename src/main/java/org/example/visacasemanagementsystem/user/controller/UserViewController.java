@@ -1,6 +1,7 @@
 package org.example.visacasemanagementsystem.user.controller;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
@@ -27,13 +28,16 @@ public class UserViewController {
     private final VisaService visaService;
     private final UserService userService;
     private final VisaLogService visaLogService;
+    private final UserLogService userLogService;
 
     public UserViewController(VisaService visaService,
                               UserService userService,
-                              VisaLogService visaLogService) {
+                              VisaLogService visaLogService,
+                              UserLogService userLogService) {
         this.visaService = visaService;
         this.userService = userService;
         this.visaLogService = visaLogService;
+        this.userLogService = userLogService;
     }
 
     // Signup form for new users, accessible to all
@@ -166,6 +170,7 @@ public class UserViewController {
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
         model.addAttribute("visaLogs", visaLogService.findAll());
+        model.addAttribute("userLogs", userLogService.findAll());
         return "dashboard/sysadmin";
     }
 }
