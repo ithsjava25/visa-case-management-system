@@ -109,6 +109,10 @@ public class UserService {
     @PreAuthorize("hasRole('SYSADMIN')")
     @Transactional
     public UserDTO updateUserAuthorization(Long actorUserId, Long targetUserId, UserAuthorization newAuth) {
+        if (newAuth == null) {
+            throw new IllegalArgumentException("New authorization cannot be null");
+        }
+
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 

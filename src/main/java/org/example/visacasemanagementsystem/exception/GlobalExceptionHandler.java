@@ -6,6 +6,7 @@ import org.example.visacasemanagementsystem.ApplicationViewController;
 import org.example.visacasemanagementsystem.user.controller.UserViewController;
 import org.example.visacasemanagementsystem.visa.controller.VisaViewController;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,6 +26,16 @@ public class GlobalExceptionHandler {
         // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
         // model.addAttribute("dashboardUrl", determineDashboardUrl());
 
+        return "error/error";
+    }
+
+    // Handles method-level @PreAuthorize denials which throw AccessDeniedException
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    @ExceptionHandler(AccessDeniedException.class)
+    public String handleAccessDeniedException(AccessDeniedException exception, Model model) {
+        log.error("Access denied: {}", exception.getMessage());
+        model.addAttribute("errorMessage", "You do not have permission to perform this action.");
+        model.addAttribute("errorTitle", "⚠️Access Denied.");
         return "error/error";
     }
 

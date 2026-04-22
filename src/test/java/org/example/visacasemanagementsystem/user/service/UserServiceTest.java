@@ -75,7 +75,7 @@ class UserServiceTest {
         User mappedUser = new User();
         when(userMapper.toEntity(dto)).thenReturn(mappedUser);
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class)))
+        when(userRepository.saveAndFlush(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException("unique constraint"));
 
         // Act & Assert
@@ -99,7 +99,7 @@ class UserServiceTest {
 
         when(userMapper.toEntity(dto)).thenReturn(mappedUser);
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(userRepository.save(mappedUser)).thenReturn(savedUser);
+        when(userRepository.saveAndFlush(mappedUser)).thenReturn(savedUser);
         when(userMapper.toDTO(savedUser)).thenReturn(expectedDTO);
 
         // Act
@@ -110,7 +110,7 @@ class UserServiceTest {
         assertThat(mappedUser.getPassword()).isEqualTo("encodedPassword");
         assertThat(mappedUser.getUserAuthorization()).isEqualTo(UserAuthorization.USER);
         verify(passwordEncoder).encode("password123");
-        verify(userRepository).save(mappedUser);
+        verify(userRepository).saveAndFlush(mappedUser);
         // Self-creation via signup: actor and target are the same (the new user).
         verify(userLogService).createUserLog(eq(1L), eq(1L), eq(UserEventType.CREATED), anyString());
     }
