@@ -1,6 +1,6 @@
 package org.example.visacasemanagementsystem.user.controller;
 
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.config.SecurityConfig;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
@@ -48,7 +48,7 @@ class UserViewControllerTest {
     @MockitoBean
     private VisaService visaService;
     @MockitoBean
-    private AuditService auditService;
+    private VisaLogService visaLogService;
 
     // ── GET /user/signup ──────────────────────────────────────────────────────
 
@@ -224,7 +224,7 @@ class UserViewControllerTest {
     void updateProfile_WithValidData_ShouldRedirectToProfileView() throws Exception {
         // Arrange
         Long userId = 1L;
-        when(userService.updateUser(any())).thenReturn(
+        when(userService.updateUser(any(), any())).thenReturn(
                 new UserDTO(userId, "Updated Name", "updated@test.com", UserAuthorization.USER)
         );
 
@@ -237,7 +237,7 @@ class UserViewControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/profile/view/" + userId));
 
-        verify(userService).updateUser(any());
+        verify(userService).updateUser(any(),any());
     }
 
     @Test
@@ -245,7 +245,7 @@ class UserViewControllerTest {
     void updateProfile_WithDuplicateEmail_ShouldReturnEditViewWithError() throws Exception {
         // Arrange
         Long userId = 1L;
-        when(userService.updateUser(any()))
+        when(userService.updateUser(any(), any()))
                 .thenThrow(new IllegalArgumentException("A user with this email already exists"));
 
         // Act & Assert
@@ -361,12 +361,12 @@ class UserViewControllerTest {
     // ── GET /dashboard/sysadmin ───────────────────────────────────────────────
 
     @Test
-    @DisplayName("Checking if GET /dashboard/sysadmin returns users and audit logs for a SYSADMIN")
+    @DisplayName("Checking if GET /dashboard/sysadmin returns users and visa logs for a SYSADMIN")
     void sysAdminDashboard_AsSysAdmin_ShouldReturnDashboardWithUsersAndLogs() throws Exception {
         // Arrange
         Long sysAdminId = 1L;
         when(userService.findAll()).thenReturn(List.of());
-        when(auditService.findAll()).thenReturn(List.of());
+        when(visaLogService.findAll()).thenReturn(List.of());
 
         // Act & Assert
         mockMvc.perform(get("/dashboard/sysadmin")
@@ -374,7 +374,7 @@ class UserViewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("dashboard/sysadmin"))
                 .andExpect(model().attributeExists("users"))
-                .andExpect(model().attributeExists("auditLogs"))
+                .andExpect(model().attributeExists("visaLogs"))
                 .andExpect(model().attributeExists("name"));
     }
 

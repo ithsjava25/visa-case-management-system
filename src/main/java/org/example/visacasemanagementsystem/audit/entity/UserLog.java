@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.example.visacasemanagementsystem.audit.AuditEventType;
+import org.example.visacasemanagementsystem.audit.UserEventType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -17,29 +17,35 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class AuditLog {
+public class UserLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "audit_id", nullable = false)
+    @Column(name = "user_log_id", nullable = false)
     private Long id;
 
     @NotNull @CreatedDate
     private LocalDateTime timeStamp;
 
-    @NotNull private Long userId; // Vem gjorde vad?
+    // Who performed the action (e.g. the sysadmin who deleted the account, or the
+    // user themselves when self-creating via signup or self-updating their profile).
+    @NotNull
+    private Long actorUserId;
 
-    @NotNull private Long visaCaseId; // Vilket ärende rör det?
+    // Which user the action was performed on. For self-creation/self-update this
+    // equals actorUserId; for admin-initiated changes it differs.
+    @NotNull
+    private Long targetUserId;
 
     @NotNull @Enumerated(EnumType.STRING)
-    private AuditEventType auditEventType;
+    private UserEventType userEventType;
 
-    private String description; // Beskrivning av händelse
+    private String description; // Free-form description of what happened.
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof AuditLog auditLog)) return false;
-        return Objects.equals(id, auditLog.id);
+        if (!(o instanceof UserLog userLog)) return false;
+        return Objects.equals(id, userLog.id);
     }
 
     @Override
@@ -49,12 +55,12 @@ public class AuditLog {
 
     @Override
     public String toString() {
-        return "AuditLog{" +
+        return "UserLog{" +
                 "id=" + id +
                 ", timeStamp=" + timeStamp +
-                ", userId=" + userId +
-                ", visaCaseId=" + visaCaseId +
-                ", auditEventType=" + auditEventType +
+                ", actorUserId=" + actorUserId +
+                ", targetUserId=" + targetUserId +
+                ", userEventType=" + userEventType +
                 ", description='" + description + '\'' +
                 '}';
     }

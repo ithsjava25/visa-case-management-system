@@ -1,10 +1,8 @@
 package org.example.visacasemanagementsystem.audit;
 
-public enum AuditEventType {
+public enum UserEventType {
     CREATED,
-    ASSIGNED,
     UPDATED,
     DELETED,
-    GRANTED,
-    REJECTED
+    AUTHORIZATION_CHANGED
 }

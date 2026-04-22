@@ -1,6 +1,8 @@
 package org.example.visacasemanagementsystem.user.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.example.visacasemanagementsystem.audit.UserEventType;
+import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
@@ -35,6 +37,8 @@ class UserServiceTest {
     private UserMapper userMapper;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private UserLogService userLogService;
 
     @InjectMocks
     private UserService userService;
@@ -107,6 +111,8 @@ class UserServiceTest {
         assertThat(mappedUser.getUserAuthorization()).isEqualTo(UserAuthorization.USER);
         verify(passwordEncoder).encode("password123");
         verify(userRepository).save(mappedUser);
+        // Self-creation via signup: actor and target are the same (the new user).
+        verify(userLogService).createUserLog(eq(1L), eq(1L), eq(UserEventType.CREATED), anyString());
     }
 
     // ── updateUser ────────────────────────────────────────────────────────────
@@ -119,7 +125,7 @@ class UserServiceTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.updateUser(dto))
+        assertThatThrownBy(() -> userService.updateUser(dto, 999L))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("User not found");
     }
@@ -139,7 +145,7 @@ class UserServiceTest {
                 .thenThrow(new DataIntegrityViolationException("unique constraint"));
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.updateUser(dto))
+        assertThatThrownBy(() -> userService.updateUser(dto, userId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("email already exists");
     }
@@ -160,12 +166,13 @@ class UserServiceTest {
         when(userMapper.toDTO(existingUser)).thenReturn(expectedDTO);
 
         // Act
-        UserDTO result = userService.updateUser(dto);
+        UserDTO result = userService.updateUser(dto, userId);
 
         // Assert
         assertThat(result).isEqualTo(expectedDTO);
         verify(userMapper).updateEntityFromDTO(dto, existingUser);
         verify(userRepository).saveAndFlush(existingUser);
+        verify(userLogService).createUserLog(eq(userId), eq(userId), eq(UserEventType.UPDATED), anyString());
     }
 
     // ── updateUserAuthorization ───────────────────────────────────────────────
@@ -178,8 +185,10 @@ class UserServiceTest {
 
         when(userRepository.findById(nonExistingUserId)).thenReturn(Optional.empty());
 
+        Long actorId = 7L;
+
         // Act & Assert
-        assertThatThrownBy(() -> userService.updateUserAuthorization(nonExistingUserId, UserAuthorization.ADMIN))
+        assertThatThrownBy(() -> userService.updateUserAuthorization(actorId, nonExistingUserId, UserAuthorization.ADMIN))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("User not found");
     }
@@ -188,6 +197,7 @@ class UserServiceTest {
     @DisplayName("Checking if updateUserAuthorization changes role and returns updated UserDTO")
     void updateUserAuthorization_shouldChangeAuthorization_WhenUserExists() {
         // Arrange
+        Long actorId = 7L;
         Long userId = 1L;
 
         User targetUser = new User();
@@ -201,13 +211,18 @@ class UserServiceTest {
         when(userMapper.toDTO(targetUser)).thenReturn(expectedDTO);
 
         // Act
-        UserDTO result = userService.updateUserAuthorization(userId, UserAuthorization.ADMIN);
+        UserDTO result = userService.updateUserAuthorization(actorId, userId, UserAuthorization.ADMIN);
 
         // Assert
         assertThat(result).isEqualTo(expectedDTO);
         assertThat(targetUser.getUserAuthorization()).isEqualTo(UserAuthorization.ADMIN);
         assertThat(result.userAuthorization()).isEqualTo(UserAuthorization.ADMIN);
         verify(userRepository).save(targetUser);
+        verify(userLogService).createUserLog(
+                eq(actorId),
+                eq(userId),
+                eq(UserEventType.AUTHORIZATION_CHANGED),
+                contains("USER -> ADMIN"));
     }
 
     // ── deleteUser ────────────────────────────────────────────────────────────
@@ -220,8 +235,10 @@ class UserServiceTest {
 
         when(userRepository.findById(nonExistingUserId)).thenReturn(Optional.empty());
 
+        Long actorId = 7L;
+
         // Act & Assert
-        assertThatThrownBy(() -> userService.deleteUser(nonExistingUserId))
+        assertThatThrownBy(() -> userService.deleteUser(actorId, nonExistingUserId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("User not found");
     }
@@ -230,6 +247,7 @@ class UserServiceTest {
     @DisplayName("Checking if deleteUser removes the user when the user exists")
     void deleteUser_shouldDeleteUser_WhenUserExists() {
         // Arrange
+        Long actorId = 7L;
         Long userId = 1L;
 
         User targetUser = new User();
@@ -238,10 +256,11 @@ class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
 
         // Act
-        userService.deleteUser(userId);
+        userService.deleteUser(actorId, userId);
 
         // Assert
         verify(userRepository, times(1)).delete(targetUser);
+        verify(userLogService).createUserLog(eq(actorId), eq(userId), eq(UserEventType.DELETED), anyString());
     }
 
     // ── validateProfileAccess ─────────────────────────────────────────────────

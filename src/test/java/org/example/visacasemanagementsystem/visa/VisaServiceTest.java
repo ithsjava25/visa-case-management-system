@@ -1,8 +1,8 @@
 package org.example.visacasemanagementsystem.visa;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.visacasemanagementsystem.audit.AuditEventType;
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
@@ -35,7 +35,7 @@ class VisaServiceTest {
     @Mock
     private VisaMapper visaMapper;
     @Mock
-    private AuditService auditService;
+    private VisaLogService visaLogService;
 
     @InjectMocks
     private VisaService visaService;
@@ -59,7 +59,7 @@ class VisaServiceTest {
 
         // Verify
         verifyNoInteractions(visaRepository);
-        verifyNoInteractions(auditService);
+        verifyNoInteractions(visaLogService);
     }
 
     @Test
@@ -183,7 +183,7 @@ class VisaServiceTest {
         assertThat(visa.getHandler()).isEqualTo(admin);
 
         verify(visaRepository, times(1)).save(visa);
-        verify(auditService).createAuditLog(eq(adminId), eq(visaId), eq(AuditEventType.GRANTED),
+        verify(visaLogService).createVisaLog(eq(adminId), eq(visaId), eq(VisaEventType.GRANTED),
                 contains("granted"));
 
     }
@@ -211,7 +211,7 @@ class VisaServiceTest {
         // Assert
         assertThat(visa.getVisaStatus()).isEqualTo(VisaStatus.REJECTED);
         assertThat(visa.getStatusInformation()).isEqualTo(reason);
-        verify(auditService).createAuditLog(eq(adminId), eq(visaId), eq(AuditEventType.REJECTED), contains(reason));
+        verify(visaLogService).createVisaLog(eq(adminId), eq(visaId), eq(VisaEventType.REJECTED), contains(reason));
 
     }
 
@@ -228,7 +228,7 @@ class VisaServiceTest {
                 .hasMessageContaining("Reason for rejection cannot be null or blank");
 
         verifyNoInteractions(visaRepository);
-        verifyNoInteractions(auditService);
+        verifyNoInteractions(visaLogService);
     }
 
     @Test
@@ -257,10 +257,10 @@ class VisaServiceTest {
         assertThat(visa.getStatusInformation()).isEqualTo(infoText);
         assertThat(visa.getHandler()).isEqualTo(admin);
 
-        verify(auditService).createAuditLog(
+        verify(visaLogService).createVisaLog(
                 eq(adminId),
                 eq(visaId),
-                eq(AuditEventType.UPDATED),
+                eq(VisaEventType.UPDATED),
                 contains(infoText));
     }
 

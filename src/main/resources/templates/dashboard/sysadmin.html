@@ -185,23 +185,23 @@
         </table>
     </div>
 
-    <!-- Audit Logs -->
+    <!-- Visa Logs -->
     <div class="container">
         <header>
             <div>
-                <h2>Audit Log</h2>
+                <h2>Visa Log</h2>
                 <span class="row-count"
-                      th:text="${#lists.size(auditLogs) + ' event' + (#lists.size(auditLogs) == 1 ? '' : 's')}">
+                      th:text="${#lists.size(visaLogs) + ' event' + (#lists.size(visaLogs) == 1 ? '' : 's')}">
                     0 events
                 </span>
             </div>
         </header>
 
-        <div th:if="${auditLogs.isEmpty()}" class="empty-state">
-            No audit events recorded yet.
+        <div th:if="${visaLogs.isEmpty()}" class="empty-state">
+            No visa events recorded yet.
         </div>
 
-        <table th:if="${!auditLogs.isEmpty()}">
+        <table th:if="${!visaLogs.isEmpty()}">
             <thead>
             <tr>
                 <th>Timestamp</th>
@@ -212,13 +212,13 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="log : ${auditLogs}">
+            <tr th:each="log : ${visaLogs}">
                 <td class="timestamp"
                     th:text="${#temporals.format(log.timeStamp(), 'yyyy-MM-dd HH:mm:ss')}">
                     2024-01-01 10:00:00
                 </td>
                 <td>
-                    <span class="event-badge" th:text="${log.auditEventType()}">CREATED</span>
+                    <span class="event-badge" th:text="${log.visaEventType()}">CREATED</span>
                 </td>
                 <td th:text="${log.userId()}">1</td>
                 <td th:text="${log.visaCaseId() != null ? log.visaCaseId() : '—'}">1</td>

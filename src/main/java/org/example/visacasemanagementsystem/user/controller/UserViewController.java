@@ -1,8 +1,7 @@
 package org.example.visacasemanagementsystem.user.controller;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.visacasemanagementsystem.audit.dto.AuditDTO;
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
@@ -27,14 +26,14 @@ import java.util.Objects;
 public class UserViewController {
     private final VisaService visaService;
     private final UserService userService;
-    private final AuditService auditService;
+    private final VisaLogService visaLogService;
 
     public UserViewController(VisaService visaService,
                               UserService userService,
-                              AuditService auditService) {
+                              VisaLogService visaLogService) {
         this.visaService = visaService;
         this.userService = userService;
-        this.auditService = auditService;
+        this.visaLogService = visaLogService;
     }
 
     // Signup form for new users, accessible to all
@@ -117,7 +116,7 @@ public class UserViewController {
 
         try {
             UpdateUserDTO dto = new UpdateUserDTO(userId, fullName, email);
-            userService.updateUser(dto);
+            userService.updateUser(dto, principal.getUserId());
             return "redirect:/profile/view/" + userId;
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
@@ -164,10 +163,9 @@ public class UserViewController {
     public String sysAdminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                     Model model) {
         List<UserDTO> allUsers = userService.findAll();
-        List<AuditDTO> recentLogs = auditService.findAll();
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
-        model.addAttribute("auditLogs", recentLogs);
+        model.addAttribute("visaLogs", visaLogService.findAll());
         return "dashboard/sysadmin";
     }
 }

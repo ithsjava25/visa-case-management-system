@@ -1,7 +1,7 @@
 package org.example.visacasemanagementsystem.visa.service;
 import jakarta.persistence.EntityNotFoundException;
-import org.example.visacasemanagementsystem.audit.AuditEventType;
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
@@ -32,14 +32,14 @@ public class VisaService {
     private final VisaRepository visaRepository;
     private final UserRepository userRepository;
     private final VisaMapper visaMapper;
-    private final AuditService auditService;
+    private final VisaLogService visaLogService;
 
 
-    public VisaService(VisaRepository visaRepository, UserRepository userRepository ,VisaMapper visaMapper, AuditService auditService) {
+    public VisaService(VisaRepository visaRepository, UserRepository userRepository, VisaMapper visaMapper, VisaLogService visaLogService) {
         this.visaRepository = visaRepository;
         this.userRepository = userRepository;
         this.visaMapper = visaMapper;
-        this.auditService = auditService;
+        this.visaLogService = visaLogService;
     }
 
     // --- For filtering in Frontend list-view ---
@@ -148,10 +148,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log in database
-        auditService.createAuditLog(
+        visaLogService.createVisaLog(
                 adminId,
                 visaId,
-                AuditEventType.UPDATED,
+                VisaEventType.UPDATED,
                 "Status changed to: " + newStatus
         );
 
@@ -176,10 +176,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log in database
-        auditService.createAuditLog(
+        visaLogService.createVisaLog(
                 userId,
                 savedVisa.getId(),
-                AuditEventType.CREATED,
+                VisaEventType.CREATED,
                 "Visa application submitted."
         );
         return visaMapper.toDTO(savedVisa);
@@ -214,10 +214,10 @@ public class VisaService {
 
         Visa  savedVisa = visaRepository.save(visa);
 
-        auditService.createAuditLog(
+        visaLogService.createVisaLog(
                 userId,
                 savedVisa.getId(),
-                AuditEventType.UPDATED,
+                VisaEventType.UPDATED,
                 "Applicant updated application details."
         );
         return visaMapper.toDTO(savedVisa);
@@ -237,10 +237,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log in database
-        auditService.createAuditLog(
+        visaLogService.createVisaLog(
                 adminId,
                 visaId,
-                AuditEventType.GRANTED,
+                VisaEventType.GRANTED,
                 "Visa has been granted."
         );
 
@@ -265,10 +265,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log in database
-        auditService.createAuditLog(
+        visaLogService.createVisaLog(
                 adminId,
                 visaId,
-                AuditEventType.REJECTED,
+                VisaEventType.REJECTED,
                 "Visa rejected. Reason: " + reason);
 
         return visaMapper.toDTO(savedVisa);
@@ -292,10 +292,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log in database
-        auditService.createAuditLog(
+        visaLogService.createVisaLog(
                 adminId,
                 visaId,
-                AuditEventType.UPDATED,
+                VisaEventType.UPDATED,
                 "Information requested: " + infoText
         );
 
@@ -313,10 +313,10 @@ public class VisaService {
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log in database
-        auditService.createAuditLog(
+        visaLogService.createVisaLog(
                 adminId,
                 visaId,
-                AuditEventType.ASSIGNED,
+                VisaEventType.ASSIGNED,
                 "Admin " + admin.getFullName() + " has been assigned to case and status is now ASSIGNED."
         );
         return visaMapper.toDTO(savedVisa);
