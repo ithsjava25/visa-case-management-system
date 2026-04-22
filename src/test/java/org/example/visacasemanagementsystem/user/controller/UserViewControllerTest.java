@@ -1,5 +1,6 @@
 package org.example.visacasemanagementsystem.user.controller;
 
+import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.config.SecurityConfig;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
@@ -49,6 +50,8 @@ class UserViewControllerTest {
     private VisaService visaService;
     @MockitoBean
     private VisaLogService visaLogService;
+    @MockitoBean
+    private UserLogService userLogService;
 
     // ── GET /user/signup ──────────────────────────────────────────────────────
 
@@ -394,6 +397,70 @@ class UserViewControllerTest {
         mockMvc.perform(get("/dashboard/sysadmin")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
                 .andExpect(status().isForbidden());
+    }
+
+    // ── POST /profile/edit/{userId}/authorization ─────────────────────────────
+
+    @Test
+    @DisplayName("Checking if POST /profile/edit/{id}/authorization redirects to profile view when SYSADMIN edits another user")
+    void updateAuthorization_AsSysAdminEditingAnotherUser_ShouldRedirectToProfileView() throws Exception {
+        // Arrange
+        Long sysAdminId = 1L;
+        Long targetUserId = 5L;
+        when(userService.updateUserAuthorization(sysAdminId, targetUserId, UserAuthorization.ADMIN))
+                .thenReturn(new UserDTO(targetUserId, "Promoted", "promoted@test.com", UserAuthorization.ADMIN));
+
+        // Act & Assert
+        mockMvc.perform(post("/profile/edit/" + targetUserId + "/authorization")
+                        .param("newAuthorization", "ADMIN")
+                        .with(authentication(authFor(sysAdminId, "SysAdmin", "sysadmin@test.com", UserAuthorization.SYSADMIN)))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profile/view/" + targetUserId));
+
+        verify(userService).updateUserAuthorization(sysAdminId, targetUserId, UserAuthorization.ADMIN);
+    }
+
+    @Test
+    @DisplayName("Checking if POST /profile/edit/{id}/authorization returns 403 when accessed by an ADMIN")
+    void updateAuthorization_AsAdmin_ShouldReturnForbidden() throws Exception {
+        // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects ADMIN
+        mockMvc.perform(post("/profile/edit/5/authorization")
+                        .param("newAuthorization", "USER")
+                        .with(authentication(authFor(1L, "Test Admin", "admin@test.com", UserAuthorization.ADMIN)))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(userService, never()).updateUserAuthorization(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Checking if POST /profile/edit/{id}/authorization returns 403 when accessed by a regular USER")
+    void updateAuthorization_AsRegularUser_ShouldReturnForbidden() throws Exception {
+        // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects USER
+        mockMvc.perform(post("/profile/edit/5/authorization")
+                        .param("newAuthorization", "USER")
+                        .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER)))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(userService, never()).updateUserAuthorization(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Checking if POST /profile/edit/{id}/authorization refuses self-change to prevent sysadmin lockout")
+    void updateAuthorization_AsSysAdminEditingSelf_ShouldBeForbidden() throws Exception {
+        // Arrange
+        Long sysAdminId = 1L;
+
+        // Act & Assert — controller throws UnauthorizedException, mapped to 403
+        mockMvc.perform(post("/profile/edit/" + sysAdminId + "/authorization")
+                        .param("newAuthorization", "USER")
+                        .with(authentication(authFor(sysAdminId, "SysAdmin", "sysadmin@test.com", UserAuthorization.SYSADMIN)))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(userService, never()).updateUserAuthorization(any(), any(), any());
     }
 
     // ── Helper methods ────────────────────────────────────────────────────────

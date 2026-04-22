@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.user.controller;
 import jakarta.persistence.EntityNotFoundException;
 import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
+import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
@@ -106,6 +107,7 @@ public class UserViewController {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         model.addAttribute("user", user);
+        addAuthorizationFormAttributes(model, principal, userId);
         return "profile/edit";
     }
 
@@ -123,10 +125,47 @@ public class UserViewController {
             userService.updateUser(dto, principal.getUserId());
             return "redirect:/profile/view/" + userId;
         } catch (IllegalArgumentException e) {
+            // Re-fetch the user so the (separate) authorization form on the same page
+            // can keep showing the correct currently-selected role.
+            UserAuthorization currentAuth = userService.findById(userId)
+                    .map(UserDTO::userAuthorization)
+                    .orElse(null);
             model.addAttribute("error", e.getMessage());
-            model.addAttribute("user", new UserDTO(userId, fullName, email, null));
+            model.addAttribute("user", new UserDTO(userId, fullName, email, currentAuth));
+            addAuthorizationFormAttributes(model, principal, userId);
             return "profile/edit";
         }
+    }
+
+    // Sysadmin-only endpoint that backs the role dropdown on /profile/edit/{userId}.
+    // Kept as a separate POST so an authorization change is one HTTP request and one
+    // log row (UserEventType.AUTHORIZATION_CHANGED) — not muddled in with name/email
+    // updates which log as UserEventType.UPDATED.
+    @PreAuthorize("hasRole('SYSADMIN')")
+    @PostMapping("/profile/edit/{userId}/authorization")
+    public String updateAuthorization(@AuthenticationPrincipal UserPrincipal principal,
+                                      @PathVariable Long userId,
+                                      @RequestParam UserAuthorization newAuthorization) {
+        if (principal.getUserId().equals(userId)) {
+            // Defence-in-depth: the template hides the dropdown on own profile, but
+            // refusing here protects against a hand-crafted request that would
+            // otherwise let a sysadmin lock themselves out by self-demoting.
+            throw new UnauthorizedException("Sysadmins cannot change their own authorization.");
+        }
+        userService.updateUserAuthorization(principal.getUserId(), userId, newAuthorization);
+        return "redirect:/profile/view/" + userId;
+    }
+
+    // Adds the two model attributes the role dropdown on profile/edit needs.
+    // canChangeAuthorization gates whether the dropdown form renders at all
+    // (sysadmin viewing someone else's profile); authorizations populates the
+    // <option> list.
+    private void addAuthorizationFormAttributes(Model model, UserPrincipal principal, Long userId) {
+        boolean isOwnProfile = principal.getUserId().equals(userId);
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+        model.addAttribute("canChangeAuthorization", isSysAdmin && !isOwnProfile);
+        model.addAttribute("authorizations", UserAuthorization.values());
     }
 
     // A list view of users only available to sysadmins
