@@ -248,8 +248,10 @@ class UserViewControllerTest {
     void updateProfile_WithDuplicateEmail_ShouldReturnEditViewWithError() throws Exception {
         // Arrange
         Long userId = 1L;
+        UserDTO existing = new UserDTO(userId, "Test User", "user@test.com", UserAuthorization.USER);
         when(userService.updateUser(any(), any()))
                 .thenThrow(new IllegalArgumentException("A user with this email already exists"));
+        when(userService.findById(userId)).thenReturn(Optional.of(existing));
 
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + userId)
@@ -260,6 +262,25 @@ class UserViewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("profile/edit"))
                 .andExpect(model().attributeExists("error"));
+    }
+
+    @Test
+    @DisplayName("Checking if POST /profile/edit/{id} returns 404 when the user was concurrently deleted between validation and the failed update")
+    void updateProfile_WhenUserConcurrentlyDeleted_ShouldReturnNotFound() throws Exception {
+        // Arrange — updateUser fails with IllegalArgumentException AND the
+        // re-fetch in the catch block returns empty (concurrent delete window).
+        Long userId = 1L;
+        when(userService.updateUser(any(), any()))
+                .thenThrow(new IllegalArgumentException("A user with this email already exists"));
+        when(userService.findById(userId)).thenReturn(Optional.empty());
+
+        // Act & Assert — handled by GlobalExceptionHandler → 404
+        mockMvc.perform(post("/profile/edit/" + userId)
+                        .param("fullName", "Test User")
+                        .param("email", "taken@test.com")
+                        .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER)))
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -445,6 +466,32 @@ class UserViewControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(userService, never()).updateUserAuthorization(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Checking if POST /profile/edit/{id}/authorization re-renders the edit form with an inline error when the service throws IllegalArgumentException")
+    void updateAuthorization_WhenServiceThrowsIllegalArgument_ShouldReturnEditViewWithError() throws Exception {
+        // Arrange — simulates a future business rule (e.g., refusing to demote
+        // the last sysadmin) bubbling out as IllegalArgumentException.
+        Long sysAdminId = 1L;
+        Long targetUserId = 5L;
+        UserDTO existing = new UserDTO(targetUserId, "Target", "target@test.com", UserAuthorization.SYSADMIN);
+
+        when(userService.updateUserAuthorization(sysAdminId, targetUserId, UserAuthorization.USER))
+                .thenThrow(new IllegalArgumentException("Cannot demote the last sysadmin"));
+        when(userService.findById(targetUserId)).thenReturn(Optional.of(existing));
+
+        // Act & Assert
+        mockMvc.perform(post("/profile/edit/" + targetUserId + "/authorization")
+                        .param("newAuthorization", "USER")
+                        .with(authentication(authFor(sysAdminId, "SysAdmin", "sysadmin@test.com", UserAuthorization.SYSADMIN)))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("profile/edit"))
+                .andExpect(model().attributeExists("error"))
+                .andExpect(model().attributeExists("user"))
+                .andExpect(model().attributeExists("canChangeAuthorization"))
+                .andExpect(model().attributeExists("authorizations"));
     }
 
     @Test
