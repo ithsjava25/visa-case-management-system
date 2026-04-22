@@ -95,5 +95,13 @@ public class FileService {
         return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
+    public void deleteFile(String s3Key) {
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(s3Key)
+                .build();
+        s3Client.deleteObject(deleteObjectRequest);
+    }
+
 
 }

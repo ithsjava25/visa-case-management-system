@@ -15,6 +15,7 @@ public record UpdateVisaDTO(
         @NotBlank(message = "Nationality must be specified") String nationality,
         @NotBlank(message = "Passport number must be provided") String passportNumber,
         @NotNull (message = "Travel date must be provided") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate travelDate,
-        Long handlerId
+        Long handlerId,
+        String statusInformation
 ) {
 }

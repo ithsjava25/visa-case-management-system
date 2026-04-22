@@ -6,6 +6,8 @@ import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class VisaMapper {
 
@@ -26,8 +28,9 @@ public class VisaMapper {
                 visa.getHandler() != null ? visa.getHandler().getFullName() : "Unassigned",
                 visa.getCreatedAt(),
                 visa.getUpdatedAt(),
-                visa.getStatusInformation()
-
+                visa.getStatusInformation(),
+                List.of(),
+                List.copyOf(visa.getS3Keys())
         );
     }
 
@@ -53,7 +56,8 @@ public class VisaMapper {
         visa.setPassportNumber(dto.passportNumber());
         visa.setTravelDate(dto.travelDate());
 
+        if (dto.statusInformation() != null) {
+            visa.setStatusInformation(dto.statusInformation());
+        }
     }
-
-
 }

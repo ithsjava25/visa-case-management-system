@@ -102,8 +102,34 @@
             font-size: 0.75rem;
             margin-top: 8px;
             display: block;
-
         }
+
+        /* Styling for new Choose file-button */
+        input[type="file"] {
+            width: 105px !important;
+            height: 32px;
+            color: transparent;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            display: none;
+        }
+
+        input[type="file"]::before {
+            content: 'Choose File';
+            display: inline-block;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 5px 12px;
+            color: #ccc;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+
     </style>
 </head>
 <body>
@@ -114,7 +140,7 @@
         <p>Logged in as <span th:text="${currentUser.fullName}">User</span></p>
     </header>
 
-    <form th:action="@{/visas/apply}" th:object="${createVisaDTO}" method="post">
+    <form th:action="@{/visas/apply}" th:object="${createVisaDTO}" method="post" enctype="multipart/form-data">
         <input type="hidden" name="applicantId" th:value="${createVisaDTO.applicantId}" />
 
         <div th:if="${#fields.hasErrors('global')}"
@@ -164,12 +190,38 @@
             <span class="error-text" th:if="${#fields.hasErrors('travelDate')}" th:errors="*{travelDate}"></span>
         </div>
 
+        <div class="form-group">
+            <label>Add Passport Document</label>
+            <div style="position: relative; border: 1px dashed #333; background: #111; border-radius: 6px; padding: 12px; display: flex; align-items: center; gap: 15px;">
+
+                <input type="file" name="passportFile" id="passportFile" accept="image/*,.pdf"
+                       style="border: none; background: transparent; padding: 0; width: auto; margin: 0;">
+
+                <span id="file-name" style="color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+            </div>
+
+            <p style="color: #666; font-size: 11px; margin-top: 5px;">
+                Supported Formats: PDF, JPG or PNG. (Max 10MB).
+            </p>
+        </div>
+
         <button type="submit" class="btn-submit">Submit Application</button>
 
         <a th:href="@{/visas/dashboard}" class="cancel-link">Cancel</a>
     </form>
 
 </div>
+
+<script>
+    document.getElementById('passportFile').addEventListener('change', function() {
+        const fileNameDisplay = document.getElementById('file-name');
+        if (this.files && this.files.length > 0) {
+            fileNameDisplay.innerHTML = '📎 Selected: ' + this.files[0].name;
+        } else {
+            fileNameDisplay.innerHTML = '';
+        }
+    });
+</script>
 
 </body>
 </html>
