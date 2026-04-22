@@ -66,21 +66,22 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(dto.password()));
         user.setUserAuthorization(UserAuthorization.USER);
+        User savedUser;
         try {
-            User savedUser = userRepository.save(user);
-            // For self-creation via signup the actor is the new user themselves.
-            // If admin-initiated user creation is added later, introduce an overload that
-            // accepts an explicit actorUserId.
-            userLogService.createUserLog(
-                    savedUser.getId(),
-                    savedUser.getId(),
-                    UserEventType.CREATED,
-                    "User account created via signup."
-            );
-            return userMapper.toDTO(savedUser);
+            savedUser = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);
         }
+        // For self-creation via signup the actor is the new user themselves.
+        // If admin-initiated user creation is added later, introduce an overload that
+        // accepts an explicit actorUserId.
+        userLogService.createUserLog(
+                savedUser.getId(),
+                savedUser.getId(),
+                UserEventType.CREATED,
+                "User account created via signup."
+        );
+        return userMapper.toDTO(savedUser);
     }
 
     @Transactional
@@ -89,19 +90,20 @@ public class UserService {
         User user = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
+        User savedUser;
         try {
             userMapper.updateEntityFromDTO(dto, user);
-            User savedUser = userRepository.saveAndFlush(user);
-            userLogService.createUserLog(
-                    actorUserId,
-                    savedUser.getId(),
-                    UserEventType.UPDATED,
-                    "User profile updated (fullName/email)."
-            );
-            return userMapper.toDTO(savedUser);
+            savedUser = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);
         }
+        userLogService.createUserLog(
+                actorUserId,
+                savedUser.getId(),
+                UserEventType.UPDATED,
+                "User profile updated (fullName/email)."
+        );
+        return userMapper.toDTO(savedUser);
     }
 
     @PreAuthorize("hasRole('SYSADMIN')")
