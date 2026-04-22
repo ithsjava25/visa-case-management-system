@@ -29,13 +29,11 @@ public class UserLog {
 
     // Who performed the action (e.g. the sysadmin who deleted the account, or the
     // user themselves when self-creating via signup or self-updating their profile).
-    @NotNull
-    private Long actorUserId;
+    @NotNull private Long actorUserId;
 
     // Which user the action was performed on. For self-creation/self-update this
     // equals actorUserId; for admin-initiated changes it differs.
-    @NotNull
-    private Long targetUserId;
+    @NotNull private Long targetUserId;
 
     @NotNull @Enumerated(EnumType.STRING)
     private UserEventType userEventType;
