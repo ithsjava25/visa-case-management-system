@@ -60,7 +60,10 @@ class FileServiceIntegrationTest {
         assertThat(resultKey).endsWith("test-document.pdf");
 
         verify(s3Client).putObject(
-                argThat((PutObjectRequest req) -> req.bucket().equals("test-bucket")),
+                argThat((PutObjectRequest req) ->
+                        "test-bucket".equals(req.bucket())
+                                && resultKey.equals(req.key())
+                                && "application/pdf".equals(req.contentType())),
                 any(RequestBody.class)
         );
     }
@@ -77,6 +80,9 @@ class FileServiceIntegrationTest {
         assertThatThrownBy(() -> fileService.uploadFile(largeFile))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("File exceeds maximum allowed size of 10 MB");
+
+        verify(s3Client, never()).putObject(
+                any(PutObjectRequest.class), any(RequestBody.class));
 
     }
 
@@ -115,6 +121,8 @@ class FileServiceIntegrationTest {
         assertThatThrownBy(() -> fileService.uploadFile(mockFile))
         .isInstanceOf(IOException.class)
                 .hasMessageContaining("Unsupported document type: " + mockFile.getContentType());
+        verify(s3Client, never()).putObject(
+                any(PutObjectRequest.class), any(RequestBody.class));
 
 
     }
@@ -129,8 +137,13 @@ class FileServiceIntegrationTest {
 
        when(mockPresignedRequest.url()).thenReturn(URI.create(expectedUrl).toURL());
 
-       when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
-               .thenReturn(mockPresignedRequest);
+        when(s3Presigner.presignGetObject(argThat((GetObjectPresignRequest req) ->
+                req.signatureDuration().equals(java.time.Duration.ofMinutes(10))
+                        && "test-bucket".equals(req.getObjectRequest().bucket())
+                        && fileName.equals(req.getObjectRequest().key())
+                        && ("attachment; filename=\"" + fileName + "\"")
+                        .equals(req.getObjectRequest().responseContentDisposition()))))
+                .thenReturn(mockPresignedRequest);
 
        // Act
         String url = fileService.getPresignedDownloadUrl(fileName);
