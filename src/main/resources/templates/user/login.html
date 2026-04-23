@@ -118,6 +118,10 @@
             font-size: 14px;
             margin-bottom: 20px;
         }
+        .oauth2 {
+            display: block;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -152,7 +156,10 @@
         <p class="signup-link">
             Don't have an account? <a th:href="@{/user/signup}">Sign up</a>
         </p>
+
+        <a class="oauth2" th:href="@{/oauth2/authorization/google}">Sign in with Google</a>
     </form>
+
 </div>
 
 </body>

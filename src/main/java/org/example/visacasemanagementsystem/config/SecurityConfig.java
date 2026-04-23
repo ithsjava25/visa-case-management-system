@@ -45,6 +45,10 @@ public class SecurityConfig {
                 .formLogin(l -> l
                         .defaultSuccessUrl("/dashboard", true)
                         .loginPage("/user/login"))
+                .oauth2Login(l -> l
+                        .defaultSuccessUrl("/dashboard", true)
+                        .loginPage("/user/login")
+                        .successHandler(oauthSuccessHandler()))
                 .logout(withDefaults()) //TODO: Custom logout page required
                 .httpBasic(withDefaults());
 
@@ -61,5 +65,10 @@ public class SecurityConfig {
     @Bean
     public static PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    public OauthSuccessHandler oauthSuccessHandler() {
+        return new OauthSuccessHandler();
     }
 }
