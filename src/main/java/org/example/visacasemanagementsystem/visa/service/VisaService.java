@@ -289,7 +289,7 @@ public class VisaService {
 
             fileService.deleteFile(s3Key);
 
-            auditService.createAuditLog(userId, visaId, AuditEventType.UPDATED, "Removed document: " + s3Key);
+            visaLogService.createVisaLog(userId, visaId, VisaEventType.UPDATED, "Removed document: " + s3Key);
         }
     }
 
