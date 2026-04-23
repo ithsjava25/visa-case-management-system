@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Visa Case Details</title>
+    <style th:replace="~{fragments/header :: nav-style}"></style>
     <style>
         /* Modern Dark Case Details CSS */
         body {
@@ -11,8 +12,10 @@
             line-height: 1.6;
             background: #000;
             margin: 0;
-            padding: 40px;
+            padding: 0;
         }
+
+        .page-content { padding: 40px; }
 
         .container { max-width: 800px; margin: 0 auto; }
 
@@ -124,6 +127,9 @@
 </head>
 <body>
 
+<nav th:replace="~{fragments/header :: nav}"></nav>
+
+<div class="page-content">
 <div class="container">
     <a th:href="@{/visas/dashboard}" class="back-link">← Back to Dashboard</a>
 
@@ -291,6 +297,7 @@
             </form>
         </div>
     </section>
+</div>
 </div>
 
 <script>

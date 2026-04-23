@@ -38,13 +38,21 @@
             padding-left: 24px;
             border-left: 1px solid #222;
         }
+        /* Logout is a POST form, but must *look* like the old Sign Out link/button */
+        .site-nav .logout-form {
+            margin: 0;
+            padding: 0;
+        }
         .site-nav .btn-signout {
             color: #666;
+            background: transparent;
             text-decoration: none;
             font-size: 13px;
+            font-family: inherit;
             padding: 6px 14px;
             border: 1px solid #222;
             border-radius: 6px;
+            cursor: pointer;
             transition: all 0.2s;
         }
         .site-nav .btn-signout:hover {
@@ -59,27 +67,39 @@
     <a class="brand" th:href="@{/}">Visa Case Management</a>
 
     <div class="nav-links">
-        <!-- Applicant nav -->
+        <!-- Applicant nav.
+             USERs no longer have their own /dashboard/applicant page; the
+             richer /visas/dashboard view is their single dashboard. -->
         <th:block sec:authorize="hasRole('USER')">
-            <a th:href="@{/dashboard/applicant}">Dashboard</a>
+            <a th:href="@{/visas/dashboard}">Dashboard</a>
             <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
         </th:block>
 
         <!-- Admin nav -->
         <th:block sec:authorize="hasRole('ADMIN')">
             <a th:href="@{/dashboard/admin}">Dashboard</a>
+            <a th:href="@{/visas/dashboard}">Visa Cases</a>
             <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
         </th:block>
 
         <!-- Sysadmin nav -->
         <th:block sec:authorize="hasRole('SYSADMIN')">
             <a th:href="@{/dashboard/sysadmin}">Dashboard</a>
+            <a th:href="@{/visas/dashboard}">Visa Cases</a>
             <a th:href="@{/user/list}">Users</a>
             <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
         </th:block>
 
         <span class="nav-user" sec:authentication="principal.fullName">User</span>
-        <a th:href="@{/logout}" class="btn-signout">Sign Out</a>
+
+        <!--
+          Logout must be a POST request because Spring Security's CSRF protection
+          is enabled.  The UserViewController#logout handler invalidates the session
+          and redirects to /user/login?logout.
+        -->
+        <form th:action="@{/user/logout}" method="post" class="logout-form">
+            <button type="submit" class="btn-signout">Sign Out</button>
+        </form>
     </div>
 </nav>
 </body>

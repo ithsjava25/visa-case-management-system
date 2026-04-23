@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
 <head>
     <meta charset="UTF-8">
     <title>System Error - Visa Management</title>
+    <style th:replace="~{fragments/header :: nav-style}"></style>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -10,11 +13,25 @@
             line-height: 1.6;
             background: #000;
             margin: 0;
+            /*
+              No body padding: when the user is signed in, the nav fragment sits
+              flush at the top.  The centred error card is placed inside a
+              vertically-centred .error-stage wrapper instead of using `height: 100vh`
+              on body (which would collide with the nav height).
+            */
+        }
+
+        /*
+          Vertically centres the error card, minus the height of the nav bar.
+          Falls back to 100vh for anonymous users (no nav rendered).
+        */
+        .error-stage {
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: calc(100vh - 56px);
         }
+        .error-stage.no-nav { min-height: 100vh; }
 
         .container {
             max-width: 500px;
@@ -74,16 +91,29 @@
 </head>
 <body>
 
-<div class="container">
-    <div class="error-code" th:text="${errorTitle}">⚠️Error.</div>
-    <h1 th:text="${errorMessage}">Something went wrong</h1>
-    <p>The action could not be completed. Please verify your request or return to the dashboard.</p>
+<!--
+    Header is only rendered when the user is authenticated.  An anonymous user
+    who lands on an error page (e.g. a 404) must not see the navigation.
+-->
+<nav th:replace="~{fragments/header :: nav}" sec:authorize="isAuthenticated()"></nav>
 
-<!--    Todo: update button wih correct redirect URL-->
-    <a href="/visa/dashboard" class="btn-back">
-        Return to Dashboard
-    </a>
+<div class="error-stage" th:classappend="${#authorization.expression('!isAuthenticated()')} ? 'no-nav' : ''">
+    <div class="container">
+        <div class="error-code" th:text="${errorTitle}">⚠️Error.</div>
+        <h1 th:text="${errorMessage}">Something went wrong</h1>
+        <p>The action could not be completed. Please verify your request or return to the dashboard.</p>
 
+        <!--
+            Authenticated users: /dashboard redirects to the correct role-specific dashboard.
+            Anonymous users (e.g. someone who hit a 404 on a public URL): send them to the login page.
+        -->
+        <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}" class="btn-back">
+            Return to Dashboard
+        </a>
+        <a sec:authorize="!isAuthenticated()" th:href="@{/user/login}" class="btn-back">
+            Go to Sign In
+        </a>
+    </div>
 </div>
 
 </body>

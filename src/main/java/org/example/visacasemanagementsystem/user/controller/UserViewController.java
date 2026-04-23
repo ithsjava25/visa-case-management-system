@@ -1,6 +1,8 @@
 package org.example.visacasemanagementsystem.user.controller;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
@@ -13,7 +15,10 @@ import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,16 +46,16 @@ public class UserViewController {
         this.userLogService = userLogService;
     }
 
-    // Signup form for new users, accessible to all
+    // Signup form for new users, accessible to all.
     @PreAuthorize("permitAll()")
     @GetMapping("/user/signup")
-    public String userSignupForm(Model model) {
+    public String userSignupForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
+        if (principal != null) {
+            return "redirect:/dashboard";
+        }
         return "user/signup";
     }
 
-    // Posting a successful user creation then redirecting to the applicant dashboard since only applicants can be
-    // created through the signup process. Admins or Sysadmins are created from applicant users by given authorization
-    // from a sysadmin.
     @PreAuthorize("permitAll()")
     @PostMapping("/user/signup")
     public String createUser(@RequestParam String fullName,
@@ -69,15 +74,26 @@ public class UserViewController {
         }
     }
 
-    // Login page
+    // Login page.
     @PreAuthorize("permitAll()")
     @GetMapping("/user/login")
-    public String userLoginForm(){
+    public String userLoginForm(@AuthenticationPrincipal UserPrincipal principal) {
+        if (principal != null) {
+            return "redirect:/dashboard";
+        }
         return "user/login";
     }
 
-    // Uneditable profile view from where the user themselves or a sysadmin can access the profile edit view through a
-    // button only available to them
+    // Sign-out endpoint.
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/user/logout")
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        new SecurityContextLogoutHandler().logout(request, response, auth);
+        return "redirect:/user/login?logout";
+    }
+
+    // Uneditable profile view
     @GetMapping("/profile/view/{userId}")
     public String viewProfile(@AuthenticationPrincipal UserPrincipal principal,
                               @PathVariable Long userId,
@@ -177,16 +193,6 @@ public class UserViewController {
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
         return "user/list";
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/dashboard/applicant")
-    public String applicantDashboard(@AuthenticationPrincipal UserPrincipal principal,
-                                     Model model) {
-        List<VisaDTO> visas = visaService.findVisasByApplicantId(principal.getUserId());
-        model.addAttribute("name", principal.getFullName());
-        model.addAttribute("visas", visas);
-        return "dashboard/applicant";
     }
 
     @PreAuthorize("hasRole('ADMIN')")

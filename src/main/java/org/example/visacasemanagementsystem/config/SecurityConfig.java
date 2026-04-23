@@ -7,6 +7,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -32,20 +33,21 @@ public class SecurityConfig {
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/user/signup").permitAll()
                         .requestMatchers("/user/login").permitAll()
-                        .requestMatchers("/logout").permitAll()
+                        .requestMatchers("/user/logout").authenticated()
                         .requestMatchers("/dashboard").authenticated()
                         .requestMatchers("/profile/**").authenticated()
                         .requestMatchers("/visas/**").authenticated()
                         .requestMatchers("/api/comments/**").authenticated()
                         .requestMatchers("/**/admin").hasRole("ADMIN")
-                        .requestMatchers("/**/applicant").hasRole("USER")
+                        // /dashboard/applicant was removed — USERs now land on /visas/dashboard
+                        // (covered by the /visas/** authenticated matcher above).
                         .anyRequest().hasRole("SYSADMIN")
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .formLogin(l -> l
                         .defaultSuccessUrl("/dashboard", true)
                         .loginPage("/user/login"))
-                .logout(withDefaults()) //TODO: Custom logout page required
+                .logout(AbstractHttpConfigurer::disable)
                 .httpBasic(withDefaults());
 
         return http.build();
