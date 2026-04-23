@@ -66,7 +66,7 @@ class FileServiceIntegrationTest {
     }
 
     @Test
-    void uploadFile_shouldThrowException_WhenFileIsToLarge() {
+    void uploadFile_shouldThrowException_WhenFileIsTooLarge() {
         // Arrange
         byte[] largeContent = new byte[10 * 1024 * 1024 + 1];
         MockMultipartFile largeFile = new MockMultipartFile(
