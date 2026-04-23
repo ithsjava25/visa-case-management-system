@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
+import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @PreAuthorize("isAuthenticated()")
@@ -29,11 +32,13 @@ public class VisaViewController {
     private final VisaService visaService;
     private final CommentService commentService;
     private final UserService userService;
+    private final FileService fileService;
 
-    public VisaViewController(VisaService visaService, CommentService commentService, UserService userService) {
+    public VisaViewController(VisaService visaService, CommentService commentService, UserService userService,  FileService fileService) {
         this.visaService = visaService;
         this.commentService = commentService;
         this.userService = userService;
+        this.fileService = fileService;
     }
 
     @GetMapping("/dashboard")
@@ -81,16 +86,30 @@ public class VisaViewController {
     public String submitApplication(
             @Valid @ModelAttribute("createVisaDTO") CreateVisaDTO createVisaDTO,
             BindingResult bindingResult,
+            @RequestParam(value = "passportFile",  required = false) MultipartFile passportFile,
             @AuthenticationPrincipal UserPrincipal principal,
             Model model) {
-
+        
         if (bindingResult.hasErrors()) {
             prepareApplyModel(principal.getUserId(), model);
             return "visa/apply-form";
         }
 
         try {
-            visaService.applyForVisa(createVisaDTO, principal.getUserId());
+            String s3Key = null;
+
+            if (passportFile != null && !passportFile.isEmpty()) {
+                s3Key = fileService.uploadFile(passportFile);
+            }
+
+            visaService.applyForVisa(createVisaDTO, principal.getUserId(), s3Key);
+
+        } catch (java.io.IOException e) {
+            bindingResult.reject("upload.error", "Failed to upload document: " + e.getMessage());
+            prepareApplyModel(principal.getUserId(), model);
+
+            return "visa/apply-form";
+
         } catch (IllegalArgumentException e) {
             bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
             prepareApplyModel(principal.getUserId(), model);
@@ -118,10 +137,12 @@ public class VisaViewController {
                 visa.nationality(),
                 visa.passportNumber(),
                 visa.travelDate(),
-                visa.handlerId()
+                visa.handlerId(),
+                visa.statusInformation()
         );
 
         model.addAttribute("updateVisaDto", updateDto);
+        model.addAttribute("visa", visa);
         model.addAttribute("currentUser", userDTO);
         model.addAttribute("visaTypes", VisaType.values());
         model.addAttribute("isEdit", true);
@@ -133,36 +154,65 @@ public class VisaViewController {
     @PostMapping("/{id}/edit")
     public String processUpdate(
             @PathVariable Long id,
-            @Valid @ModelAttribute ("updateVisaDto") UpdateVisaDTO updateVisaDTO,
+            @Valid @ModelAttribute("updateVisaDto") UpdateVisaDTO updateVisaDTO,
             BindingResult bindingResult,
+            @RequestParam(value = "passportFile", required = false) MultipartFile passportFile,
             @AuthenticationPrincipal UserPrincipal principal,
             Model model) {
 
         if (bindingResult.hasErrors()) {
+            VisaDTO visa = visaService.findVisaDtoById(id);
+            model.addAttribute("visa", visa);
             prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
-            VisaDTO visa = visaService.findVisaDtoById(id);
             model.addAttribute("statusInformation", visa.statusInformation());
             return "visa/edit-form";
         }
 
         try {
-            visaService.updateVisa(id, updateVisaDTO, principal.getUserId());
+            String newS3Key = null;
+
+            if (passportFile != null && !passportFile.isEmpty()) {
+                newS3Key = fileService.uploadFile(passportFile);
+            }
+
+            visaService.updateVisa(id, updateVisaDTO, principal.getUserId(), newS3Key);
+
+        } catch (java.io.IOException e) {
+            bindingResult.reject("upload.error", "Failed to upload new document: " + e.getMessage());
+            VisaDTO visa  = visaService.findVisaDtoById(id);
+            model.addAttribute("visa", visa);
+            prepareApplyModel(principal.getUserId(), model);
+            model.addAttribute("isEdit", true);
+            return "visa/edit-form";
+
         } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("date")) {
+            if (e.getMessage() != null && e.getMessage().contains("date")) {
                 bindingResult.rejectValue("travelDate", "error.travelDate", e.getMessage());
             } else {
-                bindingResult.reject("globalError",e.getMessage());
+                bindingResult.reject("globalError", e.getMessage());
             }
 
             prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
             VisaDTO visa = visaService.findVisaDtoById(id);
+            model.addAttribute("visa", visa);
             model.addAttribute("statusInformation", visa.statusInformation());
 
             return "visa/edit-form";
         }
+
         return "redirect:/visas/" + id;
+    }
+
+    @PostMapping("/{id}/documents/delete")
+    public String deleteVisaDocument(@PathVariable Long id,
+                                     @RequestParam String s3Key,
+                                     @AuthenticationPrincipal UserPrincipal principal) {
+
+        visaService.removeVisaDocument(id, s3Key, principal.getUserId());
+        return "redirect:/visas/" + id + "/edit";
+
     }
 
     @PreAuthorize("hasRole('ADMIN')")

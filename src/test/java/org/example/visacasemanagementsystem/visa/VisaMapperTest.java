@@ -84,7 +84,8 @@ class VisaMapperTest {
                 "New Nationality",
                 "NEW-456",
                 LocalDate.now().plusMonths(1),
-                2L
+                2L,
+                null
         );
 
         // Act

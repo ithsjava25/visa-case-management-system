@@ -1,6 +1,7 @@
 package org.example.visacasemanagementsystem.user.service;
 
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
+import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +32,9 @@ class UserServiceIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @MockitoBean
+    private FileService fileService;
 
     @Test
     @DisplayName("Checking if createUser persists and returns the new user when all input is valid")
