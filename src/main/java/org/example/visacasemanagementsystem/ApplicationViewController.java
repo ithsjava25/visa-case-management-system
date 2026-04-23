@@ -26,6 +26,7 @@ public class ApplicationViewController {
 
         if (isSysAdmin) return "redirect:/dashboard/sysadmin";
         if (isAdmin)    return "redirect:/dashboard/admin";
-        return "redirect:/dashboard/applicant";
+        // Applicants use /visas/dashboard as their landing dashboard.
+        return "redirect:/visas/dashboard";
     }
 }

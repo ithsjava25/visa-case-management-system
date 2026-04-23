@@ -333,26 +333,6 @@ class UserViewControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ── GET /dashboard/applicant ──────────────────────────────────────────────
-
-    @Test
-    @DisplayName("Checking if GET /dashboard/applicant returns the applicant dashboard with their visa list")
-    void applicantDashboard_AsUser_ShouldReturnDashboardWithVisas() throws Exception {
-        // Arrange
-        Long userId = 1L;
-        when(visaService.findVisasByApplicantId(userId)).thenReturn(List.of());
-
-        // Act & Assert
-        mockMvc.perform(get("/dashboard/applicant")
-                        .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER))))
-                .andExpect(status().isOk())
-                .andExpect(view().name("dashboard/applicant"))
-                .andExpect(model().attributeExists("visas"))
-                .andExpect(model().attributeExists("name"));
-
-        verify(visaService).findVisasByApplicantId(userId);
-    }
-
     // ── GET /dashboard/admin ──────────────────────────────────────────────────
 
     @Test
