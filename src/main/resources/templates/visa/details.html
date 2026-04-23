@@ -375,8 +375,8 @@
                         textEl.className = 'comment-text';
                         textEl.textContent = comment.text;
 
-                        +card.append(meta, textEl);
-                        +container.prepend(card);
+                        card.append(meta, textEl);
+                        container.prepend(card);
                     })
                     .catch(error => {
                         alert('System Message: ' + error.message);

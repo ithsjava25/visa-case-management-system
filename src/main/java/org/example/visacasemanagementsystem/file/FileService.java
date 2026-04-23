@@ -62,7 +62,8 @@ public class FileService {
                 } else { throw e; }
             }
         } catch (Exception e) {
-            log.error("Failed to verify/create bucket: {}", e.getMessage());
+            log.error("Failed to verify/create bucket '{}': {}", bucketName, e.getMessage(), e);
+            return;
         }
 
         try {
@@ -71,6 +72,11 @@ public class FileService {
                     .map(String::trim)
                     .filter(s -> !s.isBlank())
                     .toList();
+
+            if (origins.isEmpty()) {
+                log.warn("minio.corsAllowedOrigins is empty; skipping CORS configuration for bucket '{}'", bucketName);
+                return;
+            }
 
             CORSRule corsRule = CORSRule.builder()
                     .allowedOrigins(origins)
