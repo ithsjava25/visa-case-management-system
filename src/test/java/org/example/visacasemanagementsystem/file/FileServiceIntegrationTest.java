@@ -39,7 +39,7 @@ class FileServiceIntegrationTest {
 
 
     @Test
-    void uploadFile_ShouldReturnSKey_WhenUploadIsSuccessful() throws IOException {
+    void uploadFile_ShouldReturnS3Key_WhenUploadIsSuccessful() throws IOException {
         // Arrange
         MockMultipartFile mockFile = new MockMultipartFile(
                 "file",
