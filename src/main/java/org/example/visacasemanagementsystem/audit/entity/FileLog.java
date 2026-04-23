@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.FileEventType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -17,29 +17,32 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class VisaLog {
+public class FileLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "visa_log_id", nullable = false)
+    @Column(name = "file_log_id", nullable = false)
     private Long id;
 
-    @NotNull @CreatedDate
+    @NotNull
+    @CreatedDate
     private LocalDateTime timeStamp;
 
-    @NotNull private Long userId;
+    @NotNull private Long actorUserId;
 
     @NotNull private Long visaCaseId;
 
+    @NotNull private String fileName;
+
     @NotNull @Enumerated(EnumType.STRING)
-    private VisaEventType visaEventType;
+    private FileEventType fileEventType;
 
     private String description;
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof VisaLog visaLog)) return false;
-        return Objects.equals(id, visaLog.id);
+        if (!(o instanceof FileLog fileLog)) return false;
+        return Objects.equals(id, fileLog.id);
     }
 
     @Override
@@ -49,12 +52,13 @@ public class VisaLog {
 
     @Override
     public String toString() {
-        return "VisaLog{" +
+        return "FileLog{" +
                 "id=" + id +
                 ", timeStamp=" + timeStamp +
-                ", userId=" + userId +
+                ", actorUserId=" + actorUserId +
                 ", visaCaseId=" + visaCaseId +
-                ", visaEventType=" + visaEventType +
+                ", fileName='" + fileName + '\'' +
+                ", fileEventType=" + fileEventType +
                 ", description='" + description + '\'' +
                 '}';
     }
