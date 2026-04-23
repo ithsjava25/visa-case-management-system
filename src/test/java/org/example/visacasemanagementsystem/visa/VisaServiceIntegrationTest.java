@@ -1,7 +1,7 @@
 package org.example.visacasemanagementsystem.visa;
 
-import org.example.visacasemanagementsystem.audit.AuditEventType;
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
@@ -35,7 +35,7 @@ class VisaServiceIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private AuditService auditService;
+    private VisaLogService visaLogService;
 
     @MockitoBean
     private FileService fileService;
@@ -60,7 +60,7 @@ class VisaServiceIntegrationTest {
         assertThat(savedVisas).hasSize(1);
         assertThat(savedVisas.get(0).getPassportNumber()).isEqualTo("PASS-INT-123");
         assertThat(savedVisas.get(0).getS3Keys()).contains(testS3Key);
-        assertThat(auditService.findAll()).isNotEmpty();
+        assertThat(visaLogService.findAll()).isNotEmpty();
 
     }
 
@@ -96,7 +96,7 @@ class VisaServiceIntegrationTest {
       assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.SUBMITTED);
       assertThat(updatedVisa.getStatusInformation()).isNull();
 
-        var logs = auditService.findAll();
+        var logs = visaLogService.findAll();
 
         Visa finalVisa = visa;
         assertThat(logs)
@@ -104,7 +104,7 @@ class VisaServiceIntegrationTest {
                 .anyMatch(log ->
                         log.visaCaseId() != null &&
                                 log.visaCaseId().equals(finalVisa.getId()) &&
-                                log.auditEventType() == AuditEventType.UPDATED
+                                log.visaEventType() == VisaEventType.UPDATED
                 );
 
     }
@@ -142,12 +142,12 @@ class VisaServiceIntegrationTest {
       assertThat(updatedVisa.getHandler().getId()).isEqualTo(admin.getId());
       assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.ASSIGNED);
 
-        var logs = auditService.findAll();
+        var logs = visaLogService.findAll();
         User finalAdmin = admin;
         assertThat(logs).anyMatch(log ->
                 log.visaCaseId().equals(updatedVisa.getId()) &&
                         log.userId().equals(finalAdmin.getId()) &&
-                        log.auditEventType() == AuditEventType.ASSIGNED &&
+                        log.visaEventType() == VisaEventType.ASSIGNED &&
                         log.description().contains("Test Admin")
         );
     }

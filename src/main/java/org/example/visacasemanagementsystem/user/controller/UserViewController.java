@@ -1,8 +1,9 @@
 package org.example.visacasemanagementsystem.user.controller;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.visacasemanagementsystem.audit.dto.AuditDTO;
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.service.UserLogService;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
+import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
@@ -27,14 +28,17 @@ import java.util.Objects;
 public class UserViewController {
     private final VisaService visaService;
     private final UserService userService;
-    private final AuditService auditService;
+    private final VisaLogService visaLogService;
+    private final UserLogService userLogService;
 
     public UserViewController(VisaService visaService,
                               UserService userService,
-                              AuditService auditService) {
+                              VisaLogService visaLogService,
+                              UserLogService userLogService) {
         this.visaService = visaService;
         this.userService = userService;
-        this.auditService = auditService;
+        this.visaLogService = visaLogService;
+        this.userLogService = userLogService;
     }
 
     // Signup form for new users, accessible to all
@@ -103,6 +107,7 @@ public class UserViewController {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         model.addAttribute("user", user);
+        addAuthorizationFormAttributes(model, principal, userId);
         return "profile/edit";
     }
 
@@ -117,13 +122,50 @@ public class UserViewController {
 
         try {
             UpdateUserDTO dto = new UpdateUserDTO(userId, fullName, email);
-            userService.updateUser(dto);
+            userService.updateUser(dto, principal.getUserId());
             return "redirect:/profile/view/" + userId;
         } catch (IllegalArgumentException e) {
+            // Re-fetch the user so the (separate) authorization form on the same page
+            // can keep showing the correct currently-selected role.
+            UserDTO existing = userService.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
             model.addAttribute("error", e.getMessage());
-            model.addAttribute("user", new UserDTO(userId, fullName, email, null));
+            model.addAttribute("user", new UserDTO(userId, fullName, email, existing.userAuthorization()));
+            addAuthorizationFormAttributes(model, principal, userId);
             return "profile/edit";
         }
+    }
+
+    // Sysadmin-only endpoint that backs the role dropdown
+    @PreAuthorize("hasRole('SYSADMIN')")
+    @PostMapping("/profile/edit/{userId}/authorization")
+    public String updateAuthorization(@AuthenticationPrincipal UserPrincipal principal,
+                                      @PathVariable Long userId,
+                                      @RequestParam UserAuthorization newAuthorization,
+                                      Model model) {
+        if (principal.getUserId().equals(userId)) {
+            throw new UnauthorizedException("Sysadmins cannot change their own authorization.");
+        }
+        try {
+            userService.updateUserAuthorization(principal.getUserId(), userId, newAuthorization);
+            return "redirect:/profile/view/" + userId;
+        } catch (IllegalArgumentException e) {
+            UserDTO user = userService.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("user", user);
+            addAuthorizationFormAttributes(model, principal, userId);
+            return "profile/edit";
+        }
+    }
+
+    // Adds the two model attributes the role dropdown on profile/edit needs
+    private void addAuthorizationFormAttributes(Model model, UserPrincipal principal, Long userId) {
+        boolean isOwnProfile = principal.getUserId().equals(userId);
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+        model.addAttribute("canChangeAuthorization", isSysAdmin && !isOwnProfile);
+        model.addAttribute("authorizations", UserAuthorization.values());
     }
 
     // A list view of users only available to sysadmins
@@ -164,10 +206,10 @@ public class UserViewController {
     public String sysAdminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                     Model model) {
         List<UserDTO> allUsers = userService.findAll();
-        List<AuditDTO> recentLogs = auditService.findAll();
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
-        model.addAttribute("auditLogs", recentLogs);
+        model.addAttribute("visaLogs", visaLogService.findAll());
+        model.addAttribute("userLogs", userLogService.findAll());
         return "dashboard/sysadmin";
     }
 }

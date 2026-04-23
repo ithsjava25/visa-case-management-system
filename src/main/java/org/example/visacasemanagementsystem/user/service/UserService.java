@@ -2,6 +2,8 @@ package org.example.visacasemanagementsystem.user.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import org.example.visacasemanagementsystem.audit.UserEventType;
+import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
@@ -27,11 +29,16 @@ public class UserService {
     private final UserMapper userMapper;
     private static final String USER_NOT_FOUND = "User not found";
     private final PasswordEncoder passwordEncoder;
+    private final UserLogService userLogService;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       UserMapper userMapper,
+                       PasswordEncoder passwordEncoder,
+                       UserLogService userLogService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.userLogService = userLogService;
     }
 
     public List<UserDTO> findAll() {
@@ -59,46 +66,80 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(dto.password()));
         user.setUserAuthorization(UserAuthorization.USER);
+        User savedUser;
         try {
-            User savedUser = userRepository.save(user);
-            return userMapper.toDTO(savedUser);
+            savedUser = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);
         }
+        // For self-creation via signup the actor is the new user themselves.
+        // If admin-initiated user creation is added later, introduce an overload that
+        // accepts an explicit actorUserId.
+        userLogService.createUserLog(
+                savedUser.getId(),
+                savedUser.getId(),
+                UserEventType.CREATED,
+                "User account created via signup."
+        );
+        return userMapper.toDTO(savedUser);
     }
 
     @Transactional
-    public UserDTO updateUser(UpdateUserDTO dto) {
+    public UserDTO updateUser(UpdateUserDTO dto, Long actorUserId) {
         // Check if user and email exists
         User user = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
+        User savedUser;
         try {
             userMapper.updateEntityFromDTO(dto, user);
-            User savedUser = userRepository.saveAndFlush(user);
-            return userMapper.toDTO(savedUser);
+            savedUser = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("A user with this email already exists", e);
         }
-    }
-
-    @PreAuthorize("hasRole('SYSADMIN')")
-    @Transactional
-    public UserDTO updateUserAuthorization(Long userId, UserAuthorization newAuth) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
-
-        user.setUserAuthorization(newAuth);
-        User savedUser = userRepository.save(user);
+        userLogService.createUserLog(
+                actorUserId,
+                savedUser.getId(),
+                UserEventType.UPDATED,
+                "User profile updated (fullName/email)."
+        );
         return userMapper.toDTO(savedUser);
     }
 
     @PreAuthorize("hasRole('SYSADMIN')")
     @Transactional
-    public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
+    public UserDTO updateUserAuthorization(Long actorUserId, Long targetUserId, UserAuthorization newAuth) {
+        if (newAuth == null) {
+            throw new IllegalArgumentException("New authorization cannot be null");
+        }
+
+        User user = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
+
+        UserAuthorization previousAuth = user.getUserAuthorization();
+        user.setUserAuthorization(newAuth);
+        User savedUser = userRepository.save(user);
+        userLogService.createUserLog(
+                actorUserId,
+                savedUser.getId(),
+                UserEventType.AUTHORIZATION_CHANGED,
+                "Authorization changed: " + previousAuth + " -> " + newAuth
+        );
+        return userMapper.toDTO(savedUser);
+    }
+
+    @PreAuthorize("hasRole('SYSADMIN')")
+    @Transactional
+    public void deleteUser(Long actorUserId, Long targetUserId) {
+        User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
         userRepository.delete(user);
+        userLogService.createUserLog(
+                actorUserId,
+                targetUserId,
+                UserEventType.DELETED,
+                "User account deleted."
+        );
     }
 
     public void validateProfileAccess(UserPrincipal principal, Long userId) {

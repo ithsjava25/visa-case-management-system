@@ -67,8 +67,8 @@ class UserServiceIntegrationTest {
         User user = createAndSaveValidUser();
         UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "updated@integration.test");
 
-        // Act
-        UserDTO result = userService.updateUser(dto);
+        // Act — actor is the user themselves editing their own profile
+        UserDTO result = userService.updateUser(dto, user.getId());
 
         // Assert
         assertThat(result.fullName()).isEqualTo("Updated Name");
@@ -84,11 +84,12 @@ class UserServiceIntegrationTest {
     @DisplayName("Checking if updateUserAuthorization promotes a USER to ADMIN when requested by a SYSADMIN")
     void updateUserAuthorization_shouldChangeAuthorization_WhenRequestedBySysAdmin() {
         // Arrange
+        User sysAdmin = createAndSaveUser("SysAdmin Actor", UserAuthorization.SYSADMIN);
         User targetUser = createAndSaveValidUser();
 
         // Act
         UserDTO result = userService.updateUserAuthorization(
-                targetUser.getId(), UserAuthorization.ADMIN
+                sysAdmin.getId(), targetUser.getId(), UserAuthorization.ADMIN
         );
 
         // Assert
@@ -103,11 +104,12 @@ class UserServiceIntegrationTest {
     @DisplayName("Checking if deleteUser removes the user row from the database when requested by a SYSADMIN")
     void deleteUser_shouldRemoveUser_WhenRequestedBySysAdmin() {
         // Arrange
+        User sysAdmin = createAndSaveUser("SysAdmin Actor", UserAuthorization.SYSADMIN);
         User targetUser = createAndSaveValidUser();
         Long targetId = targetUser.getId();
 
         // Act
-        userService.deleteUser(targetId);
+        userService.deleteUser(sysAdmin.getId(), targetId);
 
         // Assert
         assertThat(userRepository.findById(targetId)).isEmpty();
