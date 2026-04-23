@@ -5,6 +5,7 @@ import org.example.visacasemanagementsystem.visa.VisaType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record VisaDTO(
         Long id,
@@ -19,4 +20,6 @@ public record VisaDTO(
         String handlerName,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        String statusInformation) {}
+        String statusInformation,
+        List<String> downloadUrls,
+        List<String> s3Keys) {}

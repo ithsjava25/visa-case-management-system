@@ -3,6 +3,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
+import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
@@ -32,14 +33,20 @@ public class VisaService {
     private final VisaRepository visaRepository;
     private final UserRepository userRepository;
     private final VisaMapper visaMapper;
+    private final FileService fileService;
     private final VisaLogService visaLogService;
 
 
-    public VisaService(VisaRepository visaRepository, UserRepository userRepository, VisaMapper visaMapper, VisaLogService visaLogService) {
+    public VisaService(VisaRepository visaRepository,
+                       UserRepository userRepository,
+                       VisaMapper visaMapper,
+                       VisaLogService visaLogService,
+                       FileService fileService) {
         this.visaRepository = visaRepository;
         this.userRepository = userRepository;
         this.visaMapper = visaMapper;
         this.visaLogService = visaLogService;
+        this.fileService = fileService;
     }
 
     // --- For filtering in Frontend list-view ---
@@ -59,7 +66,30 @@ public class VisaService {
         Visa visa = visaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(NOT_FOUND_MESSAGE));
 
-        return visaMapper.toDTO(visa);
+        VisaDTO dto = visaMapper.toDTO(visa);
+
+        List<String> presignedUrls = visa.getS3Keys().stream()
+                .map(fileService::getPresignedDownloadUrl)
+                .toList();
+
+        return new VisaDTO(
+                dto.id(),
+                dto.visaType(),
+                dto.visaStatus(),
+                dto.nationality(),
+                dto.passportNumber(),
+                dto.travelDate(),
+                dto.applicantId(),
+                dto.applicantName(),
+                dto.handlerId(),
+                dto.handlerName(),
+                dto.createdAt(),
+                dto.updatedAt(),
+                dto.statusInformation(),
+                presignedUrls,
+                dto.s3Keys()
+        );
+
     }
 
     public List<VisaDTO> findVisasByApplicant(Long applicantId) {
@@ -160,7 +190,7 @@ public class VisaService {
     }
 
     @Transactional
-    public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId) {
+    public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId, String s3Key) {
         // Validate travel date
         validateTravelDate(dto.travelDate());
 
@@ -173,6 +203,11 @@ public class VisaService {
 
         visa.setApplicant(applicant);
         visa.setVisaStatus(VisaStatus.SUBMITTED);
+
+        if (s3Key != null && !s3Key.isBlank()) {
+            visa.getS3Keys().add(s3Key);
+        }
+
         Visa savedVisa = visaRepository.save(visa);
 
         // Create log in database
@@ -180,13 +215,13 @@ public class VisaService {
                 userId,
                 savedVisa.getId(),
                 VisaEventType.CREATED,
-                "Visa application submitted."
+                "Visa application submitted." + (s3Key != null ? " Document attached." : "")
         );
         return visaMapper.toDTO(savedVisa);
     }
 
     @Transactional
-    public VisaDTO updateVisa(Long visaId, UpdateVisaDTO dto, Long userId) {
+    public VisaDTO updateVisa(Long visaId, UpdateVisaDTO dto, Long userId, String newS3Key) {
         if (!visaId.equals(dto.id())) {
             throw new IllegalArgumentException("Mismatched visa id.");
         }
@@ -209,6 +244,10 @@ public class VisaService {
         visa.setPassportNumber(dto.passportNumber());
         visa.setTravelDate(dto.travelDate());
 
+        if (newS3Key != null && !newS3Key.isBlank()) {
+            visa.getS3Keys().add(newS3Key);
+        }
+
         visa.setVisaStatus(VisaStatus.SUBMITTED);
         visa.setStatusInformation(null);
 
@@ -221,6 +260,37 @@ public class VisaService {
                 "Applicant updated application details."
         );
         return visaMapper.toDTO(savedVisa);
+    }
+
+    @Transactional
+    public void removeVisaDocument(Long visaId, String s3Key, Long userId) {
+        Visa visa = findVisaById(visaId);
+
+        // Check only the application owner or Admin/sysAdmin can remove files
+        User user = userRepository.findById(userId).orElseThrow();
+        boolean isOwner = visa.getApplicant().getId().equals(user.getId());
+        boolean isAdmin = user.getUserAuthorization() != UserAuthorization.USER;
+
+        if (!isOwner && !isAdmin) {
+            throw new UnauthorizedException("You cannot delete this document.");
+        }
+
+        if (!visa.getS3Keys().contains(s3Key)) {
+            throw new IllegalArgumentException("Document does not belong to this visa application.");
+        }
+
+        if (visa.getS3Keys().remove(s3Key)) {
+            if (visa.getS3Keys().isEmpty()) {
+                visa.setVisaStatus(VisaStatus.INCOMPLETE);
+            } else {
+                visa.setVisaStatus(VisaStatus.SUBMITTED);
+            }
+            visaRepository.save(visa);
+
+            fileService.deleteFile(s3Key);
+
+            auditService.createAuditLog(userId, visaId, AuditEventType.UPDATED, "Removed document: " + s3Key);
+        }
     }
 
     @Transactional
