@@ -1,0 +1,144 @@
+/* --------------------------------------------------------------------------
+ * tokens.css
+ * Design tokens — the single source of truth for colors, typography, radii,
+ * shadows and layout constants used across every template.
+ *
+ * Naming is semantic: tokens describe the *role* of a value, not the value
+ * itself (e.g. --color-text-muted, not --color-gray-888). When adding a new
+ * token, reach for an existing one first; when changing a value, change it
+ * here so every template picks it up.
+ * -------------------------------------------------------------------------- */
+:root {
+
+    /* ----------------------------------------------------------------------
+     * Surfaces
+     * Backgrounds layered from deepest (page) to lightest (hover/raised).
+     * ---------------------------------------------------------------------- */
+    --color-bg:                #000;
+    --color-surface:           #111;
+    --color-surface-raised:    #1a1a1a;
+    --color-surface-hover:     rgba(30, 30, 30, 0.4);
+    --color-input-bg:          #181818;
+    --color-input-bg-focus:    #1a1a1a;
+
+    /* ----------------------------------------------------------------------
+     * Borders
+     * From subtle dividers to strong focus rings.
+     * ---------------------------------------------------------------------- */
+    --color-border-subtle:     #181818;
+    --color-border:            #222;
+    --color-border-strong:     #333;
+    --color-border-focus:      #666;
+
+    /* ----------------------------------------------------------------------
+     * Text
+     * From most prominent to most recessive.
+     * ---------------------------------------------------------------------- */
+    --color-text-primary:      #fff;
+    --color-text-body:         #f0f0f0;
+    --color-text-secondary:    #ccc;
+    --color-text-muted:        #888;
+    --color-text-dim:          #666;
+    --color-text-dimmer:       #555;
+    --color-placeholder:       #444;
+
+    /* ----------------------------------------------------------------------
+     * Accent / primary action
+     * White-on-black is the system's primary call-to-action treatment.
+     * ---------------------------------------------------------------------- */
+    --color-accent:            #fff;
+    --color-accent-hover:      #ccc;
+    --color-accent-on:         #000;
+
+    /* ----------------------------------------------------------------------
+     * Status palette
+     * Authoritative version — visa/dashboard.html's colours won when
+     * admin.html and visa/dashboard.html disagreed on assigned/unassigned.
+     * ---------------------------------------------------------------------- */
+    --color-submitted-bg:      rgba(25, 103, 210, 0.2);
+    --color-submitted-fg:      #8ab4f8;
+
+    --color-unassigned-bg:     rgba(95, 99, 104, 0.2);
+    --color-unassigned-fg:     #bdc1c6;
+
+    --color-assigned-bg:       rgba(0, 97, 193, 0.2);
+    --color-assigned-fg:       #66b2ff;
+
+    --color-incomplete-bg:     rgba(176, 96, 0, 0.2);
+    --color-incomplete-fg:     #fdd663;
+
+    --color-granted-bg:        rgba(30, 126, 52, 0.2);
+    --color-granted-fg:        #81c995;
+
+    --color-rejected-bg:       rgba(217, 48, 37, 0.2);
+    --color-rejected-fg:       #f28b82;
+
+    /* ----------------------------------------------------------------------
+     * Role palette
+     * Mirrors the status palette where it makes sense (USER reuses
+     * submitted-blue, ADMIN reuses incomplete-amber) and adds purple for
+     * SYSADMIN.
+     * ---------------------------------------------------------------------- */
+    --color-role-user-bg:      rgba(25, 103, 210, 0.2);
+    --color-role-user-fg:      #8ab4f8;
+
+    --color-role-admin-bg:     rgba(176, 96, 0, 0.2);
+    --color-role-admin-fg:     #fdd663;
+
+    --color-role-sysadmin-bg:  rgba(128, 0, 128, 0.2);
+    --color-role-sysadmin-fg:  #d7a8ff;
+
+    /* ----------------------------------------------------------------------
+     * Alerts
+     * Slightly more translucent than status badges so they recede into
+     * surrounding cards when stacked.
+     * ---------------------------------------------------------------------- */
+    --color-alert-error-bg:       rgba(217, 48, 37, 0.15);
+    --color-alert-error-border:   rgba(217, 48, 37, 0.3);
+    --color-alert-error-fg:       #f28b82;
+
+    --color-alert-success-bg:     rgba(30, 126, 52, 0.15);
+    --color-alert-success-border: rgba(30, 126, 52, 0.3);
+    --color-alert-success-fg:     #81c995;
+
+    /* ----------------------------------------------------------------------
+     * Form validation
+     * A louder red than the muted alert palette so inline errors pop.
+     * ---------------------------------------------------------------------- */
+    --color-danger:            #ff4d4d;
+
+    /* ----------------------------------------------------------------------
+     * Warning callouts
+     * The "action required / incomplete" yellow banner used on visa
+     * details and the edit form's feedback block.
+     * ---------------------------------------------------------------------- */
+    --color-warning-bg:        #1a1500;
+    --color-warning-border:    #332200;
+    --color-warning-accent:    #ffcc00;
+
+    /* ----------------------------------------------------------------------
+     * Typography
+     * ---------------------------------------------------------------------- */
+    --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono:   ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* ----------------------------------------------------------------------
+     * Radii
+     * ---------------------------------------------------------------------- */
+    --radius-sm:   6px;
+    --radius-md:   8px;
+    --radius-lg:   12px;
+    --radius-pill: 12px;   /* badges, pill buttons — same metric as lg today */
+
+    /* ----------------------------------------------------------------------
+     * Elevation
+     * ---------------------------------------------------------------------- */
+    --shadow-card: 0 8px 16px -2px rgba(0, 0, 0, 0.6);
+
+    /* ----------------------------------------------------------------------
+     * Layout constants
+     * Nav height is used by the error page to vertically centre its card
+     * below the fixed-height header.
+     * ---------------------------------------------------------------------- */
+    --nav-height: 56px;
+}

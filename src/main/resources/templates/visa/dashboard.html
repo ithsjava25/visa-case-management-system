@@ -3,113 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Visa Dashboard</title>
-    <style th:replace="~{fragments/header :: nav-style}"></style>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #f0f0f0;
-            line-height: 1.6;
-            background: #000;
-            margin: 0;
-            padding: 0;
-        }
+        /* Page-specific: centred 1000px card + a dashboard-style header bar. */
+        .container { max-width: 1000px; margin: 0 auto; }
 
-        .page-content { padding: 40px; }
+        .container > header { margin-bottom: 40px; padding-bottom: 24px; }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 32px;
-            background: #111;
-            border: 1px solid #222;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.6);
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #222;
-            padding-bottom: 24px;
-            margin-bottom: 40px;
-        }
-
-        h1 { font-size: 24px; font-weight: 500; color: #fff; margin: 0; }
-
-        .user-info { font-size: 14px; color: #888; }
-
-        /* Buttons & Header Actions */
+        .user-info     { font-size: 14px; color: var(--color-text-muted); }
         .header-actions { display: flex; gap: 12px; }
-
-        .btn-new {
-            text-decoration: none;
-            color: #fff;
-            background: #222;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 500;
-            border-radius: 6px;
-            transition: all 0.2s;
-            border: 1px solid #333;
-        }
-        .btn-new:hover { background: #333; color: #fff; transform: translateY(-1px); }
-
-        .btn-signout {
-            background: transparent;
-            border: 1px solid #222;
-            color: #888;
-        }
-        .btn-signout:hover {
-            background: #181818;
-            color: #ccc;
-            border: 1px solid #333;
-        }
-
-        /* Table Styling */
-        table { width: 100%; border-collapse: collapse; }
-        th {
-            text-align: left;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: #666;
-            padding: 12px 16px;
-            border-bottom: 1px solid #222;
-        }
-        td {
-            padding: 16px;
-            border-bottom: 1px solid #181818;
-            font-size: 14px;
-            color: #ccc;
-            border-left: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        tr:hover td {
-            background: rgba(30, 30, 30, 0.4);
-        }
-
-        tr:hover td:first-child {
-            border-left: 2px solid #fff;
-        }
-        /* STATUS BADGES */
-        .status {
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: 500;
-        }
-
-        .status-submitted { background: rgba(25, 103, 210, 0.2); color: #8ab4f8; }
-        .status-unassigned { background: rgba(95, 99, 104, 0.2); color: #bdc1c6; }
-        .status-assigned { background: rgba(0, 97, 193, 0.2); color: #66b2ff; }
-        .status-incomplete { background: rgba(176, 96, 0, 0.2); color: #fdd663; }
-        .status-granted { background: rgba(30, 126, 52, 0.2); color: #81c995; }
-        .status-rejected { background: rgba(217, 48, 37, 0.2); color: #f28b82; }
-
-        .view-link { color: #fff; text-decoration: none; font-weight: 500; transition: 0.2s; }
-        .view-link:hover { color: #888; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -177,7 +80,7 @@
             </tbody>
         </table>
 
-        <div th:if="${#lists.isEmpty(visas)}" style="padding: 40px; text-align: center; color: #999;">
+        <div th:if="${#lists.isEmpty(visas)}" class="empty-state">
             No applications found.
         </div>
     </main>
