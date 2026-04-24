@@ -1,5 +1,10 @@
 package org.example.visacasemanagementsystem.audit.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.example.visacasemanagementsystem.audit.UserEventType;
 import org.example.visacasemanagementsystem.audit.dto.UserLogDTO;
 import org.example.visacasemanagementsystem.audit.entity.UserLog;
@@ -12,12 +17,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -142,5 +153,212 @@ class UserLogServiceTest {
         // Assert
         assertThat(result).isEmpty();
         verifyNoInteractions(userLogMapper);
+    }
+
+    // ── findFiltered ──────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findFiltered: delegates to repository with a non-null spec and maps the page content when all filters are null")
+    @SuppressWarnings("unchecked")
+    void findFiltered_shouldDelegateToRepo_andMapPage_WhenAllFiltersAreNull() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 20);
+        UserLog entity = new UserLog();
+        entity.setId(1L);
+        UserLogDTO dto = new UserLogDTO(
+                1L, LocalDateTime.now(), 1L, 1L, UserEventType.CREATED, "signup");
+
+        when(userLogRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(entity), pageable, 1));
+        when(userLogMapper.toDTO(entity)).thenReturn(dto);
+
+        // Act
+        Page<UserLogDTO> result = userLogService.findFiltered(null, null, null, pageable);
+
+        // Assert
+        assertThat(result.getContent()).containsExactly(dto);
+        assertThat(result.getPageable()).isEqualTo(pageable);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+
+        ArgumentCaptor<Specification<UserLog>> specCaptor =
+                ArgumentCaptor.forClass(Specification.class);
+        verify(userLogRepository).findAll(specCaptor.capture(), eq(pageable));
+        assertThat(specCaptor.getValue())
+                .as("service must never pass a null Specification")
+                .isNotNull();
+    }
+
+    @Test
+    @DisplayName("findFiltered: returns an empty page and skips the mapper when the repository returns nothing")
+    @SuppressWarnings("unchecked")
+    void findFiltered_shouldReturnEmptyPage_WhenRepositoryHasNoMatches() {
+        // Arrange
+        Pageable pageable = PageRequest.of(1, 50);
+        when(userLogRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        // Act
+        Page<UserLogDTO> result = userLogService.findFiltered(
+                UserEventType.CREATED, null, null, pageable);
+
+        // Assert
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+        verifyNoInteractions(userLogMapper);
+    }
+
+    @Test
+    @DisplayName("findFiltered: builds an equality predicate on userEventType when only eventType is set")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void findFiltered_shouldApplyEventTypeEqualityPredicate_WhenOnlyEventTypeIsSet() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        when(userLogRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        // Act
+        userLogService.findFiltered(UserEventType.AUTHORIZATION_CHANGED, null, null, pageable);
+
+        // Assert - capture the composed Specification and execute it against mocks
+        ArgumentCaptor<Specification<UserLog>> specCaptor =
+                ArgumentCaptor.forClass(Specification.class);
+        verify(userLogRepository).findAll(specCaptor.capture(), eq(pageable));
+
+        Root<UserLog> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path path = mock(Path.class);
+        Predicate expectedPredicate = mock(Predicate.class);
+
+        when(root.get("userEventType")).thenReturn(path);
+        when(cb.equal(path, UserEventType.AUTHORIZATION_CHANGED)).thenReturn(expectedPredicate);
+
+        Predicate actual = specCaptor.getValue().toPredicate(root, query, cb);
+
+        assertThat(actual).isSameAs(expectedPredicate);
+        verify(root).get("userEventType");
+        verify(cb).equal(path, UserEventType.AUTHORIZATION_CHANGED);
+        verify(cb, never()).greaterThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
+        verify(cb, never()).lessThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("findFiltered: builds a greaterThanOrEqualTo predicate on timeStamp when only from is set")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void findFiltered_shouldApplyFromPredicate_WhenOnlyFromIsSet() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        LocalDateTime from = LocalDateTime.of(2026, 1, 1, 0, 0);
+        when(userLogRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        // Act
+        userLogService.findFiltered(null, from, null, pageable);
+
+        // Assert
+        ArgumentCaptor<Specification<UserLog>> specCaptor =
+                ArgumentCaptor.forClass(Specification.class);
+        verify(userLogRepository).findAll(specCaptor.capture(), eq(pageable));
+
+        Root<UserLog> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path path = mock(Path.class);
+        Predicate expectedPredicate = mock(Predicate.class);
+
+        when(root.get("timeStamp")).thenReturn(path);
+        when(cb.greaterThanOrEqualTo(path, from)).thenReturn(expectedPredicate);
+
+        Predicate actual = specCaptor.getValue().toPredicate(root, query, cb);
+
+        assertThat(actual).isSameAs(expectedPredicate);
+        verify(root).get("timeStamp");
+        verify(cb).greaterThanOrEqualTo(path, from);
+        verify(cb, never()).equal(any(Path.class), any(UserEventType.class));
+        verify(cb, never()).lessThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("findFiltered: builds a lessThanOrEqualTo predicate on timeStamp when only to is set")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void findFiltered_shouldApplyToPredicate_WhenOnlyToIsSet() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        LocalDateTime to = LocalDateTime.of(2026, 12, 31, 23, 59);
+        when(userLogRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        // Act
+        userLogService.findFiltered(null, null, to, pageable);
+
+        // Assert
+        ArgumentCaptor<Specification<UserLog>> specCaptor =
+                ArgumentCaptor.forClass(Specification.class);
+        verify(userLogRepository).findAll(specCaptor.capture(), eq(pageable));
+
+        Root<UserLog> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path path = mock(Path.class);
+        Predicate expectedPredicate = mock(Predicate.class);
+
+        when(root.get("timeStamp")).thenReturn(path);
+        when(cb.lessThanOrEqualTo(path, to)).thenReturn(expectedPredicate);
+
+        Predicate actual = specCaptor.getValue().toPredicate(root, query, cb);
+
+        assertThat(actual).isSameAs(expectedPredicate);
+        verify(root).get("timeStamp");
+        verify(cb).lessThanOrEqualTo(path, to);
+        verify(cb, never()).equal(any(Path.class), any(UserEventType.class));
+        verify(cb, never()).greaterThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("findFiltered: composes event-type + from + to predicates with AND when all filters are supplied")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void findFiltered_shouldComposeAllPredicates_WhenAllFiltersAreSet() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        LocalDateTime from = LocalDateTime.of(2026, 1, 1, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 12, 31, 23, 59);
+
+        when(userLogRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        // Act
+        userLogService.findFiltered(UserEventType.CREATED, from, to, pageable);
+
+        // Assert
+        ArgumentCaptor<Specification<UserLog>> specCaptor =
+                ArgumentCaptor.forClass(Specification.class);
+        verify(userLogRepository).findAll(specCaptor.capture(), eq(pageable));
+
+        Root<UserLog> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+
+        Path eventTypePath = mock(Path.class);
+        Path timeStampPath = mock(Path.class);
+        Predicate eqPred = mock(Predicate.class);
+        Predicate gtePred = mock(Predicate.class);
+        Predicate ltePred = mock(Predicate.class);
+        Predicate and1 = mock(Predicate.class);
+        Predicate and2 = mock(Predicate.class);
+
+        when(root.get("userEventType")).thenReturn(eventTypePath);
+        when(root.get("timeStamp")).thenReturn(timeStampPath);
+        when(cb.equal(eventTypePath, UserEventType.CREATED)).thenReturn(eqPred);
+        when(cb.greaterThanOrEqualTo(timeStampPath, from)).thenReturn(gtePred);
+        when(cb.lessThanOrEqualTo(timeStampPath, to)).thenReturn(ltePred);
+        when(cb.and(eqPred, gtePred)).thenReturn(and1);
+        when(cb.and(and1, ltePred)).thenReturn(and2);
+
+        Predicate actual = specCaptor.getValue().toPredicate(root, query, cb);
+
+        assertThat(actual).isSameAs(and2);
+        verify(cb).equal(eventTypePath, UserEventType.CREATED);
+        verify(cb).greaterThanOrEqualTo(timeStampPath, from);
+        verify(cb).lessThanOrEqualTo(timeStampPath, to);
     }
 }
