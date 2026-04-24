@@ -184,7 +184,7 @@ input[type="file"] {
     cursor: pointer;
     overflow: hidden;
 }
-input[type="file"]::-webkit-file-upload-button { display: none; }
+input[type="file"]::file-selector-button { display: none; }
 input[type="file"]::before {
     content: 'Choose File';
     display: inline-block;
