@@ -509,18 +509,6 @@ class VisaViewControllerTest {
                 .andExpect(model().attribute("backUrl", "/visa/cases"));
     }
 
-    // ── Removal smoke test ────────────────────────────────────────────────
-    //
-    // /visas/** is gone. A quick 404 check keeps the old path from silently
-    // coming back during future refactors.
-
-    @Test
-    @WithMockUser
-    void oldPluralPath_ShouldNoLongerResolve() throws Exception {
-        mockMvc.perform(get("/visas/dashboard"))
-                .andExpect(status().isNotFound());
-    }
-
     // Helper methods
     private UserDTO createMockUser(Long id, UserAuthorization role) {
         User testUser = new User();

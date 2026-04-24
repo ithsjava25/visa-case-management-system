@@ -8,6 +8,7 @@ import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -51,20 +52,9 @@ public class LogViewController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) int size,
             Model model) {
-
-        Page<VisaLogDTO> logs = visaLogService.findFiltered(
-                eventType,
-                startOfDayOrNull(from),
-                endOfDayOrNull(to),
-                buildPageable(page, size));
-
-        model.addAttribute("logs", logs);
-        model.addAttribute("eventTypes", VisaEventType.values());
-        model.addAttribute("selectedEventType", eventType);
-        model.addAttribute("from", from);
-        model.addAttribute("to", to);
-        model.addAttribute("pageTitle", "Visa Log");
-        return "log/visa";
+        return renderLogPage(eventType, from, to, page, size,
+                visaLogService::findFiltered,
+                VisaEventType.values(), "Visa Log", "log/visa", model);
     }
 
     @GetMapping("/user")
@@ -77,23 +67,43 @@ public class LogViewController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) int size,
             Model model) {
+        return renderLogPage(eventType, from, to, page, size,
+                userLogService::findFiltered,
+                UserEventType.values(), "User Log", "log/user", model);
+    }
 
-        Page<UserLogDTO> logs = userLogService.findFiltered(
+    // ─── Helpers ──────────────────────────────────────────────────────────
+
+    /** Four-arity fetch function: (eventType, from, to, pageable) → Page. */
+    @FunctionalInterface
+    private interface LogFetcher<E extends Enum<E>, D> {
+        Page<D> fetch(E eventType, LocalDateTime from, LocalDateTime to, Pageable pageable);
+    }
+
+    /**
+     * Populates the model and returns the view name for any log page.
+     * Date-to-LocalDateTime conversion and pagination clamping are applied here
+     * so each handler only needs to supply its service reference and enum type.
+     */
+    private <E extends Enum<E>, D> String renderLogPage(
+            E eventType, LocalDate from, LocalDate to, int page, int size,
+            LogFetcher<E, D> fetchFn,
+            E[] allEventTypes, String pageTitle, String view, Model model) {
+
+        Page<D> logs = fetchFn.fetch(
                 eventType,
                 startOfDayOrNull(from),
                 endOfDayOrNull(to),
                 buildPageable(page, size));
 
         model.addAttribute("logs", logs);
-        model.addAttribute("eventTypes", UserEventType.values());
+        model.addAttribute("eventTypes", allEventTypes);
         model.addAttribute("selectedEventType", eventType);
         model.addAttribute("from", from);
         model.addAttribute("to", to);
-        model.addAttribute("pageTitle", "User Log");
-        return "log/user";
+        model.addAttribute("pageTitle", pageTitle);
+        return view;
     }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────
 
     private static LocalDateTime startOfDayOrNull(LocalDate d) {
         return d == null ? null : d.atStartOfDay();
