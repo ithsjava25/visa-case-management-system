@@ -175,16 +175,15 @@ input:disabled {
     display: block;
 }
 
-/* File input — replace the native "Choose File" button with a styled one
-   so it matches the dark form aesthetic. */
+/* File input — replace the native "Choose File" button with a styled one */
 input[type="file"] {
-    width: 105px !important;
-    height: 32px;
-    color: transparent;
+    width: 100%;           /* was 105px !important — let it fill the form column */
+    height: auto;
+    color: var(--color-text-secondary);   /* was transparent — show the filename */
     cursor: pointer;
-    overflow: hidden;
+    /* overflow: hidden removed */
 }
-input[type="file"]::file-selector-button { display: none; }
+input[type="file"]::-webkit-file-upload-button { display: none; }
 input[type="file"]::before {
     content: 'Choose File';
     display: inline-block;
@@ -192,6 +191,7 @@ input[type="file"]::before {
     border: 1px solid var(--color-placeholder);
     border-radius: 4px;
     padding: 5px 12px;
+    margin-right: 8px;          /* gap between fake button and filename text */
     color: var(--color-text-secondary);
     font-weight: 600;
     font-size: 13px;
