@@ -22,7 +22,7 @@
     <header>
         <div>
             <h1>My Applications</h1>
-            <span class="user-info">Logged in as: <span th:text="${currentUser.fullName}">User</span></span>
+            <span class="user-info">Logged in as: <span th:text="${currentUser.fullName()}">User</span></span>
         </div>
         <div class="header-actions">
             <a th:href="@{/visa/apply}" class="btn-new">+ New Application</a>
@@ -43,19 +43,19 @@
             </thead>
             <tbody>
             <tr th:each="visa : ${visas}">
-                <td th:text="'# ' + ${visa.id}">#101</td>
-                <td th:text="${visa.visaType}">STUDENT</td>
+                <td th:text="'# ' + ${visa.id()}">#101</td>
+                <td th:text="${visa.visaType()}">STUDENT</td>
                 <td>
                     <span class="status"
-                          th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
-                          th:text="${visa.visaStatus}">
+                          th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus())}"
+                          th:text="${visa.visaStatus()}">
                         SUBMITTED
                     </span>
                 </td>
-                <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
-                <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
+                <td th:text="${#temporals.format(visa.travelDate(), 'yyyy-MM-dd')}">2026-05-20</td>
+                <td th:text="${#temporals.format(visa.updatedAt(), 'yyyy-MM-dd HH:mm')}">-</td>
                 <td style="text-align: left;">
-                    <a th:href="@{/visa/{id}(id=${visa.id})}" class="view-link">
+                    <a th:href="@{/visa/{id}(id=${visa.id()})}" class="view-link">
                         Details &rarr;
                     </a>
                 </td>
