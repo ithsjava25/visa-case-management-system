@@ -22,11 +22,11 @@
         </div>
     </header>
 
-    <div th:if="${cases.isEmpty()}" class="empty-state" th:text="${emptyMsg}">
+    <div th:if="${#lists.isEmpty(cases)}" class="empty-state" th:text="${emptyMsg}">
         No cases.
     </div>
 
-    <table th:if="${!cases.isEmpty()}">
+    <table th:if="${!#lists.isEmpty(cases)}">
         <thead>
         <tr>
             <th th:text="${idHeader}">Reference</th>

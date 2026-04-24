@@ -71,7 +71,9 @@
     Header is only rendered when the user is authenticated.  An anonymous user
     who lands on an error page (e.g. a 404) must not see the navigation.
 -->
-<nav th:replace="~{fragments/header :: nav}" sec:authorize="isAuthenticated()"></nav>
+<th:block sec:authorize="isAuthenticated()">
+    <nav th:replace="~{fragments/header :: nav}"></nav>
+</th:block>
 
 <div class="error-stage" th:classappend="${#authorization.expression('!isAuthenticated()')} ? 'no-nav' : ''">
     <div class="container error-card">
