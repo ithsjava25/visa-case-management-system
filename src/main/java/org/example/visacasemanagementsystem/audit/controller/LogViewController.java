@@ -2,8 +2,6 @@ package org.example.visacasemanagementsystem.audit.controller;
 
 import org.example.visacasemanagementsystem.audit.UserEventType;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
-import org.example.visacasemanagementsystem.audit.dto.UserLogDTO;
-import org.example.visacasemanagementsystem.audit.dto.VisaLogDTO;
 import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.springframework.data.domain.Page;
