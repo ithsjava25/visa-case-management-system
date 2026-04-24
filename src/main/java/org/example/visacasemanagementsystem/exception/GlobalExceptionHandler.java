@@ -2,42 +2,82 @@ package org.example.visacasemanagementsystem.exception;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.example.visacasemanagementsystem.ApplicationViewController;
+import org.example.visacasemanagementsystem.user.controller.UserViewController;
+import org.example.visacasemanagementsystem.visa.controller.VisaViewController;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ControllerAdvice
+@ControllerAdvice(assignableTypes = {VisaViewController.class, UserViewController.class, ApplicationViewController.class})
 @Slf4j
 public class GlobalExceptionHandler {
 
     @ResponseStatus(value = HttpStatus.FORBIDDEN)
     @ExceptionHandler(UnauthorizedException.class)
-    @ResponseBody
-    public String handleUnauthorizedException(UnauthorizedException exception) {
-        return "Access Denied: " + exception.getMessage();
+    public String handleUnauthorizedException(UnauthorizedException exception, Model model) {
+        log.error("Access denied: {}", exception.getMessage());
+        model.addAttribute("errorMessage","You do not have permission to perform this action.");
+        model.addAttribute("errorTitle", "⚠️Access Denied.");
+
+        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
+        // model.addAttribute("dashboardUrl", determineDashboardUrl());
+
+        return "error/error";
+    }
+
+    // Handles method-level @PreAuthorize denials which throw AccessDeniedException
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    @ExceptionHandler(AccessDeniedException.class)
+    public String handleAccessDeniedException(AccessDeniedException exception, Model model) {
+        log.error("Access denied: {}", exception.getMessage());
+        model.addAttribute("errorMessage", "You do not have permission to perform this action.");
+        model.addAttribute("errorTitle", "⚠️Access Denied.");
+        return "error/error";
     }
 
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     @ExceptionHandler({EntityNotFoundException.class, ResourceNotFoundException.class})
-    @ResponseBody
-    public String handleNotFoundException(RuntimeException exception) {
-        return exception.getMessage();
+    public String handleNotFoundException(RuntimeException exception, Model model) {
+        log.error("Resource not found: {}", exception.getMessage());
+        model.addAttribute("errorMessage", "The requested resource could not be found.");
+        model.addAttribute("errorTitle", "⚠️Not Found.");
+
+        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
+        // model.addAttribute("dashboardUrl", determineDashboardUrl());
+
+        return "error/error";
     }
 
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public String handleIllegalArgumentException(IllegalArgumentException exception) {
-        return "Invalid Request: " + exception.getMessage();
+    public String handleIllegalArgumentException(IllegalArgumentException exception,  Model model) {
+        log.error("Bad request: {}", exception.getMessage());
+        String userMessage = exception.getMessage() != null
+                ? exception.getMessage()
+                : "The request contained invalid data.";
+        model.addAttribute("errorMessage", userMessage);
+        model.addAttribute("errorTitle", "⚠️Bad Request.");
+
+        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
+        // model.addAttribute("dashboardUrl", determineDashboardUrl());
+
+        return "error/error";
     }
 
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public String handleAllUncaughtErrors(Exception exception) {
+    public String handleAllUncaughtErrors(Exception exception,  Model model) {
         log.error("Unexpected Error: ", exception);
-        return "Unexpected server error.";
+        model.addAttribute("errorMessage","Something went wrong. Try again later.");
+        model.addAttribute("errorTitle", "⚠️Internal Server Error.");
+
+        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
+        // model.addAttribute("dashboardUrl", determineDashboardUrl());
+
+        return "error/error";
     }
 }

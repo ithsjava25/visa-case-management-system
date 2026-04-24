@@ -1,7 +1,8 @@
 package org.example.visacasemanagementsystem.visa;
 
-import org.example.visacasemanagementsystem.audit.AuditEventType;
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
+import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -33,12 +35,16 @@ class VisaServiceIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private AuditService auditService;
+    private VisaLogService visaLogService;
+
+    @MockitoBean
+    private FileService fileService;
 
     @Test
     void applyForVisa_shouldSaveVisa_WhenDataIsValid() {
         // Arrange
        User user = createAndSaveValidUser();
+       String testS3Key = "testS3Key";
 
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "PASS-INT-123",
@@ -47,13 +53,14 @@ class VisaServiceIntegrationTest {
         );
 
         // Act
-        visaService.applyForVisa(dto, user.getId());
+        visaService.applyForVisa(dto, user.getId(),testS3Key);
 
         // Assert
         var savedVisas = visaRepository.findAll();
         assertThat(savedVisas).hasSize(1);
         assertThat(savedVisas.get(0).getPassportNumber()).isEqualTo("PASS-INT-123");
-        assertThat(auditService.findAll()).isNotEmpty();
+        assertThat(savedVisas.get(0).getS3Keys()).contains(testS3Key);
+        assertThat(visaLogService.findAll()).isNotEmpty();
 
     }
 
@@ -75,11 +82,11 @@ class VisaServiceIntegrationTest {
 
         UpdateVisaDTO dto = new UpdateVisaDTO(
                 visa.getId(), VisaType.TOURIST, VisaStatus.SUBMITTED,
-                "Swedish", "NEW-PASS-999", LocalDate.now().plusMonths(1), null
+                "Swedish", "NEW-PASS-999", LocalDate.now().plusMonths(1), null, null
         );
 
         // Act
-        visaService.updateVisa(visa.getId(), dto, user.getId());
+        visaService.updateVisa(visa.getId(), dto, user.getId(), null);
 
         // Assert
       Visa updatedVisa = visaRepository.findById(visa.getId()).get();
@@ -89,7 +96,7 @@ class VisaServiceIntegrationTest {
       assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.SUBMITTED);
       assertThat(updatedVisa.getStatusInformation()).isNull();
 
-        var logs = auditService.findAll();
+        var logs = visaLogService.findAll();
 
         Visa finalVisa = visa;
         assertThat(logs)
@@ -97,7 +104,7 @@ class VisaServiceIntegrationTest {
                 .anyMatch(log ->
                         log.visaCaseId() != null &&
                                 log.visaCaseId().equals(finalVisa.getId()) &&
-                                log.auditEventType() == AuditEventType.UPDATED
+                                log.visaEventType() == VisaEventType.UPDATED
                 );
 
     }
@@ -135,12 +142,12 @@ class VisaServiceIntegrationTest {
       assertThat(updatedVisa.getHandler().getId()).isEqualTo(admin.getId());
       assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.ASSIGNED);
 
-        var logs = auditService.findAll();
+        var logs = visaLogService.findAll();
         User finalAdmin = admin;
         assertThat(logs).anyMatch(log ->
                 log.visaCaseId().equals(updatedVisa.getId()) &&
                         log.userId().equals(finalAdmin.getId()) &&
-                        log.auditEventType() == AuditEventType.ASSIGNED &&
+                        log.visaEventType() == VisaEventType.ASSIGNED &&
                         log.description().contains("Test Admin")
         );
     }

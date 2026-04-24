@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.visa;
 import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
+import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
@@ -34,9 +35,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.mock.web.MockMultipartFile;
 
 @WebMvcTest(VisaViewController.class)
 class VisaViewControllerTest {
@@ -49,6 +50,8 @@ class VisaViewControllerTest {
     private UserService userService;
     @MockitoBean
     private CommentService commentService;
+    @MockitoBean
+    private FileService fileService;
 
     @AfterEach
     void tearDown() {
@@ -123,18 +126,26 @@ class VisaViewControllerTest {
         Long userId = 1L;
         UserDTO mockUser = createMockUser(userId, UserAuthorization.USER);
 
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "passportFile", // Namnet MÅSTE matcha @RequestParam i controllern
+                "test.pdf",
+                "application/pdf",
+                "test content".getBytes()
+        );
+
         // Act & Assert
-        mockMvc.perform(post("/visas/apply")
-                .param("currentUserId", userId.toString())
-                .param("visaType", "TOURIST")
-                .param("nationality", "Swedish")
-                .param("passportNumber", "ABC12345")
-                .param("travelDate", "2026-12-01")
-                .with(csrf()))
+        mockMvc.perform(multipart("/visas/apply")
+                        .file(mockFile)
+                        .param("currentUserId", userId.toString())
+                        .param("visaType", "TOURIST")
+                        .param("nationality", "Swedish")
+                        .param("passportNumber", "ABC12345")
+                        .param("travelDate", "2026-12-01")
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/visas/dashboard"));
 
-        verify(visaService).applyForVisa(any(CreateVisaDTO.class), eq(userId));
+        verify(visaService).applyForVisa(any(CreateVisaDTO.class), eq(userId),any());
     }
 
     @Test
@@ -210,12 +221,14 @@ class VisaViewControllerTest {
         Long  visaId = 100L;
         Long userId = 1L;
         String expectedUrl = "/visas/" + visaId;
+        MockMultipartFile mockFile = new MockMultipartFile("passportFile", "", "application/octet-stream", new byte[0]);
 
         when(userService.findById(userId)).thenReturn(Optional.of(createMockUser(userId, UserAuthorization.USER)));
         when(visaService.findVisaDtoById(visaId)).thenReturn(createMockVisa(visaId, userId));
 
         // Act
-        var result = mockMvc.perform(post("/visas/{id}/edit", visaId)
+        var result = mockMvc.perform(multipart("/visas/{id}/edit", visaId)
+                        .file(mockFile)
                 .param("id", visaId.toString())
                 .param("currentUserId", userId.toString())
                 .param("visaType", "TOURIST")
@@ -229,7 +242,7 @@ class VisaViewControllerTest {
         result.andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(expectedUrl));
 
-        verify(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId));
+        verify(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId), any());
 
     }
 
@@ -267,12 +280,14 @@ class VisaViewControllerTest {
         Long visaId = 100L;
         Long userId = 1L;
         UserDTO mockUser = createMockUser(userId, UserAuthorization.USER);
+        MockMultipartFile mockFile = new MockMultipartFile("passportFile", "", "application/octet-stream", new byte[0]);
 
         doThrow(new UnauthorizedException("You are not authorized to update this application."))
-                .when(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId));
+                .when(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId), any());
 
         // Act
-        var result = mockMvc.perform(post("/visas/{id}/edit", visaId)
+        var result = mockMvc.perform(multipart("/visas/{id}/edit", visaId)
+                        .file(mockFile)
                 .param("id", visaId.toString())
                 .param("currentUserId", userId.toString())
                 .param("visaType", "TOURIST")
@@ -284,7 +299,9 @@ class VisaViewControllerTest {
 
         // Assert
         result.andExpect(status().isForbidden())
-                .andExpect(content().string("Access Denied: You are not authorized to update this application."));
+                .andExpect(view().name("error/error"))
+                .andExpect(model().attribute("errorTitle", "⚠️Access Denied."))
+                .andExpect(model().attribute("errorMessage", "You do not have permission to perform this action."));
     }
 
     @Test
@@ -293,29 +310,31 @@ class VisaViewControllerTest {
         // Arrange
         Long visaId = 100L;
         Long userId = 1L;
+        MockMultipartFile mockFile = new MockMultipartFile("passportFile", "", "application/octet-stream", new byte[0]);
 
         when(userService.findById(userId)).thenReturn(Optional.of(createMockUser(userId, UserAuthorization.USER)));
-
         when(visaService.findVisaDtoById(visaId)).thenReturn(createMockVisa(visaId, userId));
 
         doThrow(new IllegalArgumentException("Travel date cannot be in the past."))
-                .when(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId));
+                .when(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId), any());
 
         // Act
-        var result = mockMvc.perform(post("/visas/{id}/edit", visaId)
+        var result = mockMvc.perform(multipart("/visas/{id}/edit", visaId)
+                        .file(mockFile)
                 .param("id", visaId.toString())
                 .param("currentUserId", userId.toString())
                 .param("visaType", "TOURIST")
                 .param("visaStatus", "INCOMPLETE")
                 .param("nationality", "Sweden")
                 .param("passportNumber", "ABC12345")
-                .param("travelDate", "2020-01-01") // Datum i dåtid
+                .param("travelDate", "2020-01-01")
                 .with(csrf()));
 
         // Assert
         result.andExpect(status().isOk())
                 .andExpect(view().name("visa/edit-form"))
-                .andExpect(model().hasErrors());
+                .andExpect(model().hasErrors())
+                .andExpect(model().attributeExists("statusInformation"));
 
     }
 
@@ -505,7 +524,9 @@ class VisaViewControllerTest {
                 null, null,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                "Some status info"
+                "Some status info",
+                List.of(),
+                List.of()
         );
     }
 

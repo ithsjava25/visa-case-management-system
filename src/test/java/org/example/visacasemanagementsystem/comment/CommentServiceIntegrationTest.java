@@ -4,6 +4,7 @@ import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.dto.CreateCommentDTO;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
 import org.example.visacasemanagementsystem.exception.ResourceNotFoundException;
+import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
@@ -21,6 +22,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -40,6 +42,9 @@ class CommentServiceIntegrationTest{
     private VisaRepository visaRepository;
     @Autowired
     private UserRepository userRepository;
+
+    @MockitoBean
+    private FileService fileService;
 
     private User testUser;
     private User nonExistentUser;

@@ -1,14 +1,15 @@
 package org.example.visacasemanagementsystem.audit.dto;
 
-import org.example.visacasemanagementsystem.audit.AuditEventType;
+import org.example.visacasemanagementsystem.audit.CommentEventType;
 
 import java.time.LocalDateTime;
 
-public record AuditDTO(
+public record CommentLogDTO(
         Long id,
         LocalDateTime timeStamp,
-        Long userId,
+        Long actorUserId,
         Long visaCaseId,
-        AuditEventType auditEventType,
+        Long commentId,
+        CommentEventType commentEventType,
         String description) {
 }

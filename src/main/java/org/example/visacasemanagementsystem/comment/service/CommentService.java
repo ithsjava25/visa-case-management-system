@@ -1,7 +1,7 @@
 package org.example.visacasemanagementsystem.comment.service;
 
-import org.example.visacasemanagementsystem.audit.AuditEventType;
-import org.example.visacasemanagementsystem.audit.service.AuditService;
+import org.example.visacasemanagementsystem.audit.CommentEventType;
+import org.example.visacasemanagementsystem.audit.service.CommentLogService;
 import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.dto.CreateCommentDTO;
 import org.example.visacasemanagementsystem.comment.entity.Comment;
@@ -24,18 +24,19 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final UserRepository userRepository;
     private final VisaRepository visaRepository;
-    private final AuditService auditService;
+    private final CommentLogService commentLogService;
 
-    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper , UserRepository userRepository, VisaRepository visaRepository, AuditService auditService) {
+    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, UserRepository userRepository, VisaRepository visaRepository, CommentLogService commentLogService) {
         this.commentRepository = commentRepository;
         this.commentMapper = commentMapper;
         this.userRepository = userRepository;
         this.visaRepository = visaRepository;
-        this.auditService = auditService;
+        this.commentLogService = commentLogService;
+
     }
 
 
-     // Create Comment
+    // Create Comment
     @Transactional
     public CommentDTO createComment(CreateCommentDTO dto, Long userId) {
         if (dto == null) {
@@ -64,11 +65,12 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
 
         // Create log in database
-        auditService.createAuditLog(
-                author.getId (),
-                visa.getId (),
-                AuditEventType.UPDATED,
-                "Comment added by " + author.getFullName()
+        commentLogService.createCommentLog(
+                author.getId(),
+                visa.getId(),
+                savedComment.getId(),
+                CommentEventType.ADDED,
+                "User added a new comment"
 
         );
 

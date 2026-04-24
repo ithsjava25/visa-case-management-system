@@ -114,6 +114,12 @@
         textarea:focus { outline: none; border-color: #666; }
         .btn-submit { background: #fff; color: #000; font-weight: 600; border: none; transition: 0.2s ease; }
         .btn-submit:hover { background: #ccc; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
     </style>
 </head>
 <body>
@@ -173,9 +179,29 @@
             <span class="label">Important Information / Notes</span>
             <span class="value" th:text="${visa.statusInformation}">-</span>
         </div>
+
+        <div class="info-item" style="grid-column: span 2;">
+            <span class="label">Attached Documents</span>
+
+            <div th:if="${not #lists.isEmpty(visa.downloadUrls)}" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                <div th:each="url,iter : ${visa.downloadUrls}">
+                    <a th:href="${url}" target="_blank" class="btn-assign"
+                       style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span th:text="${#strings.substring(visa.s3Keys[iter.index], 37)}">filename.pdf</span>
+                    </a>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(visa.downloadUrls)}" style="margin-top: 10px; color: #ff4d4d; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                No documents attached. This may delay processing.
+            </div>
+        </div>
+
     </div>
 
-    <div th:if="${visa.visaStatus.name() == 'INCOMPLETE' and visa.applicantId == currentUser.id}"
+    <div th:if="${(visa.visaStatus.name() == 'INCOMPLETE' or visa.visaStatus.name() == 'SUBMITTED') and visa.applicantId == currentUser.id and visa.handlerName == 'Unassigned'}"
          style="margin-bottom: 40px; padding: 24px; background: #1a1500; border: 1px solid #332200; border-radius: 12px; border-left: 4px solid #ffcc00;">
 
         <h3 style="margin-top:0; color: #ffcc00; font-size: 18px;">Action Required</h3>
@@ -187,7 +213,7 @@
         <a th:href="@{/visas/{id}/edit(id=${visa.id})}"
            class="btn-submit"
            style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto; border-radius: 8px;">
-            Edit & Resubmit Application
+            Edit Application
         </a>
     </div>
 
@@ -197,10 +223,12 @@
         <div class="action-group">
             <form th:if="${visa.handlerName == 'Unassigned'}"
                   th:action="@{/visas/{id}/assign(id=${visa.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="btn-assign">Assign to Me</button>
             </form>
 
             <form th:action="@{/visas/{id}/approve(id=${visa.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="btn-approve">Approve Visa</button>
             </form>
         </div>
@@ -214,22 +242,23 @@
 
             <div style="display: flex; gap: 10px; width: 100%;">
                 <form th:action="@{/visas/{id}/request-info(id=${visa.id})}" method="post" id="form-info" style="flex: 1;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="reason" id="hidden-info">
-                    <button type="submit" onclick="document.getElementById('hidden-info').value = document.getElementById('infoReason').value"
-                            style="width: 100%; transition: 0.2s ease;">
+                    <button type="submit" style="width: 100%; transition: 0.2s ease;">
                         Request More Info
                     </button>
                 </form>
 
                 <form th:action="@{/visas/{id}/reject(id=${visa.id})}" method="post" id="form-reject" style="flex: 1;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="reason" id="hidden-reject">
-                    <button type="submit" onclick="document.getElementById('hidden-reject').value = document.getElementById('infoReason').value"
-                            style="width: 100%;">
+                    <button type="submit" style="width: 100%;">
                         Reject Visa
                     </button>
                 </form>
             </div>
         </div>
+
     </div>
 
     <section class="comments-section">
@@ -265,61 +294,95 @@
 </div>
 
 <script>
-    document.getElementById('commentForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    document.addEventListener('DOMContentLoaded', function() {
 
-        const visaId = document.getElementById('visaId').value;
-        const authorId = document.getElementById('authorId').value;
-        const text = document.getElementById('commentText').value;
+        //  Handle ADMIN Decision (Reject / Request Info) ---
+        const handleDecision = (e, hiddenId) => {
+            const reasonInput = document.getElementById('infoReason');
+            const reasonValue = reasonInput.value.trim();
 
-        const token = document.querySelector('input[name="_csrf"]').value
-        const header = document.querySelector('input[name="_csrf_header"]').value
+            if (!reasonValue) {
+                e.preventDefault();
+                reasonInput.style.borderColor = '#ff4d4d';
+                alert('Please provide a reason or note for this decision.');
+                return;
+            }
 
-        const payload = {
-            visaId: parseInt(visaId),
-            authorId: parseInt(authorId),
-            text: text
+            document.getElementById(hiddenId).value = reasonValue;
         };
 
-        fetch('/api/comments', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                [header]: token
-            },
-            body: JSON.stringify(payload)
-        })
-            .then(response => {
-                if (!response.ok) throw new Error('Could not save comment');
-                return response.json();
-            })
-            .then(comment => {
-                document.getElementById('commentText').value = '';
+        const infoForm = document.getElementById('form-info');
+        if (infoForm) {
+            infoForm.addEventListener('submit', (e) => handleDecision(e, 'hidden-info'));
+        }
 
-                const noCommentsMsg = document.getElementById('noCommentsMessage');
-                if (noCommentsMsg) noCommentsMsg.remove();
+        const rejectForm = document.getElementById('form-reject');
+        if (rejectForm) {
+            rejectForm.addEventListener('submit', (e) => handleDecision(e, 'hidden-reject'));
+        }
 
-                const container = document.getElementById('commentContainer');
-                const card = document.createElement('div');
-                card.className = 'comment-card';
-                card.style.animation = 'fadeIn 0.5s';
-                const meta = document.createElement('div');
-                meta.className = 'comment-meta';
-                const author = document.createElement('strong');
-                author.textContent = comment.authorName;
-                meta.appendChild(author);
-                meta.append(' • Just now');
 
-                const text = document.createElement('div');
-                text.className = 'comment-text';
-                text.textContent = comment.text;
-                card.appendChild(meta);
-                card.appendChild(text);
-                container.prepend(card);
-            })
-            .catch(error => {
-                alert('Error: ' + error.message);
+        // Handle Comment section ---
+        const commentForm = document.getElementById('commentForm');
+        if (commentForm) {
+            commentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const visaId = document.getElementById('visaId').value;
+                const authorId = document.getElementById('authorId').value;
+                const text = document.getElementById('commentText').value;
+
+                const token = document.querySelector('input[name="_csrf"]').value;
+                const header = document.querySelector('input[name="_csrf_header"]').value;
+
+                const payload = {
+                    visaId: parseInt(visaId),
+                    authorId: parseInt(authorId),
+                    text: text
+                };
+
+                fetch('/api/comments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [header]: token
+                    },
+                    body: JSON.stringify(payload)
+                })
+                    .then(async response => {
+                        if (!response.ok){
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Could not save comment');
+                        }
+                        return response.json();
+                    })
+                    .then(comment => {
+                        document.getElementById('commentText').value = '';
+                        const noCommentsMsg = document.getElementById('noCommentsMessage');
+                        if (noCommentsMsg) noCommentsMsg.remove();
+
+                        const container = document.getElementById('commentContainer');
+                        const card = document.createElement('div');
+                        card.className = 'comment-card';
+                        card.style.animation = 'fadeIn 0.5s';
+
+                        const meta = document.createElement('div');
+                        meta.className = 'comment-meta';
+                        const nameEl = document.createElement('strong');
+                        nameEl.textContent = comment.authorName;
+                        meta.append(nameEl, ' • Just now');
+                        const textEl = document.createElement('div');
+                        textEl.className = 'comment-text';
+                        textEl.textContent = comment.text;
+
+                        card.append(meta, textEl);
+                        container.prepend(card);
+                    })
+                    .catch(error => {
+                        alert('System Message: ' + error.message);
+                    });
             });
+        }
     });
 </script>
 
