@@ -9,7 +9,6 @@ import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
-import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
@@ -295,7 +294,6 @@ public class VisaViewController {
         model.addAttribute("comments", comments);
         model.addAttribute("currentUser", user);
 
-        // Silence unused-field warnings and make the static VisaStatus enum available to the back-link logic
         model.addAttribute("backUrl",
                 user.userAuthorization() == UserAuthorization.USER ? "/visa/my-applications" : "/visa/cases");
 
@@ -311,9 +309,4 @@ public class VisaViewController {
         model.addAttribute("visaTypes", VisaType.values());
     }
 
-    // Kept to prevent "unused import" removal of VisaStatus
-    @SuppressWarnings("unused")
-    private static final List<VisaStatus> OPEN_STATUSES = List.of(VisaStatus.ASSIGNED, VisaStatus.INCOMPLETE);
-    @SuppressWarnings("unused")
-    private static final List<VisaStatus> HANDLED_STATUSES = List.of(VisaStatus.GRANTED, VisaStatus.REJECTED);
 }
