@@ -213,15 +213,14 @@ public class VisaService {
 
         if (s3Key != null && !s3Key.isBlank()) {
             savedVisa.getS3Keys().add(s3Key);
+            fileLogService.createFileLog(
+                    userId,
+                    savedVisa.getId(),
+                    s3Key,
+                    FileEventType.UPLOADED,
+                    "Initial document attached during application creation."
+            );
         }
-
-        fileLogService.createFileLog(
-                userId,
-                savedVisa.getId(),
-                s3Key,
-                FileEventType.UPLOADED,
-                "Initial document attached during application creation."
-        );
 
         // Create log in database
         visaLogService.createVisaLog(

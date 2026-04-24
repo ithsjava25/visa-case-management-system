@@ -21,8 +21,8 @@ public class CommentLogService {
 
     }
 
-    public void createCommentLog(Long actorUserId, Long visaCasId, Long commentId, CommentEventType commentEventType, String description) {
-        CommentLog commentLog = commentLogMapper.toEntity(actorUserId, visaCasId, commentId,commentEventType, description);
+    public void createCommentLog(Long actorUserId, Long visaCaseId, Long commentId, CommentEventType commentEventType, String description) {
+        CommentLog commentLog = commentLogMapper.toEntity(actorUserId, visaCaseId, commentId,commentEventType, description);
         commentLogRepository.save(commentLog);
 
     }

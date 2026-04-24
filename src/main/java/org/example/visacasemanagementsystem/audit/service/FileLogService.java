@@ -20,8 +20,8 @@ public class FileLogService {
         this.fileLogMapper = fileLogMapper;
     }
 
-    public void createFileLog(Long actorUserId, Long visaCasId, String fileName, FileEventType fileEventType, String description) {
-        FileLog fileLog = fileLogMapper.toEntity(actorUserId, visaCasId, fileName, fileEventType, description);
+    public void createFileLog(Long actorUserId, Long visaCaseId, String fileName, FileEventType fileEventType, String description) {
+        FileLog fileLog = fileLogMapper.toEntity(actorUserId, visaCaseId, fileName, fileEventType, description);
         fileLogRepository.save(fileLog);
 
     }
