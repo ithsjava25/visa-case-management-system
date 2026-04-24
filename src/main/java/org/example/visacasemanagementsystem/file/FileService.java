@@ -26,7 +26,6 @@ public class FileService {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
-    private final FileLogService fileLogService;
 
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "application/pdf",
@@ -42,10 +41,9 @@ public class FileService {
     @Value("${minio.corsAllowedOrigins:http://localhost:8080}")
     private String corsAllowedOrigins;
 
-    public FileService(S3Client s3Client, S3Presigner s3Presigner, FileLogService fileLogService) {
+    public FileService(S3Client s3Client, S3Presigner s3Presigner) {
         this.s3Client = s3Client;
         this.s3Presigner = s3Presigner;
-        this.fileLogService = fileLogService;
     }
 
     @PostConstruct
@@ -98,7 +96,7 @@ public class FileService {
         }
     }
 
-    public String uploadFile(MultipartFile file, Long visaCaseId, Long actorUserId) throws IOException {
+    public String uploadFile(MultipartFile file) throws IOException {
         // Validate file size
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
             throw  new IOException("File exceeds maximum allowed size of 10 MB");
@@ -127,14 +125,6 @@ public class FileService {
         s3Client.putObject(putObjectRequest,
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-        fileLogService.createFileLog(
-                actorUserId,
-                visaCaseId,
-                fileName,
-                FileEventType.UPLOADED,
-                "File uploaded: " + safeName
-        );
-
         return  fileName;
     }
 
@@ -153,21 +143,12 @@ public class FileService {
         return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
-    public void deleteFile(String s3Key, Long actorUserId, Long visaCaseId) {
+    public void deleteFile(String s3Key) {
         DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                 .bucket(bucketName)
                 .key(s3Key)
                 .build();
         s3Client.deleteObject(deleteObjectRequest);
 
-        fileLogService.createFileLog(
-                actorUserId,
-                visaCaseId,
-                s3Key,
-                FileEventType.DELETED,
-                "File deleted: " + s3Key
-        );
     }
-
-
 }

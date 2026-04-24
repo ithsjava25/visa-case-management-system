@@ -308,9 +308,10 @@ public class VisaService {
             }
             visaRepository.save(visa);
 
-            fileService.deleteFile(s3Key, userId, visaId);
+            fileService.deleteFile(s3Key);
 
             visaLogService.createVisaLog(userId, visaId, VisaEventType.UPDATED, "Removed document: " + s3Key);
+            fileLogService.createFileLog(userId, visaId, s3Key, FileEventType.DELETED, "Applicant removed file.");
         }
     }
 
