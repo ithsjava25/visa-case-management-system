@@ -28,164 +28,38 @@
     <!-- Page heading -->
     <div>
         <h1>Visa Cases</h1>
-        <p class="subtitle">Logged in as <span th:text="${name}">Admin</span></p>
+        <p class="subtitle">Logged in as <span th:text="${currentUser.fullName}">Admin</span></p>
     </div>
 
     <!-- ─── Open Cases ─────────────────────────────────────────────────
          Status in {ASSIGNED, INCOMPLETE} AND handler = current user.
     -->
-    <div class="container">
-        <header>
-            <div>
-                <h2>Open Cases</h2>
-                <span class="case-count"
-                      th:text="${#lists.size(openCases) + ' case' + (#lists.size(openCases) == 1 ? '' : 's')}">
-                    0 cases
-                </span>
-            </div>
-        </header>
-
-        <div th:if="${openCases.isEmpty()}" class="empty-state">
-            No cases currently assigned to you.
-        </div>
-
-        <table th:if="${!openCases.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Reference</th>
-                <th>Applicant</th>
-                <th>Handler</th>
-                <th>Visa Type</th>
-                <th>Status</th>
-                <th>Travel Date</th>
-                <th>Last updated</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="visa : ${openCases}">
-                <td th:text="'# ' + ${visa.id}">#101</td>
-                <td th:text="${visa.applicantName}">Anna Andersson</td>
-                <td th:text="${visa.handlerName != null ? visa.handlerName : 'Unassigned'}">-</td>
-                <td th:text="${visa.visaType}">STUDENT</td>
-                <td>
-                    <span class="status"
-                          th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
-                          th:text="${visa.visaStatus}">ASSIGNED</span>
-                </td>
-                <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
-                <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
-                <td style="text-align: left;">
-                    <a th:href="@{/visa/{id}(id=${visa.id})}" class="view-link">Details &rarr;</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+    <div th:replace="~{fragments/cases :: caseSection(
+            'Open Cases',
+            ${openCases},
+            'No cases currently assigned to you.',
+            '',
+            'Reference')}"></div>
 
     <!-- ─── Unassigned Cases ───────────────────────────────────────────
          Status = SUBMITTED AND handler is null.
     -->
-    <div class="container">
-        <header>
-            <div>
-                <h2>Unassigned Cases</h2>
-                <span class="case-count"
-                      th:text="${#lists.size(unassignedCases) + ' case' + (#lists.size(unassignedCases) == 1 ? '' : 's') + ' waiting'}">
-                    0 cases waiting
-                </span>
-            </div>
-        </header>
-
-        <div th:if="${unassignedCases.isEmpty()}" class="empty-state">
-            All cases are assigned — nothing in the queue.
-        </div>
-
-        <table th:if="${!unassignedCases.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Visa ID</th>
-                <th>Applicant</th>
-                <th>Handler</th>
-                <th>Visa Type</th>
-                <th>Status</th>
-                <th>Travel Date</th>
-                <th>Last updated</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="visa : ${unassignedCases}">
-                <td th:text="'# ' + ${visa.id}">#101</td>
-                <td th:text="${visa.applicantName}">Anna Andersson</td>
-                <td th:text="${visa.handlerName != null ? visa.handlerName : 'Unassigned'}">Unassigned</td>
-                <td th:text="${visa.visaType}">STUDENT</td>
-                <td>
-                    <span class="status"
-                          th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
-                          th:text="${visa.visaStatus}">SUBMITTED</span>
-                </td>
-                <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
-                <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
-                <td style="text-align: left;">
-                    <a th:href="@{/visa/{id}(id=${visa.id})}" class="view-link">Details &rarr;</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+    <div th:replace="~{fragments/cases :: caseSection(
+            'Unassigned Cases',
+            ${unassignedCases},
+            'All cases are assigned — nothing in the queue.',
+            ' waiting',
+            'Visa ID')}"></div>
 
     <!-- ─── Handled Cases ──────────────────────────────────────────────
          Status in {GRANTED, REJECTED} AND handler = current user.
     -->
-    <div class="container">
-        <header>
-            <div>
-                <h2>Handled Cases</h2>
-                <span class="case-count"
-                      th:text="${#lists.size(handledCases) + ' case' + (#lists.size(handledCases) == 1 ? '' : 's') + ' handled'}">
-                    0 cases handled
-                </span>
-            </div>
-        </header>
-
-        <div th:if="${handledCases.isEmpty()}" class="empty-state">
-            You have not yet handled any cases.
-        </div>
-
-        <table th:if="${!handledCases.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Reference</th>
-                <th>Applicant</th>
-                <th>Handler</th>
-                <th>Visa Type</th>
-                <th>Status</th>
-                <th>Travel Date</th>
-                <th>Last updated</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="visa : ${handledCases}">
-                <td th:text="'# ' + ${visa.id}">#101</td>
-                <td th:text="${visa.applicantName}">Anna Andersson</td>
-                <td th:text="${visa.handlerName != null ? visa.handlerName : 'Unassigned'}">-</td>
-                <td th:text="${visa.visaType}">STUDENT</td>
-                <td>
-                    <span class="status"
-                          th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
-                          th:text="${visa.visaStatus}">GRANTED</span>
-                </td>
-                <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
-                <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
-                <td style="text-align: left;">
-                    <a th:href="@{/visa/{id}(id=${visa.id})}" class="view-link">Details &rarr;</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+    <div th:replace="~{fragments/cases :: caseSection(
+            'Handled Cases',
+            ${handledCases},
+            'You have not yet handled any cases.',
+            ' handled',
+            'Reference')}"></div>
 
 </div>
 

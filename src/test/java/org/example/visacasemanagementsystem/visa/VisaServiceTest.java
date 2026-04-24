@@ -308,6 +308,13 @@ class VisaServiceTest {
         verifyNoInteractions(visaRepository);
     }
 
+    // --- Helpers ---
+
+    private static VisaDTO visaDtoWithId(Long id) {
+        return new VisaDTO(id, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
+    }
+
     // --- Tests for the /visa/cases landing-page queries ---
 
     @Test
@@ -321,10 +328,8 @@ class VisaServiceTest {
         v1.setId(1L);
         Visa v2 = new Visa();
         v2.setId(2L);
-        VisaDTO d1 = new VisaDTO(1L, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
-        VisaDTO d2 = new VisaDTO(2L, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
+        VisaDTO d1 = visaDtoWithId(1L);
+        VisaDTO d2 = visaDtoWithId(2L);
 
         when(visaRepository.findByHandler_IdAndVisaStatusIn(
                 eq(handlerId), eq(expectedStatuses), eq(expectedSort)))
@@ -364,8 +369,7 @@ class VisaServiceTest {
         Sort expectedSort = Sort.by("updatedAt").descending();
 
         Visa v1 = new Visa();
-        VisaDTO d1 = new VisaDTO(10L, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
+        VisaDTO d1 = visaDtoWithId(10L);
 
         when(visaRepository.findByVisaStatusAndHandlerIsNull(
                 eq(VisaStatus.SUBMITTED), eq(expectedSort)))
@@ -408,10 +412,8 @@ class VisaServiceTest {
         granted.setId(100L);
         Visa rejected = new Visa();
         rejected.setId(101L);
-        VisaDTO grantedDto = new VisaDTO(100L, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
-        VisaDTO rejectedDto = new VisaDTO(101L, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
+        VisaDTO grantedDto = visaDtoWithId(100L);
+        VisaDTO rejectedDto = visaDtoWithId(101L);
 
         when(visaRepository.findByHandler_IdAndVisaStatusIn(
                 eq(handlerId), eq(expectedStatuses), eq(expectedSort)))

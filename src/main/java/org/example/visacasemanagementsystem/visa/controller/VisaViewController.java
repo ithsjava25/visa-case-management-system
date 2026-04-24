@@ -74,7 +74,6 @@ public class VisaViewController {
         List<VisaDTO> handledCases = visaService.findHandledCasesByHandler(meId);
 
         model.addAttribute("currentUser", user);
-        model.addAttribute("name", principal.getFullName());
         model.addAttribute("openCases", openCases);
         model.addAttribute("unassignedCases", unassignedCases);
         model.addAttribute("handledCases", handledCases);

@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.audit.service;
 import org.example.visacasemanagementsystem.audit.UserEventType;
 import org.example.visacasemanagementsystem.audit.dto.UserLogDTO;
 import org.example.visacasemanagementsystem.audit.entity.UserLog;
+import org.example.visacasemanagementsystem.audit.entity.UserLog_;
 import org.example.visacasemanagementsystem.audit.mapper.UserLogMapper;
 import org.example.visacasemanagementsystem.audit.repository.UserLogRepository;
 import org.springframework.data.domain.Page;
@@ -49,13 +50,13 @@ public class UserLogService {
         // the where(null) idiom in favour of this explicit factory method.
         Specification<UserLog> spec = Specification.unrestricted();
         if (eventType != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("userEventType"), eventType));
+            spec = spec.and((root, query, cb) -> cb.equal(root.get(UserLog_.userEventType), eventType));
         }
         if (from != null) {
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timeStamp"), from));
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(UserLog_.timeStamp), from));
         }
         if (to != null) {
-            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timeStamp"), to));
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(UserLog_.timeStamp), to));
         }
         return userLogRepository.findAll(spec, pageable).map(userLogMapper::toDTO);
     }

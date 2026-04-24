@@ -38,7 +38,7 @@ public class SecurityConfig {
 
                         // Any authenticated user can hit these; role-specific protection
                         // lives on the individual @PreAuthorize annotations.
-                        .requestMatchers("/user/logout").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/user/logout").authenticated()
                         .requestMatchers("/home").authenticated()
                         .requestMatchers("/profile/**").authenticated()
                         .requestMatchers("/visa/**").authenticated()
@@ -56,8 +56,7 @@ public class SecurityConfig {
                         // SYSADMIN -> /log/visa
                         .defaultSuccessUrl("/home", true)
                         .loginPage("/user/login"))
-                .logout(AbstractHttpConfigurer::disable)
-                .httpBasic(withDefaults());
+                .logout(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.audit.service;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
 import org.example.visacasemanagementsystem.audit.dto.VisaLogDTO;
 import org.example.visacasemanagementsystem.audit.entity.VisaLog;
+import org.example.visacasemanagementsystem.audit.entity.VisaLog_;
 import org.example.visacasemanagementsystem.audit.mapper.VisaLogMapper;
 import org.example.visacasemanagementsystem.audit.repository.VisaLogRepository;
 import org.springframework.data.domain.Page;
@@ -49,13 +50,13 @@ public class VisaLogService {
         // the where(null) idiom in favour of this explicit factory method.
         Specification<VisaLog> spec = Specification.unrestricted();
         if (eventType != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("visaEventType"), eventType));
+            spec = spec.and((root, query, cb) -> cb.equal(root.get(VisaLog_.visaEventType), eventType));
         }
         if (from != null) {
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timeStamp"), from));
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(VisaLog_.timeStamp), from));
         }
         if (to != null) {
-            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timeStamp"), to));
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(VisaLog_.timeStamp), to));
         }
         return visaLogRepository.findAll(spec, pageable).map(visaLogMapper::toDTO);
     }
