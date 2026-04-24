@@ -1,7 +1,7 @@
 package org.example.visacasemanagementsystem.comment.service;
 
-import org.example.visacasemanagementsystem.audit.VisaEventType;
-import org.example.visacasemanagementsystem.audit.service.VisaLogService;
+import org.example.visacasemanagementsystem.audit.CommentEventType;
+import org.example.visacasemanagementsystem.audit.service.CommentLogService;
 import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.dto.CreateCommentDTO;
 import org.example.visacasemanagementsystem.comment.entity.Comment;
@@ -24,18 +24,19 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final UserRepository userRepository;
     private final VisaRepository visaRepository;
-    private final VisaLogService visaLogService;
+    private final CommentLogService commentLogService;
 
-    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, UserRepository userRepository, VisaRepository visaRepository, VisaLogService visaLogService) {
+    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, UserRepository userRepository, VisaRepository visaRepository, CommentLogService commentLogService) {
         this.commentRepository = commentRepository;
         this.commentMapper = commentMapper;
         this.userRepository = userRepository;
         this.visaRepository = visaRepository;
-        this.visaLogService = visaLogService;
+        this.commentLogService = commentLogService;
+
     }
 
 
-     // Create Comment
+    // Create Comment
     @Transactional
     public CommentDTO createComment(CreateCommentDTO dto, Long userId) {
         if (dto == null) {
@@ -64,11 +65,13 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
 
         // Create log in database
-        visaLogService.createVisaLog(
+        commentLogService.createCommentLog(
                 author.getId(),
                 visa.getId(),
-                VisaEventType.UPDATED,
-                "Comment added by " + author.getFullName()
+                savedComment.getId(),
+                CommentEventType.ADDED,
+                "User added a new comment"
+
         );
 
         return commentMapper.toDTO(savedComment);

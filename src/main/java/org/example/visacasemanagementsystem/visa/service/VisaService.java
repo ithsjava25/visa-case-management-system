@@ -1,6 +1,8 @@
 package org.example.visacasemanagementsystem.visa.service;
 import jakarta.persistence.EntityNotFoundException;
+import org.example.visacasemanagementsystem.audit.FileEventType;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.service.FileLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.file.FileService;
@@ -35,18 +37,21 @@ public class VisaService {
     private final VisaMapper visaMapper;
     private final FileService fileService;
     private final VisaLogService visaLogService;
+    private final FileLogService fileLogService;
 
 
     public VisaService(VisaRepository visaRepository,
                        UserRepository userRepository,
                        VisaMapper visaMapper,
                        VisaLogService visaLogService,
-                       FileService fileService) {
+                       FileService fileService,
+                       FileLogService fileLogService) {
         this.visaRepository = visaRepository;
         this.userRepository = userRepository;
         this.visaMapper = visaMapper;
         this.visaLogService = visaLogService;
         this.fileService = fileService;
+        this.fileLogService = fileLogService;
     }
 
     // --- For filtering in Frontend list-view ---
@@ -204,18 +209,25 @@ public class VisaService {
         visa.setApplicant(applicant);
         visa.setVisaStatus(VisaStatus.SUBMITTED);
 
-        if (s3Key != null && !s3Key.isBlank()) {
-            visa.getS3Keys().add(s3Key);
-        }
-
         Visa savedVisa = visaRepository.save(visa);
+
+        if (s3Key != null && !s3Key.isBlank()) {
+            savedVisa.getS3Keys().add(s3Key);
+            fileLogService.createFileLog(
+                    userId,
+                    savedVisa.getId(),
+                    s3Key,
+                    FileEventType.UPLOADED,
+                    "Initial document attached during application creation."
+            );
+        }
 
         // Create log in database
         visaLogService.createVisaLog(
                 userId,
                 savedVisa.getId(),
                 VisaEventType.CREATED,
-                "Visa application submitted." + (s3Key != null ? " Document attached." : "")
+                "Visa application submitted." + (s3Key != null && !s3Key.isBlank() ? " Document attached." : "")
         );
         return visaMapper.toDTO(savedVisa);
     }
@@ -246,6 +258,14 @@ public class VisaService {
 
         if (newS3Key != null && !newS3Key.isBlank()) {
             visa.getS3Keys().add(newS3Key);
+
+            fileLogService.createFileLog(
+                    userId,
+                    visaId,
+                    newS3Key,
+                    FileEventType.UPLOADED,
+                    "Document attached during application update."
+            );
         }
 
         visa.setVisaStatus(VisaStatus.SUBMITTED);
@@ -290,6 +310,9 @@ public class VisaService {
             fileService.deleteFile(s3Key);
 
             visaLogService.createVisaLog(userId, visaId, VisaEventType.UPDATED, "Removed document: " + s3Key);
+
+            String actor = isOwner ? "Applicant" : "Administrator";
+            fileLogService.createFileLog(userId, visaId, s3Key, FileEventType.DELETED, actor + " removed file.");
         }
     }
 

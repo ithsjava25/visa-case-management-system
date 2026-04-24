@@ -147,7 +147,6 @@ public class FileService {
                 .key(s3Key)
                 .build();
         s3Client.deleteObject(deleteObjectRequest);
+
     }
-
-
 }
