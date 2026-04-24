@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @DisplayName("CommentLogMapper unit tests")
 class CommentLogMapperTest {
 
-    private CommentLogMapper commentLogmapper;
+    private CommentLogMapper commentLogMapper;
 
     @BeforeEach
   void setUp() {
-        commentLogmapper = new CommentLogMapper();
+        commentLogMapper = new CommentLogMapper();
     }
 
     @Test
@@ -36,7 +36,7 @@ class CommentLogMapperTest {
         entity.setDescription("User added a comment regarding missing documents.");
 
         // Act
-        CommentLogDTO dto = commentLogmapper.toDTO(entity);
+        CommentLogDTO dto = commentLogMapper.toDTO(entity);
 
         // Assert
         assertThat(dto).isNotNull();
@@ -54,7 +54,7 @@ class CommentLogMapperTest {
     @DisplayName("Checking if toDTO returns null when entity is null")
     void toDTO_shouldReturnNull_WhenEntityIsNull() {
         // Act
-        CommentLogDTO dto = commentLogmapper.toDTO(null);
+        CommentLogDTO dto = commentLogMapper.toDTO(null);
 
         // Assert
         assertThat(dto).isNull();
@@ -65,7 +65,7 @@ class CommentLogMapperTest {
     @DisplayName("Checking if toEntity sets all fields for a new log entry")
     void toEntity_shouldSetAllFields_WhenAllArgumentsAreProvided() {
         // Act
-        CommentLog entity = commentLogmapper.toEntity(
+        CommentLog entity = commentLogMapper.toEntity(
                 1L, 100L, 20L,
                 CommentEventType.ADDED, "User added a comment"
         );

@@ -227,7 +227,7 @@ public class VisaService {
                 userId,
                 savedVisa.getId(),
                 VisaEventType.CREATED,
-                "Visa application submitted." + (s3Key != null ? " Document attached." : "")
+                "Visa application submitted." + (s3Key != null && !s3Key.isBlank() ? " Document attached." : "")
         );
         return visaMapper.toDTO(savedVisa);
     }
@@ -310,7 +310,9 @@ public class VisaService {
             fileService.deleteFile(s3Key);
 
             visaLogService.createVisaLog(userId, visaId, VisaEventType.UPDATED, "Removed document: " + s3Key);
-            fileLogService.createFileLog(userId, visaId, s3Key, FileEventType.DELETED, "Applicant removed file.");
+
+            String actor = isOwner ? "Applicant" : "Administrator";
+            fileLogService.createFileLog(userId, visaId, s3Key, FileEventType.DELETED, actor + " removed file.");
         }
     }
 

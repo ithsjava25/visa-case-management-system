@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
 
-@DisplayName("FilLogMapper unit tests")
+@DisplayName("FileLogMapper unit tests")
 class FileLogMapperTest {
 
     private FileLogMapper fileLogMapper;
@@ -45,6 +45,7 @@ class FileLogMapperTest {
         assertThat(dto.id()).isEqualTo(101L);
         assertThat(dto.timeStamp()).isEqualTo(timestamp);
         assertThat(dto.actorUserId()).isEqualTo(7L);
+        assertThat(dto.visaCaseId()).isEqualTo(200L);
         assertThat(dto.fileName()).isEqualTo("passport_scan.pdf");
         assertThat(dto.fileEventType()).isEqualTo(FileEventType.UPLOADED);
         assertThat(dto.description()).isEqualTo("Initial passport document uploaded.");
