@@ -12,6 +12,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
@@ -26,10 +29,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, OauthSuccessHandler oauthSuccessHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/").permitAll()
+                        .requestMatchers("/static/google-icon.svg").permitAll()
                         .requestMatchers("/user/signup").permitAll()
                         .requestMatchers("/user/login").permitAll()
                         .requestMatchers("/logout").permitAll()
@@ -46,9 +50,8 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/dashboard", true)
                         .loginPage("/user/login"))
                 .oauth2Login(l -> l
-                        .defaultSuccessUrl("/dashboard", true)
                         .loginPage("/user/login")
-                        .successHandler(oauthSuccessHandler()))
+                        .successHandler(oauthSuccessHandler))
                 .logout(withDefaults()) //TODO: Custom logout page required
                 .httpBasic(withDefaults());
 
@@ -68,7 +71,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public OauthSuccessHandler oauthSuccessHandler() {
-        return new OauthSuccessHandler();
+    public SecurityContextRepository securityContextRepository(){
+        return new HttpSessionSecurityContextRepository();
     }
 }

@@ -11,6 +11,10 @@ import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -19,6 +23,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -70,6 +79,17 @@ public class UserViewController {
     @GetMapping("/user/login")
     public String userLoginForm(){
         return "user/login";
+    }
+
+    @PreAuthorize("permitAll()")
+    @GetMapping(value = "/static/google-icon.svg", produces = "image/svg+xml")
+    public ResponseEntity<Resource> icon() throws IOException {
+        String inputFile = "src/main/resources/static/google-icon.svg";
+        Path path = new File(inputFile).toPath();
+        FileSystemResource resource = new FileSystemResource(path);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(Files.probeContentType(path)))
+                .body(resource);
     }
 
     // Uneditable profile view from where the user themselves or a sysadmin can access the profile edit view through a

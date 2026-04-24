@@ -118,11 +118,36 @@
             font-size: 14px;
             margin-bottom: 20px;
         }
-        .oauth2 {
+
+        .divider {
             display: block;
             text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
         }
+
+        .oauth2-btn {
+            background: #fff;
+            color: #000;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: 0.2s;
+            margin-top: 10px;
+            font-size: 15px;
+        }
+        .oauth2-btn:hover { background: #ccc; transform: translateY(-1px); }
     </style>
+
 </head>
 <body>
 
@@ -157,7 +182,15 @@
             Don't have an account? <a th:href="@{/user/signup}">Sign up</a>
         </p>
 
-        <a class="oauth2" th:href="@{/oauth2/authorization/google}">Sign in with Google</a>
+        <p class="divider"> - or - </p>
+
+        <a th:href="@{/oauth2/authorization/google}">
+            <button type="button" class="oauth2-btn" >
+            <img th:src="@{/../../static/google-icon.svg}" alt="" width="20" height="20">
+            Sign in with Google
+            </button>
+        </a>
+
     </form>
 
 </div>
