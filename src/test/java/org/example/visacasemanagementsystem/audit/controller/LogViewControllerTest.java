@@ -21,7 +21,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -97,7 +96,6 @@ class LogViewControllerTest {
     // ── /log/visa ─────────────────────────────────────────────────────────
 
     @Test
-    @WithMockUser(roles = "SYSADMIN")
     void visaLog_AsSysadmin_NoFilters_ShouldReturnPageWithDefaults() throws Exception {
         // Arrange — service returns an empty page; we only care about wiring here.
         loginAsSysadmin();
@@ -121,7 +119,6 @@ class LogViewControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "SYSADMIN")
     void visaLog_AsSysadmin_WithFilters_ShouldPassThroughToService() throws Exception {
         // Arrange
         loginAsSysadmin();
@@ -156,7 +153,6 @@ class LogViewControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "SYSADMIN")
     void visaLog_AsSysadmin_WithExplicitPageAndSize_ShouldUseThem() throws Exception {
         // Arrange
         loginAsSysadmin();
@@ -175,7 +171,6 @@ class LogViewControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "SYSADMIN")
     void visaLog_AsSysadmin_WithOversizedPageSize_ShouldClampToMax() throws Exception {
         // Arrange — size=1000 should be clamped to MAX_PAGE_SIZE (100).
         loginAsSysadmin();
@@ -192,7 +187,6 @@ class LogViewControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "SYSADMIN")
     void visaLog_AsSysadmin_WithNegativePageAndSize_ShouldClampToSafeMinimums() throws Exception {
         // Arrange — page=-5 → 0, size=0 → 1.
         loginAsSysadmin();
@@ -210,18 +204,9 @@ class LogViewControllerTest {
         verify(visaLogService).findFiltered(isNull(), isNull(), isNull(), eq(expected));
     }
 
-    // Note on negative auth coverage:
-    // The SYSADMIN-only rule for /log/** is enforced URL-side by SecurityConfig
-    // (`/log/** → hasRole("SYSADMIN")`), which is exercised by the full-context
-    // integration tests. The @PreAuthorize on LogViewController is a
-    // belt-and-suspenders duplicate. @WebMvcTest does not load
-    // @EnableMethodSecurity unless SecurityConfig is imported, so adding a
-    // negative assertion here would test nothing (or silently return 200 OK).
-
     // ── /log/user ─────────────────────────────────────────────────────────
 
     @Test
-    @WithMockUser(roles = "SYSADMIN")
     void userLog_AsSysadmin_NoFilters_ShouldReturnPageWithDefaults() throws Exception {
         // Arrange
         loginAsSysadmin();
@@ -244,7 +229,6 @@ class LogViewControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "SYSADMIN")
     void userLog_AsSysadmin_WithFilters_ShouldPassThroughToService() throws Exception {
         // Arrange
         loginAsSysadmin();

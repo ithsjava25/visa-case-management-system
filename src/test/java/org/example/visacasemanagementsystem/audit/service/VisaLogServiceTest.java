@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.SingularAttribute;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
 import org.example.visacasemanagementsystem.audit.dto.VisaLogDTO;
 import org.example.visacasemanagementsystem.audit.entity.VisaLog;
@@ -29,6 +30,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -208,13 +210,12 @@ class VisaLogServiceTest {
         Path path = mock(Path.class);
         Predicate expectedPredicate = mock(Predicate.class);
 
-        when(root.get("visaEventType")).thenReturn(path);
+        when(root.get(nullable(SingularAttribute.class))).thenReturn(path);
         when(cb.equal(path, VisaEventType.GRANTED)).thenReturn(expectedPredicate);
 
         Predicate actual = specCaptor.getValue().toPredicate(root, query, cb);
 
         assertThat(actual).isSameAs(expectedPredicate);
-        verify(root).get("visaEventType");
         verify(cb).equal(path, VisaEventType.GRANTED);
         verify(cb, never()).greaterThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
         verify(cb, never()).lessThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
@@ -244,13 +245,12 @@ class VisaLogServiceTest {
         Path path = mock(Path.class);
         Predicate expectedPredicate = mock(Predicate.class);
 
-        when(root.get("timeStamp")).thenReturn(path);
+        when(root.get(nullable(SingularAttribute.class))).thenReturn(path);
         when(cb.greaterThanOrEqualTo(path, from)).thenReturn(expectedPredicate);
 
         Predicate actual = specCaptor.getValue().toPredicate(root, query, cb);
 
         assertThat(actual).isSameAs(expectedPredicate);
-        verify(root).get("timeStamp");
         verify(cb).greaterThanOrEqualTo(path, from);
         verify(cb, never()).equal(any(Path.class), any(VisaEventType.class));
         verify(cb, never()).lessThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
@@ -280,13 +280,12 @@ class VisaLogServiceTest {
         Path path = mock(Path.class);
         Predicate expectedPredicate = mock(Predicate.class);
 
-        when(root.get("timeStamp")).thenReturn(path);
+        when(root.get(nullable(SingularAttribute.class))).thenReturn(path);
         when(cb.lessThanOrEqualTo(path, to)).thenReturn(expectedPredicate);
 
         Predicate actual = specCaptor.getValue().toPredicate(root, query, cb);
 
         assertThat(actual).isSameAs(expectedPredicate);
-        verify(root).get("timeStamp");
         verify(cb).lessThanOrEqualTo(path, to);
         verify(cb, never()).equal(any(Path.class), any(VisaEventType.class));
         verify(cb, never()).greaterThanOrEqualTo(any(Path.class), any(LocalDateTime.class));
@@ -324,8 +323,7 @@ class VisaLogServiceTest {
         Predicate and1 = mock(Predicate.class);
         Predicate and2 = mock(Predicate.class);
 
-        when(root.get("visaEventType")).thenReturn(eventTypePath);
-        when(root.get("timeStamp")).thenReturn(timeStampPath);
+        when(root.get(nullable(SingularAttribute.class))).thenReturn(eventTypePath, timeStampPath, timeStampPath);
         when(cb.equal(eventTypePath, VisaEventType.CREATED)).thenReturn(eqPred);
         when(cb.greaterThanOrEqualTo(timeStampPath, from)).thenReturn(gtePred);
         when(cb.lessThanOrEqualTo(timeStampPath, to)).thenReturn(ltePred);
