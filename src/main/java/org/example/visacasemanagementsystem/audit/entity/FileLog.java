@@ -24,8 +24,7 @@ public class FileLog {
     @Column(name = "file_log_id", nullable = false)
     private Long id;
 
-    @NotNull
-    @CreatedDate
+    @NotNull @CreatedDate
     private LocalDateTime timeStamp;
 
     @NotNull private Long actorUserId;

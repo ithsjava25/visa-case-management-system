@@ -1,9 +1,7 @@
 package org.example.visacasemanagementsystem.comment.service;
 
 import org.example.visacasemanagementsystem.audit.CommentEventType;
-import org.example.visacasemanagementsystem.audit.VisaEventType;
 import org.example.visacasemanagementsystem.audit.service.CommentLogService;
-import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.dto.CreateCommentDTO;
 import org.example.visacasemanagementsystem.comment.entity.Comment;

@@ -25,16 +25,14 @@ public class CommentLog {
     @Column(name = "comment_log_id", nullable = false)
     private Long id;
 
-    @NotNull
-    @CreatedDate
+    @NotNull @CreatedDate
     private LocalDateTime timeStamp;
 
     @NotNull private Long actorUserId;
 
     @NotNull private Long visaCaseId;
 
-    @NotNull
-    private Long commentId;
+    @NotNull private Long commentId;
 
     @NotNull @Enumerated(EnumType.STRING)
     private CommentEventType commentEventType;

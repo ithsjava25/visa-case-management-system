@@ -1,13 +1,8 @@
 package org.example.visacasemanagementsystem.audit.service;
 
-import org.example.visacasemanagementsystem.audit.CommentEventType;
 import org.example.visacasemanagementsystem.audit.FileEventType;
-import org.example.visacasemanagementsystem.audit.UserEventType;
 import org.example.visacasemanagementsystem.audit.dto.FileLogDTO;
-import org.example.visacasemanagementsystem.audit.dto.UserLogDTO;
-import org.example.visacasemanagementsystem.audit.entity.CommentLog;
 import org.example.visacasemanagementsystem.audit.entity.FileLog;
-import org.example.visacasemanagementsystem.audit.entity.UserLog;
 import org.example.visacasemanagementsystem.audit.mapper.FileLogMapper;
 import org.example.visacasemanagementsystem.audit.repository.FileLogRepository;
 import org.springframework.stereotype.Service;
