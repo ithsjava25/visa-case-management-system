@@ -74,7 +74,7 @@
                     <td th:text="${log.visaCaseId}">101</td>
                     <td>
                         <span class="status"
-                              th:classappend="${'status-' + #strings.toLowerCase(log.visaEventType.name())}"
+                              th:classappend="${log.visaEventType != null ? 'status-' + #strings.toLowerCase(log.visaEventType.name()) : ''}"
                               th:text="${log.visaEventType}">CREATED</span>
                     </td>
                     <td th:text="${log.description}">Visa application submitted.</td>
@@ -91,7 +91,7 @@
             <div class="pager" th:if="${logs.totalPages > 1}">
                 <a th:if="${!logs.first}"
                    th:href="@{/log/visa(page=${logs.number - 1}, size=${logs.size},
-                                         eventType=${selectedEventType},
+                                         eventType=${selectedEventType != null ? selectedEventType.name() : null},
                                          from=${from != null ? #temporals.format(from, 'yyyy-MM-dd') : null},
                                          to=${to != null ? #temporals.format(to, 'yyyy-MM-dd') : null})}"
                    class="view-link">&larr; Previous</a>
@@ -103,7 +103,7 @@
 
                 <a th:if="${!logs.last}"
                    th:href="@{/log/visa(page=${logs.number + 1}, size=${logs.size},
-                                         eventType=${selectedEventType},
+                                         eventType=${selectedEventType != null ? selectedEventType.name() : null},
                                          from=${from != null ? #temporals.format(from, 'yyyy-MM-dd') : null},
                                          to=${to != null ? #temporals.format(to, 'yyyy-MM-dd') : null})}"
                    class="view-link">Next &rarr;</a>
