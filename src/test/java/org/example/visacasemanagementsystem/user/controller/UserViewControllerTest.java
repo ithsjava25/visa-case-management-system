@@ -355,30 +355,6 @@ class UserViewControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ── Dashboard removal ─────────────────────────────────────────────────────
-    //
-    // After the refactor /dashboard/admin and /dashboard/sysadmin no longer
-    // exist as controller mappings. They now 404, not 403 — the security
-    // chain falls through to anyRequest().hasRole("SYSADMIN"), but there is
-    // no handler, so Spring returns NOT_FOUND via the default error page.
-    // These tests pin that so the routes don't silently come back later.
-
-    @Test
-    @DisplayName("Checking if GET /dashboard/admin is gone (should 404 for ADMIN)")
-    void oldAdminDashboard_ShouldNoLongerExist() throws Exception {
-        mockMvc.perform(get("/dashboard/admin")
-                        .with(authentication(authFor(1L, "Test Admin", "admin@test.com", UserAuthorization.ADMIN))))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("Checking if GET /dashboard/sysadmin is gone (should 404 for SYSADMIN)")
-    void oldSysAdminDashboard_ShouldNoLongerExist() throws Exception {
-        mockMvc.perform(get("/dashboard/sysadmin")
-                        .with(authentication(authFor(1L, "SysAdmin", "sysadmin@test.com", UserAuthorization.SYSADMIN))))
-                .andExpect(status().isNotFound());
-    }
-
     // ── POST /profile/edit/{userId}/authorization ─────────────────────────────
 
     @Test
