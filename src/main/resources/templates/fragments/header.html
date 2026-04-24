@@ -3,37 +3,31 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       lang="en">
 <head>
-    <!--
-      The nav's styling now lives in /css/components.css under `.site-nav`.
-      Every template that renders this fragment links tokens.css + components.css
-      from its own <head>, so there's nothing to pull in here.
-    -->
 </head>
 <body>
 <nav th:fragment="nav" class="site-nav">
     <a class="brand" th:href="@{/}">Visa Case Management</a>
 
     <div class="nav-links">
-        <!-- Applicant nav.
-             USERs no longer have their own /dashboard/applicant page; the
-             richer /visas/dashboard view is their single dashboard. -->
+        <!-- Applicant nav: their own applications + their own profile. -->
         <th:block sec:authorize="hasRole('USER')">
-            <a th:href="@{/visas/dashboard}">Dashboard</a>
+            <a th:href="@{/visa/my-applications}">My Applications</a>
             <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
         </th:block>
 
-        <!-- Admin nav -->
+        <!-- Admin nav: the case-management page + their own profile. -->
         <th:block sec:authorize="hasRole('ADMIN')">
-            <a th:href="@{/dashboard/admin}">Dashboard</a>
-            <a th:href="@{/visas/dashboard}">Visa Cases</a>
+            <a th:href="@{/visa/cases}">Visa Cases</a>
             <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
         </th:block>
 
-        <!-- Sysadmin nav -->
+        <!-- Sysadmin nav: audit logs split onto their own pages, plus the
+             user list, the shared admin cases page, and their own profile. -->
         <th:block sec:authorize="hasRole('SYSADMIN')">
-            <a th:href="@{/dashboard/sysadmin}">Dashboard</a>
-            <a th:href="@{/visas/dashboard}">Visa Cases</a>
-            <a th:href="@{/user/list}">Users</a>
+            <a th:href="@{/log/visa}">Visa Log</a>
+            <a th:href="@{/log/user}">User Log</a>
+            <a th:href="@{/user/list}">User List</a>
+            <a th:href="@{/visa/cases}">Visa Cases</a>
             <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>
         </th:block>
 
@@ -41,7 +35,7 @@
 
         <!--
           Logout must be a POST request because Spring Security's CSRF protection
-          is enabled.  The UserViewController#logout handler invalidates the session
+          is enabled. The UserViewController#logout handler invalidates the session
           and redirects to /user/login?logout.
         -->
         <form th:action="@{/user/logout}" method="post" class="logout-form">

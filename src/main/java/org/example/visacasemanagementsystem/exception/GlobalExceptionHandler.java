@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.exception;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.example.visacasemanagementsystem.ApplicationViewController;
+import org.example.visacasemanagementsystem.audit.controller.LogViewController;
 import org.example.visacasemanagementsystem.user.controller.UserViewController;
 import org.example.visacasemanagementsystem.visa.controller.VisaViewController;
 import org.springframework.http.HttpStatus;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ControllerAdvice(assignableTypes = {VisaViewController.class, UserViewController.class, ApplicationViewController.class})
+@ControllerAdvice(assignableTypes = {VisaViewController.class, UserViewController.class, ApplicationViewController.class, LogViewController.class})
 @Slf4j
 public class GlobalExceptionHandler {
 
@@ -22,9 +23,6 @@ public class GlobalExceptionHandler {
         log.error("Access denied: {}", exception.getMessage());
         model.addAttribute("errorMessage","You do not have permission to perform this action.");
         model.addAttribute("errorTitle", "⚠️Access Denied.");
-
-        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
-        // model.addAttribute("dashboardUrl", determineDashboardUrl());
 
         return "error/error";
     }
@@ -46,9 +44,6 @@ public class GlobalExceptionHandler {
         model.addAttribute("errorMessage", "The requested resource could not be found.");
         model.addAttribute("errorTitle", "⚠️Not Found.");
 
-        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
-        // model.addAttribute("dashboardUrl", determineDashboardUrl());
-
         return "error/error";
     }
 
@@ -62,9 +57,6 @@ public class GlobalExceptionHandler {
         model.addAttribute("errorMessage", userMessage);
         model.addAttribute("errorTitle", "⚠️Bad Request.");
 
-        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
-        // model.addAttribute("dashboardUrl", determineDashboardUrl());
-
         return "error/error";
     }
 
@@ -74,9 +66,6 @@ public class GlobalExceptionHandler {
         log.error("Unexpected Error: ", exception);
         model.addAttribute("errorMessage","Something went wrong. Try again later.");
         model.addAttribute("errorTitle", "⚠️Internal Server Error.");
-
-        // TODO: Fetch user role from SecurityContext and add correct dashboard URL to model
-        // model.addAttribute("dashboardUrl", determineDashboardUrl());
 
         return "error/error";
     }

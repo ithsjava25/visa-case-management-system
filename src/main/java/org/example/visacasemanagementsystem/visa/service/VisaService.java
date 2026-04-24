@@ -435,4 +435,46 @@ public class VisaService {
                 .map(visaMapper::toDTO)
                 .toList();
     }
+
+    // --- Queries for /visa/cases (admin + sysadmin landing page) ---
+
+    /**
+     * Open Cases: everything the current handler is actively working on.
+     */
+    public List<VisaDTO> findOpenCasesByHandler(Long handlerId) {
+        List<VisaStatus> openStatuses = List.of(VisaStatus.ASSIGNED, VisaStatus.INCOMPLETE);
+        return visaRepository.findByHandler_IdAndVisaStatusIn(
+                        handlerId,
+                        openStatuses,
+                        Sort.by("updatedAt").descending())
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+    }
+
+    /**
+     * Unassigned Cases: freshly-submitted applications nobody is handling yet.
+     */
+    public List<VisaDTO> findUnassignedCases() {
+        return visaRepository.findByVisaStatusAndHandlerIsNull(
+                        VisaStatus.SUBMITTED,
+                        Sort.by("updatedAt").descending())
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+    }
+
+    /**
+     * Handled Cases: contains cases which have been either GRANTED or REJECTED.
+     */
+    public List<VisaDTO> findHandledCasesByHandler(Long handlerId) {
+        List<VisaStatus> handledStatuses = List.of(VisaStatus.GRANTED, VisaStatus.REJECTED);
+        return visaRepository.findByHandler_IdAndVisaStatusIn(
+                        handlerId,
+                        handledStatuses,
+                        Sort.by("updatedAt").descending())
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+    }
 }

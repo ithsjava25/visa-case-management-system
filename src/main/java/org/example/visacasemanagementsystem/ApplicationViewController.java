@@ -6,16 +6,26 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import java.util.Objects;
 
+/**
+ * Entry-point controller: maps the site root to the role-based router and
+ * hosts that router at /home.
+ */
 @Controller
 public class ApplicationViewController {
 
     @GetMapping("/")
     public String index() {
-        return "redirect:/dashboard";
+        return "redirect:/home";
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard(@AuthenticationPrincipal UserPrincipal principal) {
+    /**
+     * Role-based landing-page router. Each role has a distinct primary page:
+     *   SYSADMIN -> /log/visa
+     *   ADMIN    -> /visa/cases
+     *   USER     -> /visa/my-applications.
+     */
+    @GetMapping("/home")
+    public String home(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return "redirect:/user/login";
         }
@@ -24,9 +34,8 @@ public class ApplicationViewController {
         boolean isAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
 
-        if (isSysAdmin) return "redirect:/dashboard/sysadmin";
-        if (isAdmin)    return "redirect:/dashboard/admin";
-        // Applicants use /visas/dashboard as their landing dashboard.
-        return "redirect:/visas/dashboard";
+        if (isSysAdmin) return "redirect:/log/visa";
+        if (isAdmin)    return "redirect:/visa/cases";
+        return "redirect:/visa/my-applications";
     }
 }

@@ -30,23 +30,31 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // Public landing + static assets + anonymous auth forms
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/css/**").permitAll()
                         .requestMatchers("/user/signup").permitAll()
                         .requestMatchers("/user/login").permitAll()
+
+                        // Any authenticated user can hit these; role-specific protection
+                        // lives on the individual @PreAuthorize annotations.
                         .requestMatchers("/user/logout").authenticated()
-                        .requestMatchers("/dashboard").authenticated()
+                        .requestMatchers("/home").authenticated()
                         .requestMatchers("/profile/**").authenticated()
-                        .requestMatchers("/visas/**").authenticated()
+                        .requestMatchers("/visa/**").authenticated()
                         .requestMatchers("/api/comments/**").authenticated()
-                        .requestMatchers("/**/admin").hasRole("ADMIN")
-                        // /dashboard/applicant was removed — USERs now land on /visas/dashboard
-                        // (covered by the /visas/** authenticated matcher above).
+
+                        // Audit logs and user list are sysadmin-only.
+                        .requestMatchers("/log/**").hasRole("SYSADMIN")
                         .anyRequest().hasRole("SYSADMIN")
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .formLogin(l -> l
-                        .defaultSuccessUrl("/dashboard", true)
+                        // /home is the single post-login router and redirects as follows:
+                        // USER -> /visa/my-applications
+                        // ADMIN -> /visa/cases,
+                        // SYSADMIN -> /log/visa
+                        .defaultSuccessUrl("/home", true)
                         .loginPage("/user/login"))
                 .logout(AbstractHttpConfigurer::disable)
                 .httpBasic(withDefaults());

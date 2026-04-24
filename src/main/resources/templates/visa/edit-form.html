@@ -87,7 +87,7 @@
         </p>
     </div>
 
-    <form th:action="@{/visas/{id}/edit(id=${updateVisaDto.id})}"
+    <form th:action="@{/visa/{id}/edit(id=${updateVisaDto.id})}"
           th:object="${updateVisaDto}"
           method="post" enctype="multipart/form-data">
 
@@ -158,12 +158,12 @@
         </div>
 
         <button type="submit" class="btn-submit">Save Changes</button>
-        <a th:href="@{/visas/{id}(id=${updateVisaDto.id})}" class="cancel-link">Back to Details</a>
+        <a th:href="@{/visa/{id}(id=${updateVisaDto.id})}" class="cancel-link">Back to Details</a>
     </form>
 
     <div th:each="key, iter : ${visa.s3Keys}">
         <form th:id="'delete-doc-' + ${iter.index}"
-              th:action="@{/visas/{id}/documents/delete(id=${visa.id})}"
+              th:action="@{/visa/{id}/documents/delete(id=${visa.id})}"
               method="post" style="display: none;">
             <input type="hidden" name="s3Key" th:value="${key}">
         </form>

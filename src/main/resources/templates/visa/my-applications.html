@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Visa Dashboard</title>
+    <title>My Applications</title>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
     <style>
-        /* Page-specific: centred 1000px card + a dashboard-style header bar. */
         .container { max-width: 1000px; margin: 0 auto; }
-
         .container > header { margin-bottom: 40px; padding-bottom: 24px; }
 
-        .user-info     { font-size: 14px; color: var(--color-text-muted); }
+        .user-info      { font-size: 14px; color: var(--color-text-muted); }
         .header-actions { display: flex; gap: 12px; }
     </style>
 </head>
@@ -23,15 +21,11 @@
 <div class="container">
     <header>
         <div>
-            <h1>Visa Dashboard</h1>
+            <h1>My Applications</h1>
             <span class="user-info">Logged in as: <span th:text="${currentUser.fullName}">User</span></span>
         </div>
         <div class="header-actions">
-            <!-- Page-specific action. Sign-out lives in the global header now. -->
-            <a th:if="${currentUser.userAuthorization.name() == 'USER'}"
-               th:href="@{/visas/apply}" class="btn-new">
-                + New Application
-            </a>
+            <a th:href="@{/visa/apply}" class="btn-new">+ New Application</a>
         </div>
     </header>
 
@@ -40,8 +34,6 @@
             <thead>
             <tr>
                 <th>Reference</th>
-                <th th:if="${currentUser.userAuthorization.name() != 'USER'}">Applicant</th>
-                <th th:if="${currentUser.userAuthorization.name() != 'USER'}">Handler</th>
                 <th>Visa Type</th>
                 <th>Status</th>
                 <th>Travel Date</th>
@@ -52,28 +44,19 @@
             <tbody>
             <tr th:each="visa : ${visas}">
                 <td th:text="'# ' + ${visa.id}">#101</td>
-
-                <td th:if="${currentUser.userAuthorization.name() != 'USER'}"
-                    th:text="${visa.applicantName}">Anna Andersson</td>
-
-                <td th:if="${currentUser.userAuthorization.name() != 'USER'}"
-                    th:text="${visa.handlerName != null ? visa.handlerName : 'Unassigned'}">-</td>
-
                 <td th:text="${visa.visaType}">STUDENT</td>
                 <td>
-                        <span class="status"
-                              th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
-                              th:text="${visa.visaStatus}">
-                            SUBMITTED
-                        </span>
+                    <span class="status"
+                          th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
+                          th:text="${visa.visaStatus}">
+                        SUBMITTED
+                    </span>
                 </td>
                 <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
-
-
                 <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
                 <td style="text-align: left;">
-                    <a th:href="@{/visas/{id}(id=${visa.id})}" class="view-link">
-                        Details →
+                    <a th:href="@{/visa/{id}(id=${visa.id})}" class="view-link">
+                        Details &rarr;
                     </a>
                 </td>
             </tr>
@@ -81,7 +64,7 @@
         </table>
 
         <div th:if="${#lists.isEmpty(visas)}" class="empty-state">
-            No applications found.
+            You have no applications yet.
         </div>
     </main>
 </div>

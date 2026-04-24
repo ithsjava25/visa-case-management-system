@@ -52,8 +52,6 @@
 
     /* ----------------------------------------------------------------------
      * Status palette
-     * Authoritative version — visa/dashboard.html's colours won when
-     * admin.html and visa/dashboard.html disagreed on assigned/unassigned.
      * ---------------------------------------------------------------------- */
     --color-submitted-bg:      rgba(25, 103, 210, 0.2);
     --color-submitted-fg:      #8ab4f8;

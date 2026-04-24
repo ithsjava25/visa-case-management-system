@@ -29,7 +29,7 @@
         <p>Logged in as <span th:text="${currentUser.fullName}">User</span></p>
     </header>
 
-    <form th:action="@{/visas/apply}" th:object="${createVisaDTO}" method="post" enctype="multipart/form-data">
+    <form th:action="@{/visa/apply}" th:object="${createVisaDTO}" method="post" enctype="multipart/form-data">
         <input type="hidden" name="applicantId" th:value="${createVisaDTO.applicantId}" />
 
         <div th:if="${#fields.hasErrors('global')}" class="alert-error">
@@ -95,7 +95,9 @@
 
         <button type="submit" class="btn-submit">Submit Application</button>
 
-        <a th:href="@{/visas/dashboard}" class="cancel-link">Cancel</a>
+        <!-- Apply is USER-only, so Cancel always returns to the applicant's
+             own list. No role-aware back link needed. -->
+        <a th:href="@{/visa/my-applications}" class="cancel-link">Cancel</a>
     </form>
 
 </div>

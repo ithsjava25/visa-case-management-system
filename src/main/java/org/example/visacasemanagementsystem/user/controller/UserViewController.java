@@ -3,8 +3,6 @@ package org.example.visacasemanagementsystem.user.controller;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.visacasemanagementsystem.audit.service.UserLogService;
-import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
@@ -12,8 +10,6 @@ import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
-import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
-import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,22 +24,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * User-facing controller: signup, login, profile view/edit, and the sysadmin user list.
+ */
 @PreAuthorize("isAuthenticated()")
 @Controller
 public class UserViewController {
-    private final VisaService visaService;
     private final UserService userService;
-    private final VisaLogService visaLogService;
-    private final UserLogService userLogService;
 
-    public UserViewController(VisaService visaService,
-                              UserService userService,
-                              VisaLogService visaLogService,
-                              UserLogService userLogService) {
-        this.visaService = visaService;
+    public UserViewController(UserService userService) {
         this.userService = userService;
-        this.visaLogService = visaLogService;
-        this.userLogService = userLogService;
     }
 
     // Signup form for new users, accessible to all.
@@ -51,7 +41,7 @@ public class UserViewController {
     @GetMapping("/user/signup")
     public String userSignupForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         if (principal != null) {
-            return "redirect:/dashboard";
+            return "redirect:/home";
         }
         return "user/signup";
     }
@@ -79,7 +69,7 @@ public class UserViewController {
     @GetMapping("/user/login")
     public String userLoginForm(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal != null) {
-            return "redirect:/dashboard";
+            return "redirect:/home";
         }
         return "user/login";
     }
@@ -193,29 +183,5 @@ public class UserViewController {
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
         return "user/list";
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/dashboard/admin")
-    public String adminDashboard(@AuthenticationPrincipal UserPrincipal principal,
-                                 Model model) {
-        List<VisaDTO> assignedCases = visaService.findVisasByHandlerId(principal.getUserId());
-        List<VisaDTO> unassignedCases = visaService.findVisaByStatus("SUBMITTED");
-        model.addAttribute("name", principal.getFullName());
-        model.addAttribute("assignedCases", assignedCases);
-        model.addAttribute("unassignedCases", unassignedCases);
-        return "dashboard/admin";
-    }
-
-    @PreAuthorize("hasRole('SYSADMIN')")
-    @GetMapping("/dashboard/sysadmin")
-    public String sysAdminDashboard(@AuthenticationPrincipal UserPrincipal principal,
-                                    Model model) {
-        List<UserDTO> allUsers = userService.findAll();
-        model.addAttribute("name", principal.getFullName());
-        model.addAttribute("users", allUsers);
-        model.addAttribute("visaLogs", visaLogService.findAll());
-        model.addAttribute("userLogs", userLogService.findAll());
-        return "dashboard/sysadmin";
     }
 }

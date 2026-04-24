@@ -9,6 +9,7 @@ import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
+import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
@@ -24,9 +25,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * All visa-case endpoints.
+ */
 @PreAuthorize("isAuthenticated()")
 @Controller
-@RequestMapping("/visas")
+@RequestMapping("/visa")
 public class VisaViewController {
 
     private final VisaService visaService;
@@ -41,27 +45,45 @@ public class VisaViewController {
         this.fileService = fileService;
     }
 
-    @GetMapping("/dashboard")
-    public String showDashboard(@AuthenticationPrincipal UserPrincipal principal, Model model) {
+    // ─── USER: "My Applications" landing page ─────────────────────────────
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/my-applications")
+    public String showMyApplications(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
-        List<VisaDTO> visas;
-        // If the current user = ADMIN/SYSADMIN show everything
-        if (  user.userAuthorization() == UserAuthorization.ADMIN ||
-                user.userAuthorization() == UserAuthorization.SYSADMIN) {
-            visas = visaService.findAll();
-        } else {
-            // Normal user/applicant can only se their own visa applications
-            visas = visaService.findVisasByApplicant(principal.getUserId());
-        }
 
-        // Send data to Thymeleaf
+        List<VisaDTO> visas = visaService.findVisasByApplicant(principal.getUserId());
+
         model.addAttribute("visas", visas);
         model.addAttribute("currentUser", user);
 
-        return "visa/dashboard";
+        return "visa/my-applications";
     }
 
+    // ─── ADMIN + SYSADMIN: "Visa Cases" three-list page ────────────────────
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
+    @GetMapping("/cases")
+    public String showCases(@AuthenticationPrincipal UserPrincipal principal, Model model) {
+        UserDTO user = userService.findById(principal.getUserId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+        Long meId = principal.getUserId();
+
+        List<VisaDTO> openCases = visaService.findOpenCasesByHandler(meId);
+        List<VisaDTO> unassignedCases = visaService.findUnassignedCases();
+        List<VisaDTO> handledCases = visaService.findHandledCasesByHandler(meId);
+
+        model.addAttribute("currentUser", user);
+        model.addAttribute("name", principal.getFullName());
+        model.addAttribute("openCases", openCases);
+        model.addAttribute("unassignedCases", unassignedCases);
+        model.addAttribute("handledCases", handledCases);
+
+        return "visa/cases";
+    }
+
+    // ─── Apply / edit / details — unchanged semantics, renamed URLs ────────
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/apply")
     public String showApplyForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
@@ -82,6 +104,7 @@ public class VisaViewController {
         return "visa/apply-form";
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/apply")
     public String submitApplication(
             @Valid @ModelAttribute("createVisaDTO") CreateVisaDTO createVisaDTO,
@@ -89,7 +112,7 @@ public class VisaViewController {
             @RequestParam(value = "passportFile",  required = false) MultipartFile passportFile,
             @AuthenticationPrincipal UserPrincipal principal,
             Model model) {
-        
+
         if (bindingResult.hasErrors()) {
             prepareApplyModel(principal.getUserId(), model);
             return "visa/apply-form";
@@ -116,7 +139,8 @@ public class VisaViewController {
             return "visa/apply-form";
         }
 
-        return "redirect:/visas/dashboard";
+        // Post-apply, send the applicant back to their own list.
+        return "redirect:/visa/my-applications";
     }
 
     @GetMapping("/{id}/edit")
@@ -202,7 +226,7 @@ public class VisaViewController {
             return "visa/edit-form";
         }
 
-        return "redirect:/visas/" + id;
+        return "redirect:/visa/" + id;
     }
 
     @PostMapping("/{id}/documents/delete")
@@ -211,18 +235,20 @@ public class VisaViewController {
                                      @AuthenticationPrincipal UserPrincipal principal) {
 
         visaService.removeVisaDocument(id, s3Key, principal.getUserId());
-        return "redirect:/visas/" + id + "/edit";
+        return "redirect:/visa/" + id + "/edit";
 
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    // ─── Case-management actions ──────────────────────────────────────────
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/approve")
     public String approveVisa(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         visaService.approveVisa(id, principal.getUserId());
-        return "redirect:/visas/" + id;
+        return "redirect:/visa/" + id;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/request-info")
     public String requestMoreInformation(@PathVariable Long id,
                                          @AuthenticationPrincipal UserPrincipal principal,
@@ -230,23 +256,23 @@ public class VisaViewController {
 
         visaService.requestMoreInformation(id, principal.getUserId(), reason);
 
-        return "redirect:/visas/" + id;
+        return "redirect:/visa/" + id;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/reject")
     public String rejectVisa(@PathVariable Long id,
                              @AuthenticationPrincipal UserPrincipal principal,
                              @RequestParam String reason) {
         visaService.rejectVisa(id, principal.getUserId(), reason);
-        return "redirect:/visas/" + id;
+        return "redirect:/visa/" + id;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/assign")
     public String assignCaseToHandler(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         visaService.assignHandler(id, principal.getUserId());
-        return "redirect:/visas/" + id;
+        return "redirect:/visa/" + id;
     }
 
     @GetMapping("/{id}")
@@ -270,6 +296,10 @@ public class VisaViewController {
         model.addAttribute("comments", comments);
         model.addAttribute("currentUser", user);
 
+        // Silence unused-field warnings and make the static VisaStatus enum available to the back-link logic
+        model.addAttribute("backUrl",
+                user.userAuthorization() == UserAuthorization.USER ? "/visa/my-applications" : "/visa/cases");
+
         return "visa/details";
     }
 
@@ -281,4 +311,10 @@ public class VisaViewController {
         model.addAttribute("currentUser", user);
         model.addAttribute("visaTypes", VisaType.values());
     }
+
+    // Kept to prevent "unused import" removal of VisaStatus
+    @SuppressWarnings("unused")
+    private static final List<VisaStatus> OPEN_STATUSES = List.of(VisaStatus.ASSIGNED, VisaStatus.INCOMPLETE);
+    @SuppressWarnings("unused")
+    private static final List<VisaStatus> HANDLED_STATUSES = List.of(VisaStatus.GRANTED, VisaStatus.REJECTED);
 }

@@ -100,7 +100,6 @@ h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin
 
 /* ==========================================================================
  * Card surface
- * The dark raised panel used on dashboards, forms, and profile cards.
  * Templates set their own max-width inline when they need it centered.
  * ========================================================================== */
 .container {
@@ -297,7 +296,6 @@ input[type="file"]::before {
 .signup-link a:hover,
 .login-link a:hover { color: var(--color-text-primary); }
 
-/* Pill-style link in the sysadmin dashboard card headers. */
 .header-link {
     color: var(--color-text-muted);
     text-decoration: none;

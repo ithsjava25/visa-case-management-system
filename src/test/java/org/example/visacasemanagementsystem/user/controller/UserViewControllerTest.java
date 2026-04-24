@@ -1,7 +1,5 @@
 package org.example.visacasemanagementsystem.user.controller;
 
-import org.example.visacasemanagementsystem.audit.service.UserLogService;
-import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.config.SecurityConfig;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
@@ -9,7 +7,6 @@ import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
-import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +31,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Web-layer tests for UserViewController after the dashboard-overhaul refactor.
+ *
+ * Removed tests:
+ * - /dashboard/admin and /dashboard/sysadmin tests — those endpoints were
+ *   hard-removed; routing now lives in ApplicationViewController (/home)
+ *   and the pages they rendered were split into /visa/cases and /log/**.
+ *
+ * Mocks trimmed: VisaService, VisaLogService, UserLogService are no longer
+ * dependencies of UserViewController, so they're gone from this test too.
+ */
 @WebMvcTest(UserViewController.class)
 @Import(SecurityConfig.class)
 @DisplayName("UserViewController web-layer tests")
@@ -46,22 +54,26 @@ class UserViewControllerTest {
     private UserDetailsService userDetailsService;
     @MockitoBean
     private UserService userService;
-    @MockitoBean
-    private VisaService visaService;
-    @MockitoBean
-    private VisaLogService visaLogService;
-    @MockitoBean
-    private UserLogService userLogService;
 
     // ── GET /user/signup ──────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("Checking if GET /user/signup returns the signup view")
+    @DisplayName("Checking if GET /user/signup returns the signup view for anonymous users")
     void userSignupForm_ShouldReturnSignupView() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/user/signup"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("user/signup"));
+    }
+
+    @Test
+    @DisplayName("Checking if GET /user/signup redirects authenticated users to /home")
+    void userSignupForm_WhenAuthenticated_ShouldRedirectToHome() throws Exception {
+        // Act & Assert — after the refactor this used to redirect to /dashboard.
+        mockMvc.perform(get("/user/signup")
+                        .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/home"));
     }
 
     // ── POST /user/signup ─────────────────────────────────────────────────────
@@ -125,12 +137,22 @@ class UserViewControllerTest {
     // ── GET /user/login ───────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("Checking if GET /user/login returns the login view")
+    @DisplayName("Checking if GET /user/login returns the login view for anonymous users")
     void userLoginForm_ShouldReturnLoginView() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/user/login"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("user/login"));
+    }
+
+    @Test
+    @DisplayName("Checking if GET /user/login redirects authenticated users to /home")
+    void userLoginForm_WhenAuthenticated_ShouldRedirectToHome() throws Exception {
+        // Act & Assert — after the refactor this used to redirect to /dashboard.
+        mockMvc.perform(get("/user/login")
+                        .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/home"));
     }
 
     // ── GET /profile/view/{userId} ────────────────────────────────────────────
@@ -333,71 +355,28 @@ class UserViewControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ── GET /dashboard/admin ──────────────────────────────────────────────────
+    // ── Dashboard removal ─────────────────────────────────────────────────────
+    //
+    // After the refactor /dashboard/admin and /dashboard/sysadmin no longer
+    // exist as controller mappings. They now 404, not 403 — the security
+    // chain falls through to anyRequest().hasRole("SYSADMIN"), but there is
+    // no handler, so Spring returns NOT_FOUND via the default error page.
+    // These tests pin that so the routes don't silently come back later.
 
     @Test
-    @DisplayName("Checking if GET /dashboard/admin returns assigned and unassigned cases for an ADMIN")
-    void adminDashboard_AsAdmin_ShouldReturnDashboardWithCases() throws Exception {
-        // Arrange
-        Long adminId = 1L;
-        when(visaService.findVisasByHandlerId(adminId)).thenReturn(List.of());
-        when(visaService.findVisaByStatus("SUBMITTED")).thenReturn(List.of());
-
-        // Act & Assert
+    @DisplayName("Checking if GET /dashboard/admin is gone (should 404 for ADMIN)")
+    void oldAdminDashboard_ShouldNoLongerExist() throws Exception {
         mockMvc.perform(get("/dashboard/admin")
-                        .with(authentication(authFor(adminId, "Test Admin", "admin@test.com", UserAuthorization.ADMIN))))
-                .andExpect(status().isOk())
-                .andExpect(view().name("dashboard/admin"))
-                .andExpect(model().attributeExists("assignedCases"))
-                .andExpect(model().attributeExists("unassignedCases"))
-                .andExpect(model().attributeExists("name"));
-    }
-
-    @Test
-    @DisplayName("Checking if GET /dashboard/admin returns 403 when accessed by a regular USER")
-    void adminDashboard_AsRegularUser_ShouldReturnForbidden() throws Exception {
-        // Act & Assert — @PreAuthorize("hasRole('ADMIN')") rejects USER
-        mockMvc.perform(get("/dashboard/admin")
-                        .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
-                .andExpect(status().isForbidden());
-    }
-
-    // ── GET /dashboard/sysadmin ───────────────────────────────────────────────
-
-    @Test
-    @DisplayName("Checking if GET /dashboard/sysadmin returns users and visa logs for a SYSADMIN")
-    void sysAdminDashboard_AsSysAdmin_ShouldReturnDashboardWithUsersAndLogs() throws Exception {
-        // Arrange
-        Long sysAdminId = 1L;
-        when(userService.findAll()).thenReturn(List.of());
-        when(visaLogService.findAll()).thenReturn(List.of());
-
-        // Act & Assert
-        mockMvc.perform(get("/dashboard/sysadmin")
-                        .with(authentication(authFor(sysAdminId, "SysAdmin", "sysadmin@test.com", UserAuthorization.SYSADMIN))))
-                .andExpect(status().isOk())
-                .andExpect(view().name("dashboard/sysadmin"))
-                .andExpect(model().attributeExists("users"))
-                .andExpect(model().attributeExists("visaLogs"))
-                .andExpect(model().attributeExists("name"));
-    }
-
-    @Test
-    @DisplayName("Checking if GET /dashboard/sysadmin returns 403 when accessed by an ADMIN")
-    void sysAdminDashboard_AsAdmin_ShouldReturnForbidden() throws Exception {
-        // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects ADMIN
-        mockMvc.perform(get("/dashboard/sysadmin")
                         .with(authentication(authFor(1L, "Test Admin", "admin@test.com", UserAuthorization.ADMIN))))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("Checking if GET /dashboard/sysadmin returns 403 when accessed by a regular USER")
-    void sysAdminDashboard_AsRegularUser_ShouldReturnForbidden() throws Exception {
-        // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects USER
+    @DisplayName("Checking if GET /dashboard/sysadmin is gone (should 404 for SYSADMIN)")
+    void oldSysAdminDashboard_ShouldNoLongerExist() throws Exception {
         mockMvc.perform(get("/dashboard/sysadmin")
-                        .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER))))
-                .andExpect(status().isForbidden());
+                        .with(authentication(authFor(1L, "SysAdmin", "sysadmin@test.com", UserAuthorization.SYSADMIN))))
+                .andExpect(status().isNotFound());
     }
 
     // ── POST /profile/edit/{userId}/authorization ─────────────────────────────

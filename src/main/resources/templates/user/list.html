@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User Management</title>
+    <title>User List</title>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
     <style>
@@ -22,7 +22,7 @@
     <div class="container">
         <header>
             <div>
-                <h1>User Management</h1>
+                <h1>User List</h1>
                 <span class="user-count" th:text="${#lists.size(users) + ' users total'}">0 users total</span>
             </div>
         </header>
