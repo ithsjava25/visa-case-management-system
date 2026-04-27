@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/comments/**").authenticated()
                         .requestMatchers("/**/admin").hasRole("ADMIN")
                         .requestMatchers("/**/applicant").hasRole("USER")
+                        .requestMatchers("/profile/edit/{userId}/authorization").hasRole("SYSADMIN")
                         .anyRequest().hasRole("SYSADMIN")
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
@@ -59,14 +60,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider authnProvider = new DaoAuthenticationProvider(userDetailsService);
         authnProvider.setPasswordEncoder(passwordEncoder());
         return authnProvider;
     }
 
     @Bean
-    public static PasswordEncoder passwordEncoder() {
+    public static PasswordEncoder passwordEncoder(){
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 

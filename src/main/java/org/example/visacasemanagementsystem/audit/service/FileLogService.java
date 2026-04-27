@@ -5,6 +5,7 @@ import org.example.visacasemanagementsystem.audit.dto.FileLogDTO;
 import org.example.visacasemanagementsystem.audit.entity.FileLog;
 import org.example.visacasemanagementsystem.audit.mapper.FileLogMapper;
 import org.example.visacasemanagementsystem.audit.repository.FileLogRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class FileLogService {
 
     }
 
+    @PreAuthorize("isAuthenticated()")
     public List<FileLogDTO> findAll() {
         return fileLogRepository.findAll()
                 .stream()

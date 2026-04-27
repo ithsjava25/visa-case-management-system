@@ -139,6 +139,7 @@ class CommentServiceIntegrationTest{
     @Test
     void createComment_shouldThrowException_WhenTextIsBlank() {
         // Arrange
+        authenticateTestUser();
         CreateCommentDTO dto = new CreateCommentDTO(testVisa.getId(), " ");
 
         // Act & Assert
@@ -150,6 +151,7 @@ class CommentServiceIntegrationTest{
     @Test
     void getCommentsByVisaId_ShouldThrowException_WhenIdIsInvalid() {
         // Act & Assert
+        authenticateTestUser();
         assertThatThrownBy(() -> commentService.getCommentsByVisaId(-1L))
         .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Visa ID must be a positive number");
@@ -158,6 +160,7 @@ class CommentServiceIntegrationTest{
     @Test
     void getCommentsByVisaID_ShouldThrowException_WhenVisaDoesNotExistAndNoComments() {
         // Act & Assert
+        authenticateTestUser();
         assertThatThrownBy(() -> commentService.getCommentsByVisaId(999L))
         .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Visa case not found with id: 999");
@@ -166,6 +169,7 @@ class CommentServiceIntegrationTest{
     @Test
     void getCommentsByVisaID_ShouldReturnEmptyList_WhenVisaExistsButHasNoComments() {
         // Act
+        authenticateTestUser();
         List<CommentDTO> comments = commentService.getCommentsByVisaId(testVisa.getId());
 
         // Assert
