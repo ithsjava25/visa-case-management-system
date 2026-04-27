@@ -67,7 +67,7 @@ public class VisaService {
     }
 
     // --- For filtering in Frontend list-view ---
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     public List<VisaDTO> findAll() {
         return visaRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
@@ -329,7 +329,7 @@ public class VisaService {
         }
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
         User admin = validateHandler(adminId);
@@ -354,7 +354,7 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId, String reason) {
         if (reason == null || reason.isBlank()) {
@@ -382,7 +382,7 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @Transactional
     public VisaDTO requestMoreInformation(Long visaId, Long adminId, String infoText) {
         if (infoText == null || infoText.isBlank()) {
@@ -411,7 +411,7 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @Transactional
     public VisaDTO assignHandler(Long visaId, Long adminId) {
         User admin = validateHandler(adminId);
@@ -468,7 +468,7 @@ public class VisaService {
                 .toList();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     public List<VisaDTO> findVisasByHandlerId(Long handlerId) {
         return visaRepository.findVisasByHandlerId(handlerId,
                         Sort.by("updatedAt").descending())

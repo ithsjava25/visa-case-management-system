@@ -62,7 +62,7 @@
                     <th>Timestamp</th>
                     <th>Actor User ID</th>
                     <th>Visa Case ID</th>
-                    <th>Comment ID</th>
+                    <th>Comment</th>
                     <th>Event</th>
                     <th>Description</th>
                 </tr>
@@ -73,7 +73,12 @@
                     <td th:text="${#temporals.format(log.timeStamp, 'yyyy-MM-dd HH:mm')}">2026-04-24 10:00</td>
                     <td th:text="${log.actorUserId}">42</td>
                     <td th:text="${log.visaCaseId}">101</td>
-                    <td th:text="${log.commentId}">7</td>
+                    <td>
+                        <a th:if="${log.visaCaseId != null}"
+                           th:href="@{/visa/{id}(id=${log.visaCaseId})}"
+                           class="view-link">View case</a>
+                        <span th:if="${log.visaCaseId == null}">—</span>
+                    </td>
                     <td>
                         <span class="status"
                               th:classappend="${log.commentEventType != null ? 'status-' + #strings.toLowerCase(log.commentEventType.name()) : ''}"
