@@ -15,6 +15,7 @@ import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,6 +90,7 @@ public class UserService {
 
     @Transactional
     public UserDTO updateUser(UpdateUserDTO dto, Long actorUserId) {
+        validateProfileAccess(getUserPrincipal(), dto.id());
         // Check if user and email exists
         User user = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
@@ -157,5 +159,9 @@ public class UserService {
         if (!isOwnProfile && !isSysAdmin) {
             throw new UnauthorizedException("You do not have permission to edit this profile.");
         }
+    }
+
+    private static UserPrincipal getUserPrincipal() {
+        return (UserPrincipal) Objects.requireNonNull(Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal());
     }
 }

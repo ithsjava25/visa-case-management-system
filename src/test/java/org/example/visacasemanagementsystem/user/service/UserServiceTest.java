@@ -19,6 +19,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -121,6 +124,10 @@ class UserServiceTest {
     @DisplayName("Checking if updateUser throws EntityNotFoundException when user ID does not exist")
     void updateUser_shouldThrowEntityNotFoundException_WhenUserDoesNotExist() {
         // Arrange
+        User sysadmin = createAndSaveUser("sysadmin", UserAuthorization.SYSADMIN);
+        sysadmin.setId(1L);
+        authenticateUser(sysadmin);
+
         UpdateUserDTO dto = new UpdateUserDTO(999L, "Name", "email@test.com");
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -157,8 +164,9 @@ class UserServiceTest {
         Long userId = 1L;
         UpdateUserDTO dto = new UpdateUserDTO(userId, "Updated Name", "updated@test.com");
 
-        User existingUser = new User();
+        User existingUser = createAndSaveUser("user", UserAuthorization.USER);
         existingUser.setId(userId);
+        authenticateUser(existingUser);
         UserDTO expectedDTO = new UserDTO(userId, "Updated Name", "updated@test.com", UserAuthorization.USER);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
@@ -308,6 +316,27 @@ class UserServiceTest {
 
         // Act & Assert
         assertThat(userService.findByEmail("nobody@test.com")).isEmpty();
+    }
+
+    // ── Helper methods ────────────────────────────────────────────────────────
+
+    private User createAndSaveUser(String name, UserAuthorization auth) {
+        User user = new User();
+        String uniqueEmail = java.util.UUID.randomUUID() + "@test.com";
+        user.setFullName(name);
+        user.setEmail(uniqueEmail);
+        user.setUsername(uniqueEmail);
+        user.setPassword("password123");
+        user.setUserAuthorization(auth);
+        userRepository.save(user);
+        return user;
+    }
+
+    private UserPrincipal authenticateUser(User user) {
+        UserPrincipal principal = new UserPrincipal(user);
+        Authentication authentication = new TestingAuthenticationToken(principal, "password123", principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return principal;
     }
 }
    

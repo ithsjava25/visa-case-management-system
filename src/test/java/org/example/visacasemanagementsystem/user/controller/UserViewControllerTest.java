@@ -259,7 +259,7 @@ class UserViewControllerTest {
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + userId)
                         .param("fullName", "Updated Name")
-                        .param("email", "updated@test.com")
+                        .param("password", "newPassword")
                         .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
@@ -281,7 +281,7 @@ class UserViewControllerTest {
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + userId)
                         .param("fullName", "Test User")
-                        .param("email", "taken@test.com")
+                        .param("password", "newPassword")
                         .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -302,7 +302,7 @@ class UserViewControllerTest {
         // Act & Assert — handled by GlobalExceptionHandler → 404
         mockMvc.perform(post("/profile/edit/" + userId)
                         .param("fullName", "Test User")
-                        .param("email", "taken@test.com")
+                        .param("password", "newPassword")
                         .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().isNotFound());
@@ -320,7 +320,7 @@ class UserViewControllerTest {
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + targetUserId)
                         .param("fullName", "Hacked")
-                        .param("email", "hacked@test.com")
+                        .param("password", "newPassword")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().isForbidden());
