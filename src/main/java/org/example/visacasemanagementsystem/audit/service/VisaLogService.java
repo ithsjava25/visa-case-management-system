@@ -44,6 +44,7 @@ public class VisaLogService {
      * only non-null filters are added to the query, so Hibernate never has to
      * bind a null enum parameter (which fails in Hibernate 6/7).
      */
+    @PreAuthorize("isAuthenticated()")
     public Page<VisaLogDTO> findFiltered(VisaEventType eventType,
                                          LocalDateTime from,
                                          LocalDateTime to,
