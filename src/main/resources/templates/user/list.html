@@ -51,7 +51,7 @@
                               th:classappend="${'role-' + #strings.toLowerCase(user.userAuthorization().name())}"
                               th:text="${user.userAuthorization()}">USER</span>
                     </td>
-                    <td style="text-align: right;">
+                    <td class="td-right">
                         <a th:href="@{/profile/view/{id}(id=${user.id()})}" class="view-link">
                             View &rarr;
                         </a>

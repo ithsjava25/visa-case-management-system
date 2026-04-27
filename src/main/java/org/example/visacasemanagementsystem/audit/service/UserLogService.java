@@ -31,7 +31,7 @@ public class UserLogService {
         userLogRepository.save(userLog);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSADMIN')")
     public List<UserLogDTO> findAll() {
         return userLogRepository.findAll()
                 .stream()
@@ -44,7 +44,7 @@ public class UserLogService {
      * Only non-null filters are added to the query, avoiding Hibernate 6/7's
      * inability to bind null enum-typed parameters in JPQL.
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSADMIN')")
     public Page<UserLogDTO> findFiltered(UserEventType eventType,
                                          LocalDateTime from,
                                          LocalDateTime to,

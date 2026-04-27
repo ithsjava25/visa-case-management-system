@@ -26,6 +26,8 @@
         <th:block sec:authorize="hasRole('SYSADMIN')">
             <a th:href="@{/log/visa}">Visa Log</a>
             <a th:href="@{/log/user}">User Log</a>
+            <a th:href="@{/log/comment}">Comment Log</a>
+            <a th:href="@{/log/file}">File Log</a>
             <a th:href="@{/user/list}">User List</a>
             <a th:href="@{/visa/cases}">Visa Cases</a>
             <a th:href="@{/profile/view/{id}(id=${#authentication.principal.userId})}">Profile</a>

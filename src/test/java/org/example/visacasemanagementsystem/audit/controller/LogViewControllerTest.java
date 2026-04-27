@@ -1,9 +1,15 @@
 package org.example.visacasemanagementsystem.audit.controller;
 
+import org.example.visacasemanagementsystem.audit.CommentEventType;
+import org.example.visacasemanagementsystem.audit.FileEventType;
 import org.example.visacasemanagementsystem.audit.UserEventType;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.dto.CommentLogDTO;
+import org.example.visacasemanagementsystem.audit.dto.FileLogDTO;
 import org.example.visacasemanagementsystem.audit.dto.UserLogDTO;
 import org.example.visacasemanagementsystem.audit.dto.VisaLogDTO;
+import org.example.visacasemanagementsystem.audit.service.CommentLogService;
+import org.example.visacasemanagementsystem.audit.service.FileLogService;
 import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
@@ -69,6 +75,12 @@ class LogViewControllerTest {
 
     @MockitoBean
     private UserLogService userLogService;
+
+    @MockitoBean
+    private CommentLogService commentLogService;
+
+    @MockitoBean
+    private FileLogService fileLogService;
 
     @AfterEach
     void clearSecurityContext() {
@@ -262,6 +274,158 @@ class LogViewControllerTest {
                 eq(expectedFrom),
                 eq(expectedTo),
                 any(Pageable.class));
+    }
+
+    // ── /log/comment ──────────────────────────────────────────────────────
+
+    @Test
+    void commentLog_AsSysadmin_NoFilters_ShouldReturnPageWithDefaults() throws Exception {
+        // Arrange
+        loginAsSysadmin();
+        Page<CommentLogDTO> empty = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
+        when(commentLogService.findFiltered(isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(empty);
+
+        // Act & Assert
+        mockMvc.perform(get("/log/comment"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("log/comment"))
+                .andExpect(model().attributeExists("logs"))
+                .andExpect(model().attribute("eventTypes", CommentEventType.values()))
+                .andExpect(model().attribute("selectedEventType", (Object) null))
+                .andExpect(model().attribute("from", (Object) null))
+                .andExpect(model().attribute("to", (Object) null));
+
+        Pageable expected = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "timeStamp"));
+        verify(commentLogService).findFiltered(isNull(), isNull(), isNull(), eq(expected));
+    }
+
+    @Test
+    void commentLog_AsSysadmin_WithFilters_ShouldPassThroughToService() throws Exception {
+        // Arrange
+        loginAsSysadmin();
+        LocalDate from = LocalDate.of(2026, 4, 1);
+        LocalDate to   = LocalDate.of(2026, 4, 24);
+        LocalDateTime expectedFrom = from.atStartOfDay();
+        LocalDateTime expectedTo   = to.atTime(LocalTime.MAX);
+
+        CommentLogDTO sample = new CommentLogDTO(
+                1L, LocalDateTime.now(), 42L, 101L, 7L,
+                CommentEventType.ADDED, "Comment added.");
+        Page<CommentLogDTO> page = new PageImpl<>(List.of(sample), PageRequest.of(0, 20), 1);
+        when(commentLogService.findFiltered(
+                eq(CommentEventType.ADDED), eq(expectedFrom), eq(expectedTo), any(Pageable.class)))
+                .thenReturn(page);
+
+        // Act & Assert
+        mockMvc.perform(get("/log/comment")
+                        .param("eventType", "ADDED")
+                        .param("from", "2026-04-01")
+                        .param("to",   "2026-04-24"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("log/comment"))
+                .andExpect(model().attribute("selectedEventType", CommentEventType.ADDED))
+                .andExpect(model().attribute("from", from))
+                .andExpect(model().attribute("to", to));
+
+        verify(commentLogService).findFiltered(
+                eq(CommentEventType.ADDED),
+                eq(expectedFrom),
+                eq(expectedTo),
+                any(Pageable.class));
+    }
+
+    @Test
+    void commentLog_AsSysadmin_WithOversizedPageSize_ShouldClampToMax() throws Exception {
+        // Arrange — size=1000 should be clamped to MAX_PAGE_SIZE (100).
+        loginAsSysadmin();
+        Page<CommentLogDTO> empty = new PageImpl<>(List.of(), PageRequest.of(0, 100), 0);
+        when(commentLogService.findFiltered(isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(empty);
+
+        // Act & Assert
+        mockMvc.perform(get("/log/comment").param("size", "1000"))
+                .andExpect(status().isOk());
+
+        Pageable expected = PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "timeStamp"));
+        verify(commentLogService).findFiltered(isNull(), isNull(), isNull(), eq(expected));
+    }
+
+    // ── /log/file ─────────────────────────────────────────────────────────
+
+    @Test
+    void fileLog_AsSysadmin_NoFilters_ShouldReturnPageWithDefaults() throws Exception {
+        // Arrange
+        loginAsSysadmin();
+        Page<FileLogDTO> empty = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
+        when(fileLogService.findFiltered(isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(empty);
+
+        // Act & Assert
+        mockMvc.perform(get("/log/file"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("log/file"))
+                .andExpect(model().attributeExists("logs"))
+                .andExpect(model().attribute("eventTypes", FileEventType.values()))
+                .andExpect(model().attribute("selectedEventType", (Object) null))
+                .andExpect(model().attribute("from", (Object) null))
+                .andExpect(model().attribute("to", (Object) null));
+
+        Pageable expected = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "timeStamp"));
+        verify(fileLogService).findFiltered(isNull(), isNull(), isNull(), eq(expected));
+    }
+
+    @Test
+    void fileLog_AsSysadmin_WithFilters_ShouldPassThroughToService() throws Exception {
+        // Arrange
+        loginAsSysadmin();
+        LocalDate from = LocalDate.of(2026, 4, 1);
+        LocalDate to   = LocalDate.of(2026, 4, 24);
+        LocalDateTime expectedFrom = from.atStartOfDay();
+        LocalDateTime expectedTo   = to.atTime(LocalTime.MAX);
+
+        FileLogDTO sample = new FileLogDTO(
+                1L, LocalDateTime.now(), 42L, 101L, "passport.pdf",
+                FileEventType.UPLOADED, "File uploaded.");
+        Page<FileLogDTO> page = new PageImpl<>(List.of(sample), PageRequest.of(0, 20), 1);
+        when(fileLogService.findFiltered(
+                eq(FileEventType.UPLOADED), eq(expectedFrom), eq(expectedTo), any(Pageable.class)))
+                .thenReturn(page);
+
+        // Act & Assert
+        mockMvc.perform(get("/log/file")
+                        .param("eventType", "UPLOADED")
+                        .param("from", "2026-04-01")
+                        .param("to",   "2026-04-24"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("log/file"))
+                .andExpect(model().attribute("selectedEventType", FileEventType.UPLOADED))
+                .andExpect(model().attribute("from", from))
+                .andExpect(model().attribute("to", to));
+
+        verify(fileLogService).findFiltered(
+                eq(FileEventType.UPLOADED),
+                eq(expectedFrom),
+                eq(expectedTo),
+                any(Pageable.class));
+    }
+
+    @Test
+    void fileLog_AsSysadmin_WithExplicitPageAndSize_ShouldUseThem() throws Exception {
+        // Arrange
+        loginAsSysadmin();
+        Page<FileLogDTO> empty = new PageImpl<>(List.of(), PageRequest.of(2, 50), 0);
+        when(fileLogService.findFiltered(isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(empty);
+
+        // Act & Assert
+        mockMvc.perform(get("/log/file")
+                        .param("page", "2")
+                        .param("size", "50"))
+                .andExpect(status().isOk());
+
+        Pageable expected = PageRequest.of(2, 50, Sort.by(Sort.Direction.DESC, "timeStamp"));
+        verify(fileLogService).findFiltered(isNull(), isNull(), isNull(), eq(expected));
     }
 
 }

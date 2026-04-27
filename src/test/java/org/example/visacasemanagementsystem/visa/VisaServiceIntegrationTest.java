@@ -66,6 +66,8 @@ class VisaServiceIntegrationTest {
         visaService.applyForVisa(principal, dto, testS3Key);
 
         // Assert
+        authenticateAsSysadmin();
+        assertThat(visaLogService.findAll()).isNotEmpty();
         var savedVisa = visaRepository.findAll().stream()
                 .filter(v -> v.getPassportNumber().equals(passportNum))
                 .findFirst()
@@ -108,6 +110,7 @@ class VisaServiceIntegrationTest {
         assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.SUBMITTED);
         assertThat(updatedVisa.getStatusInformation()).isNull();
 
+        authenticateAsSysadmin();
         var logs = visaLogService.findAll();
 
         Visa finalVisa = visa;
@@ -155,6 +158,7 @@ class VisaServiceIntegrationTest {
         assertThat(updatedVisa.getHandler().getId()).isEqualTo(admin.getId());
         assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.ASSIGNED);
 
+        authenticateAsSysadmin();
         var logs = visaLogService.findAll();
         User finalAdmin = admin;
         assertThat(logs).anyMatch(log ->
@@ -183,6 +187,23 @@ class VisaServiceIntegrationTest {
         Authentication authentication = new TestingAuthenticationToken(principal, "password", principal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return principal;
+    }
+
+    /**
+     * Switches the security context to a SYSADMIN user so that calls to
+     * visaLogService.findAll() (which requires SYSADMIN) succeed during
+     * log-assertion steps without affecting the action under test.
+     */
+    private void authenticateAsSysadmin() {
+        User sysadmin = new User();
+        String email = java.util.UUID.randomUUID() + "@sysadmin-test.com";
+        sysadmin.setFullName("Test Sysadmin");
+        sysadmin.setEmail(email);
+        sysadmin.setUsername(email);
+        sysadmin.setPassword("password");
+        sysadmin.setUserAuthorization(UserAuthorization.SYSADMIN);
+        sysadmin = userRepository.save(sysadmin);
+        authenticateUser(sysadmin);
     }
 
 }

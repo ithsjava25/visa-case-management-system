@@ -70,7 +70,7 @@
         <!-- Sysadmin-only: change another user's authorization. Posts to a separate
              endpoint so it produces a single AUTHORIZATION_CHANGED log row instead
              of being bundled into the regular profile UPDATED row. -->
-        <div class="container" th:if="${canChangeAuthorization}" style="margin-top: 24px;">
+        <div class="container mt-card" th:if="${canChangeAuthorization}">
             <header>
                 <h1>Authorization</h1>
                 <p>Sysadmin only — change this user's role.</p>
