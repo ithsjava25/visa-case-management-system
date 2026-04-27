@@ -70,23 +70,21 @@ class UserServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Checking if updateUser changes fullName and email in the database")
+    @DisplayName("Checking if updateUser changes fullName in the database")
     void updateUser_shouldUpdateUserFields_WhenDataIsValid() {
         // Arrange
         User user = createAndSaveValidUser();
         authenticateUser(user);
-        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "updated@integration.test");
+        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "");
 
         // Act — actor is the user themselves editing their own profile
         UserDTO result = userService.updateUser(dto, user.getId());
 
         // Assert
         assertThat(result.fullName()).isEqualTo("Updated Name");
-        assertThat(result.email()).isEqualTo("updated@integration.test");
 
         User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         assertThat(updatedUser.getFullName()).isEqualTo("Updated Name");
-        assertThat(updatedUser.getEmail()).isEqualTo("updated@integration.test");
     }
 
     @Test

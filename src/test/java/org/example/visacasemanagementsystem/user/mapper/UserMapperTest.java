@@ -99,7 +99,7 @@ class UserMapperTest {
     }
 
     @Test
-    @DisplayName("Checking if updateEntityFromDTO overwrites fullName, email, and username on an existing User entity")
+    @DisplayName("Checking if updateEntityFromDTO overwrites fullName on an existing User entity")
     void shouldUpdateExistingUserEntityFromUpdateUserDTO() {
         // Arrange
         User user = new User();
@@ -109,15 +109,13 @@ class UserMapperTest {
         user.setPassword("password123");
         user.setUserAuthorization(UserAuthorization.USER);
 
-        UpdateUserDTO dto = new UpdateUserDTO(1L, "New Name", "new@example.com");
+        UpdateUserDTO dto = new UpdateUserDTO(1L, "New Name", "");
 
         // Act
         userMapper.updateEntityFromDTO(dto, user);
 
         // Assert
         assertThat(user.getFullName()).isEqualTo("New Name");
-        assertThat(user.getEmail()).isEqualTo("new@example.com");
-        assertThat(user.getUsername()).isEqualTo("new@example.com");
     }
 
     @Test

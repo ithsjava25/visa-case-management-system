@@ -38,6 +38,5 @@ public class UserMapper {
         if (dto == null || user == null) return;
 
         user.setFullName(dto.fullName());
-        user.setPassword(dto.password());
     }
 }

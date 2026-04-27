@@ -93,6 +93,10 @@ public class UserService {
         User user = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
+        if (!dto.password().isBlank()) {
+            passwordEncoder.encode(dto.password());
+        }
+
         User savedUser;
         try {
             userMapper.updateEntityFromDTO(dto, user);
