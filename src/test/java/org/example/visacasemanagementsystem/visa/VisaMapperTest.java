@@ -28,8 +28,7 @@ class VisaMapperTest {
                 VisaType.STUDY,
                 "Swedish",
                 "AB123456",
-                LocalDate.now().plusMonths(3),
-                1L
+                LocalDate.now().plusMonths(3)
         );
 
         // Arrange

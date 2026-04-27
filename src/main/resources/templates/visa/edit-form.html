@@ -134,8 +134,8 @@
                         <span th:text="'View Attachment ' + ${iter.count}">View Attachment</span>
                     </a>
 
-                    <button type="button"
-                            th:onclick="'if(confirm(\'Remove this document?\')) document.getElementById(\'delete-doc-' + ${iter.index} + '\').submit();'">
+                    <button type="button" class="js-delete-doc"
+                            th:attr="data-form-id='delete-doc-' + ${iter.index}">
                         &times;
                     </button>
                 </div>
@@ -179,6 +179,16 @@
         } else {
             fileNameDisplay.textContent = '';
         }
+    });
+
+    // Delegated handler for the per-document delete buttons. Reads the target
+    // hidden form's id from data-form-id and submits it after a confirm prompt.
+    document.querySelectorAll('.js-delete-doc').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (!confirm('Remove this document?')) return;
+            const form = document.getElementById(btn.dataset.formId);
+            if (form) form.submit();
+        });
     });
 </script>
 

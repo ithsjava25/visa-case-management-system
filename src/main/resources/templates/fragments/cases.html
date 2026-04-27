@@ -47,11 +47,11 @@
             <td th:text="${visa.visaType}">STUDENT</td>
             <td>
                 <span class="status"
-                      th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus)}"
+                      th:classappend="${visa.visaStatus != null ? 'status-' + #strings.toLowerCase(visa.visaStatus.name()) : ''}"
                       th:text="${visa.visaStatus}">ASSIGNED</span>
             </td>
-            <td th:text="${#temporals.format(visa.travelDate, 'yyyy-MM-dd')}">2026-05-20</td>
-            <td th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">-</td>
+            <td th:text="${visa.travelDate != null ? #temporals.format(visa.travelDate, 'yyyy-MM-dd') : '-'}">2026-05-20</td>
+            <td th:text="${visa.updatedAt != null ? #temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
             <td style="text-align: left;">
                 <a th:href="@{/visa/{id}(id=${visa.id})}" class="view-link">Details &rarr;</a>
             </td>

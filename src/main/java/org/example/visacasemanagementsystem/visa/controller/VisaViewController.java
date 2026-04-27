@@ -92,11 +92,7 @@ public class VisaViewController {
 
         if (!model.containsAttribute("createVisaDTO")) {
             model.addAttribute("createVisaDTO",
-                    new CreateVisaDTO(null,
-                            "",
-                            "",
-                            null,
-                            principal.getUserId()));
+                    new CreateVisaDTO(null, "", "", null));
         }
 
         return "visa/apply-form";
@@ -238,6 +234,13 @@ public class VisaViewController {
     }
 
     // ─── Case-management actions ──────────────────────────────────────────
+    //
+    // Product decision: SYSADMIN has the same case-management powers as ADMIN
+    // (approve, request-info, reject, assign). SYSADMIN is not strictly an
+    // audit-only role in this product — they administer everything, including
+    // visa cases — so the broader hasAnyRole('ADMIN', 'SYSADMIN') is intentional
+    // on the four mutation endpoints below. The /visa/cases nav entry in the
+    // header fragment is shown to both roles for the same reason.
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/approve")

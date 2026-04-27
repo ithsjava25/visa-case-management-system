@@ -30,7 +30,7 @@
     </header>
 
     <form th:action="@{/visa/apply}" th:object="${createVisaDTO}" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="applicantId" th:value="${createVisaDTO.applicantId}" />
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
         <div th:if="${#fields.hasErrors('global')}" class="alert-error">
             <p style="margin: 0;" th:each="err : ${#fields.errors('global')}" th:text="${err}"></p>

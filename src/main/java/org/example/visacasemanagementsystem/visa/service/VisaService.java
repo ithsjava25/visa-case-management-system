@@ -32,6 +32,13 @@ public class VisaService {
 
     private static final String NOT_FOUND_MESSAGE = "Visa not found.";
 
+    // Status groupings used by the admin "Visa Cases" page. Held as constants
+    // so the lists are allocated once per JVM rather than once per request.
+    private static final List<VisaStatus> OPEN_STATUSES =
+            List.of(VisaStatus.ASSIGNED, VisaStatus.INCOMPLETE);
+    private static final List<VisaStatus> HANDLED_STATUSES =
+            List.of(VisaStatus.GRANTED, VisaStatus.REJECTED);
+
     private final VisaRepository visaRepository;
     private final UserRepository userRepository;
     private final VisaMapper visaMapper;
@@ -465,10 +472,9 @@ public class VisaService {
      * Open Cases: everything the current handler is actively working on.
      */
     public List<VisaDTO> findOpenCasesByHandler(Long handlerId) {
-        List<VisaStatus> openStatuses = List.of(VisaStatus.ASSIGNED, VisaStatus.INCOMPLETE);
         return visaRepository.findByHandler_IdAndVisaStatusIn(
                         handlerId,
-                        openStatuses,
+                        OPEN_STATUSES,
                         Sort.by("updatedAt").descending())
                 .stream()
                 .map(visaMapper::toDTO)
@@ -491,10 +497,9 @@ public class VisaService {
      * Handled Cases: contains cases which have been either GRANTED or REJECTED.
      */
     public List<VisaDTO> findHandledCasesByHandler(Long handlerId) {
-        List<VisaStatus> handledStatuses = List.of(VisaStatus.GRANTED, VisaStatus.REJECTED);
         return visaRepository.findByHandler_IdAndVisaStatusIn(
                         handlerId,
-                        handledStatuses,
+                        HANDLED_STATUSES,
                         Sort.by("updatedAt").descending())
                 .stream()
                 .map(visaMapper::toDTO)

@@ -30,7 +30,7 @@
     </header>
 
     <main>
-        <table>
+        <table th:if="${not #lists.isEmpty(visas)}">
             <thead>
             <tr>
                 <th>Visa ID</th>

@@ -30,7 +30,7 @@ public class LogViewController {
 
     // Hard cap on page size for pagination.
     private static final int MAX_PAGE_SIZE = 100;
-    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final String DEFAULT_PAGE_SIZE_STR = "20";
 
     private final VisaLogService visaLogService;
     private final UserLogService userLogService;
@@ -48,7 +48,7 @@ public class LogViewController {
             @RequestParam(value = "to", required = false)
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) int size,
+            @RequestParam(value = "size", defaultValue = DEFAULT_PAGE_SIZE_STR) int size,
             Model model) {
         return renderLogPage(eventType, from, to, page, size,
                 visaLogService::findFiltered,
@@ -63,7 +63,7 @@ public class LogViewController {
             @RequestParam(value = "to", required = false)
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) int size,
+            @RequestParam(value = "size", defaultValue = DEFAULT_PAGE_SIZE_STR) int size,
             Model model) {
         return renderLogPage(eventType, from, to, page, size,
                 userLogService::findFiltered,

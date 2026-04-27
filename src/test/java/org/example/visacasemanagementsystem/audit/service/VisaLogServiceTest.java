@@ -323,6 +323,11 @@ class VisaLogServiceTest {
         Predicate and1 = mock(Predicate.class);
         Predicate and2 = mock(Predicate.class);
 
+        // The service's specification builder evaluates the three filters in a
+        // fixed order (event-type → from → to), and chains the resulting
+        // predicates with cb.and((eventType AND from), to). The multi-value
+        // thenReturn stubs below mirror that exact sequence — they would need
+        // updating if the order in VisaLogService#findFiltered ever changes.
         when(root.get(nullable(SingularAttribute.class))).thenReturn(eventTypePath, timeStampPath, timeStampPath);
         when(cb.equal(eventTypePath, VisaEventType.CREATED)).thenReturn(eqPred);
         when(cb.greaterThanOrEqualTo(timeStampPath, from)).thenReturn(gtePred);

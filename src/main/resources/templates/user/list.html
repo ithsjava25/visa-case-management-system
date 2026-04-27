@@ -23,7 +23,10 @@
         <header>
             <div>
                 <h1>User List</h1>
-                <span class="user-count" th:text="${#lists.size(users) + ' users total'}">0 users total</span>
+                <span class="user-count"
+                      th:text="${#lists.size(users) + ' ' + (#lists.size(users) == 1 ? 'user' : 'users') + ' total'}">
+                    0 users total
+                </span>
             </div>
         </header>
 

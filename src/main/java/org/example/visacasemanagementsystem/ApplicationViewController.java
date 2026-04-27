@@ -29,10 +29,14 @@ public class ApplicationViewController {
         if (principal == null) {
             return "redirect:/user/login";
         }
-        boolean isSysAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
-        boolean isAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
+
+        boolean isSysAdmin = false;
+        boolean isAdmin = false;
+        for (var authority : principal.getAuthorities()) {
+            String role = authority.getAuthority();
+            if (Objects.equals(role, "ROLE_SYSADMIN")) isSysAdmin = true;
+            else if (Objects.equals(role, "ROLE_ADMIN")) isAdmin = true;
+        }
 
         if (isSysAdmin) return "redirect:/log/visa";
         if (isAdmin)    return "redirect:/visa/cases";

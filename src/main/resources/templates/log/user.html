@@ -28,7 +28,7 @@
                 <select id="eventType" name="eventType">
                     <option value="" th:selected="${selectedEventType == null}">All</option>
                     <option th:each="type : ${eventTypes}"
-                            th:value="${type}"
+                            th:value="${type.name()}"
                             th:text="${type}"
                             th:selected="${selectedEventType != null and selectedEventType.name() == type.name()}">
                     </option>

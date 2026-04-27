@@ -49,8 +49,7 @@ class VisaServiceTest {
         Long userId = 1L;
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "AB123",
-                LocalDate.now().minusDays(1),
-                userId
+                LocalDate.now().minusDays(1)
         );
 
         // Act & Assert
@@ -68,8 +67,7 @@ class VisaServiceTest {
         Long userId = 99L;
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "AB123",
-                LocalDate.now(),
-                userId
+                LocalDate.now()
         );
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());

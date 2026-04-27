@@ -162,7 +162,9 @@ textarea:focus {
 }
 
 input:disabled {
-    opacity: 0.4;
+    /* 0.6 keeps disabled fields readable against --color-input-bg while still
+       signalling "disabled" — 0.4 was below WCAG AA contrast for normal text. */
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
@@ -183,18 +185,24 @@ input[type="file"] {
     cursor: pointer;
     /* overflow: hidden removed */
 }
-input[type="file"]::-webkit-file-upload-button { display: none; }
-input[type="file"]::before {
-    content: 'Choose File';
-    display: inline-block;
+/*
+ * Style the native file-select button via the standard ::file-selector-button
+ * pseudo-element (Firefox/Safari/Chromium ≥ 89). The ::-webkit-file-upload-button
+ * rule below is kept as a fallback for older WebKit/Chromium builds. The
+ * previous use of input[type="file"]::before was nonstandard and didn't render
+ * in Firefox or Safari.
+ */
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
     background: var(--color-border);
     border: 1px solid var(--color-placeholder);
     border-radius: 4px;
     padding: 5px 12px;
-    margin-right: 8px;          /* gap between fake button and filename text */
+    margin-right: 8px;          /* gap between the button and the filename text */
     color: var(--color-text-secondary);
     font-weight: 600;
     font-size: 13px;
+    cursor: pointer;
 }
 
 /* ==========================================================================
@@ -371,6 +379,17 @@ tr:hover td:first-child { border-left: 2px solid var(--color-text-primary); }
     font-family: var(--font-mono);
     letter-spacing: 0.03em;
 }
+
+/*
+ * UserEventType pills (log/user.html). The user-log template applies
+ * class="status" + "status-<event>" so the chips share the badge shape; the
+ * rules below give each event its own colour. Kept side-by-side with the
+ * status-* rules above so adding a new UserEventType only needs one new line.
+ */
+.status-created               { background: var(--color-granted-bg);    color: var(--color-granted-fg); }
+.status-updated               { background: var(--color-submitted-bg);  color: var(--color-submitted-fg); }
+.status-deleted               { background: var(--color-rejected-bg);   color: var(--color-rejected-fg); }
+.status-authorization_changed { background: var(--color-incomplete-bg); color: var(--color-incomplete-fg); }
 
 /* ==========================================================================
  * Alerts
