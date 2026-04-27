@@ -211,6 +211,7 @@ public class VisaViewController {
             model.addAttribute("visa", visa);
             prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
+            model.addAttribute("statusInformation", visa.statusInformation());
             return "visa/edit-form";
 
         } catch (IllegalArgumentException e) {

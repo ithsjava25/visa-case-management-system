@@ -99,7 +99,7 @@ public class DataInitializer {
         v.setVisaStatus(status);
         v.setVisaType(type);
         v.setPassportNumber(passport);
-        v.setNationality("Sweden");
+        v.setNationality("Swedish");
         v.setTravelDate(LocalDate.now().plusMonths(2));
         return repo.save(v);
     }
