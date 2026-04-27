@@ -71,7 +71,7 @@ class VisaViewControllerTest {
     // ── /visa/cases (ADMIN + SYSADMIN) ─────────────────────────────────────
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void showCases_AsAdmin_ShouldReturnThreeListsAndCasesView() throws Exception {
         // Arrange
         Long adminId = 1L;

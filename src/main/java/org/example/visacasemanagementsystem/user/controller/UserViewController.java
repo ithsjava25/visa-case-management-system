@@ -3,6 +3,7 @@ package org.example.visacasemanagementsystem.user.controller;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
@@ -95,6 +96,12 @@ public class UserViewController {
     public String logout(HttpServletRequest request, HttpServletResponse response) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         new SecurityContextLogoutHandler().logout(request, response, auth);
+
+        // Invalidate the HTTP session
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
         return "redirect:/user/login?logout";
     }
 
@@ -179,15 +186,6 @@ public class UserViewController {
         }
     }
 
-    // Adds the two model attributes the role dropdown on profile/edit needs
-    private void addAuthorizationFormAttributes(Model model, UserPrincipal principal, Long userId) {
-        boolean isOwnProfile = principal.getUserId().equals(userId);
-        boolean isSysAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
-        model.addAttribute("canChangeAuthorization", isSysAdmin && !isOwnProfile);
-        model.addAttribute("authorizations", UserAuthorization.values());
-    }
-
     // A list view of users only available to sysadmins
     @GetMapping("/user/list")
     public String userListView(@AuthenticationPrincipal UserPrincipal principal,
@@ -196,5 +194,14 @@ public class UserViewController {
         model.addAttribute("name", principal.getFullName());
         model.addAttribute("users", allUsers);
         return "user/list";
+    }
+
+    // Adds the two model attributes the role dropdown on profile/edit needs
+    private void addAuthorizationFormAttributes(Model model, UserPrincipal principal, Long userId) {
+        boolean isOwnProfile = principal.getUserId().equals(userId);
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+        model.addAttribute("canChangeAuthorization", isSysAdmin && !isOwnProfile);
+        model.addAttribute("authorizations", UserAuthorization.values());
     }
 }

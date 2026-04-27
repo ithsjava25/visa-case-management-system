@@ -44,12 +44,17 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/user/logout").authenticated()
                         .requestMatchers("/home").authenticated()
                         .requestMatchers("/profile/**").authenticated()
-                        .requestMatchers("/visa/**").authenticated()
+                        .requestMatchers("/visa/cases").hasAnyRole("SYSADMIN", "ADMIN")
+                        .requestMatchers("/visa/my-applications").hasRole("USER")
+                        .requestMatchers("/visa/apply").hasRole("USER")
                         .requestMatchers("/api/comments/**").authenticated()
 
                         // Audit logs and user list are sysadmin-only.
                         .requestMatchers("/profile/edit/{userId}/authorization").hasRole("SYSADMIN")
                         .requestMatchers("/log/**").hasRole("SYSADMIN")
+                        .requestMatchers("/favicon.ico").permitAll()
+                        .requestMatchers("/login/oauth2/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().hasRole("SYSADMIN")
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))

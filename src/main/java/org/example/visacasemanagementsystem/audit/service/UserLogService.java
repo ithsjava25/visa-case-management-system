@@ -44,6 +44,7 @@ public class UserLogService {
      * Only non-null filters are added to the query, avoiding Hibernate 6/7's
      * inability to bind null enum-typed parameters in JPQL.
      */
+    @PreAuthorize("isAuthenticated()")
     public Page<UserLogDTO> findFiltered(UserEventType eventType,
                                          LocalDateTime from,
                                          LocalDateTime to,

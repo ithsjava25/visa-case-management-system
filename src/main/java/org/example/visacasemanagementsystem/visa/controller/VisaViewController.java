@@ -43,7 +43,6 @@ public class VisaViewController {
     }
 
     // ─── USER: "My Applications" landing page ─────────────────────────────
-//    @PreAuthorize("hasRole('USER')")
     @GetMapping("/my-applications")
     public String showMyApplications(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
@@ -58,7 +57,6 @@ public class VisaViewController {
     }
 
     // ─── ADMIN + SYSADMIN: "Visa Cases" three-list page ────────────────────
-//    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @GetMapping("/cases")
     public String showCases(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
@@ -79,7 +77,6 @@ public class VisaViewController {
     }
 
     // ─── Apply / edit / details — unchanged semantics, renamed URLs ────────
-//    @PreAuthorize("hasRole('USER')")
     @GetMapping("/apply")
     public String showApplyForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
