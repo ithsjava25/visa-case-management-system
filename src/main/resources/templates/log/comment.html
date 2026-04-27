@@ -2,15 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User Log</title>
+    <title>Comment Log</title>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
 </head>
 <body>
 
 <div th:replace="~{fragments/log-page :: logPage(
-        'User Log',
-        '/log/user',
+        'Comment Log',
+        '/log/comment',
         ${logs},
         ${eventTypes},
         ${selectedEventType},
@@ -24,7 +24,8 @@
             <th>ID</th>
             <th>Timestamp</th>
             <th>Actor User ID</th>
-            <th>Target User ID</th>
+            <th>Visa Case ID</th>
+            <th>Comment</th>
             <th>Event</th>
             <th>Description</th>
         </tr>
@@ -34,13 +35,19 @@
             <td th:text="${log.id}">1</td>
             <td th:text="${#temporals.format(log.timeStamp, 'yyyy-MM-dd HH:mm')}">2026-04-24 10:00</td>
             <td th:text="${log.actorUserId}">42</td>
-            <td th:text="${log.targetUserId}">42</td>
+            <td th:text="${log.visaCaseId}">101</td>
+            <td>
+                <a th:if="${log.visaCaseId != null}"
+                   th:href="@{/visa/{id}(id=${log.visaCaseId})}"
+                   class="view-link">View case</a>
+                <span th:if="${log.visaCaseId == null}">—</span>
+            </td>
             <td>
                 <span class="status"
-                      th:classappend="${log.userEventType != null ? 'status-' + #strings.toLowerCase(log.userEventType.name()) : ''}"
-                      th:text="${log.userEventType}">CREATED</span>
+                      th:classappend="${log.commentEventType != null ? 'status-' + #strings.toLowerCase(log.commentEventType.name()) : ''}"
+                      th:text="${log.commentEventType}">ADDED</span>
             </td>
-            <td th:text="${log.description}">Account created via signup.</td>
+            <td th:text="${log.description}">Comment added.</td>
         </tr>
         </tbody>
     </table>

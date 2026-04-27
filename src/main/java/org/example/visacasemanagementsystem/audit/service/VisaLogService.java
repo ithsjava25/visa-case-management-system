@@ -31,7 +31,7 @@ public class VisaLogService {
         visaLogRepository.save(visaLog);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSADMIN')")
     public List<VisaLogDTO> findAll() {
         return visaLogRepository.findAll()
                 .stream()
@@ -44,6 +44,7 @@ public class VisaLogService {
      * only non-null filters are added to the query, so Hibernate never has to
      * bind a null enum parameter (which fails in Hibernate 6/7).
      */
+    @PreAuthorize("hasRole('SYSADMIN')")
     public Page<VisaLogDTO> findFiltered(VisaEventType eventType,
                                          LocalDateTime from,
                                          LocalDateTime to,

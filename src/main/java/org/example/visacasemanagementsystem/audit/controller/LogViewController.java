@@ -1,7 +1,11 @@
 package org.example.visacasemanagementsystem.audit.controller;
 
+import org.example.visacasemanagementsystem.audit.CommentEventType;
+import org.example.visacasemanagementsystem.audit.FileEventType;
 import org.example.visacasemanagementsystem.audit.UserEventType;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
+import org.example.visacasemanagementsystem.audit.service.CommentLogService;
+import org.example.visacasemanagementsystem.audit.service.FileLogService;
 import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
 import org.springframework.data.domain.Page;
@@ -34,10 +38,17 @@ public class LogViewController {
 
     private final VisaLogService visaLogService;
     private final UserLogService userLogService;
+    private final CommentLogService commentLogService;
+    private final FileLogService fileLogService;
 
-    public LogViewController(VisaLogService visaLogService, UserLogService userLogService) {
+    public LogViewController(VisaLogService visaLogService,
+                             UserLogService userLogService,
+                             CommentLogService commentLogService,
+                             FileLogService fileLogService) {
         this.visaLogService = visaLogService;
         this.userLogService = userLogService;
+        this.commentLogService = commentLogService;
+        this.fileLogService = fileLogService;
     }
 
     @GetMapping("/visa")
@@ -68,6 +79,36 @@ public class LogViewController {
         return renderLogPage(eventType, from, to, page, size,
                 userLogService::findFiltered,
                 UserEventType.values(), "User Log", "log/user", model);
+    }
+
+    @GetMapping("/comment")
+    public String commentLog(
+            @RequestParam(value = "eventType", required = false) CommentEventType eventType,
+            @RequestParam(value = "from", required = false)
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(value = "to", required = false)
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = DEFAULT_PAGE_SIZE_STR) int size,
+            Model model) {
+        return renderLogPage(eventType, from, to, page, size,
+                commentLogService::findFiltered,
+                CommentEventType.values(), "Comment Log", "log/comment", model);
+    }
+
+    @GetMapping("/file")
+    public String fileLog(
+            @RequestParam(value = "eventType", required = false) FileEventType eventType,
+            @RequestParam(value = "from", required = false)
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(value = "to", required = false)
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = DEFAULT_PAGE_SIZE_STR) int size,
+            Model model) {
+        return renderLogPage(eventType, from, to, page, size,
+                fileLogService::findFiltered,
+                FileEventType.values(), "File Log", "log/file", model);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
