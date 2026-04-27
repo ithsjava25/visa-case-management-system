@@ -6,18 +6,22 @@ import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,10 +44,16 @@ class VisaServiceIntegrationTest {
     @MockitoBean
     private FileService fileService;
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void applyForVisa_shouldSaveVisa_WhenDataIsValid() {
         // Arrange
        User user = createAndSaveValidUser();
+       UserPrincipal principal = authenticateUser(user);
        String testS3Key = "testS3Key";
 
         CreateVisaDTO dto = new CreateVisaDTO(
@@ -53,7 +63,7 @@ class VisaServiceIntegrationTest {
         );
 
         // Act
-        visaService.applyForVisa(dto, user.getId(),testS3Key);
+        visaService.applyForVisa(principal, dto, testS3Key);
 
         // Assert
         var savedVisas = visaRepository.findAll();
@@ -68,6 +78,7 @@ class VisaServiceIntegrationTest {
     void updateVisa_shouldUpdateVisaAndResetStatus_WhenUserIsAuthorized() {
         // Arrange
         User user  = createAndSaveValidUser();
+        authenticateUser(user);
 
         Visa visa = new Visa();
         visa.setApplicant(user);
@@ -89,12 +100,12 @@ class VisaServiceIntegrationTest {
         visaService.updateVisa(visa.getId(), dto, user.getId(), null);
 
         // Assert
-      Visa updatedVisa = visaRepository.findById(visa.getId()).get();
+        Visa updatedVisa = visaRepository.findById(visa.getId()).get();
 
-      assertThat(updatedVisa.getPassportNumber()).isEqualTo("NEW-PASS-999");
-      assertThat(updatedVisa.getVisaType()).isEqualTo(VisaType.TOURIST);
-      assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.SUBMITTED);
-      assertThat(updatedVisa.getStatusInformation()).isNull();
+        assertThat(updatedVisa.getPassportNumber()).isEqualTo("NEW-PASS-999");
+        assertThat(updatedVisa.getVisaType()).isEqualTo(VisaType.TOURIST);
+        assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.SUBMITTED);
+        assertThat(updatedVisa.getStatusInformation()).isNull();
 
         var logs = visaLogService.findAll();
 
@@ -120,6 +131,7 @@ class VisaServiceIntegrationTest {
         admin.setPassword("password123");
         admin.setUserAuthorization(UserAuthorization.ADMIN);
         admin = userRepository.save(admin);
+        authenticateUser(admin);
 
         User applicant = createAndSaveValidUser();
 
@@ -136,11 +148,11 @@ class VisaServiceIntegrationTest {
         visaService.assignHandler(visa.getId(), admin.getId());
 
         // Assert
-      Visa updatedVisa = visaRepository.findById(visa.getId()).orElseThrow();
+        Visa updatedVisa = visaRepository.findById(visa.getId()).orElseThrow();
 
-      assertThat(updatedVisa.getHandler()).isNotNull();
-      assertThat(updatedVisa.getHandler().getId()).isEqualTo(admin.getId());
-      assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.ASSIGNED);
+        assertThat(updatedVisa.getHandler()).isNotNull();
+        assertThat(updatedVisa.getHandler().getId()).isEqualTo(admin.getId());
+        assertThat(updatedVisa.getVisaStatus()).isEqualTo(VisaStatus.ASSIGNED);
 
         var logs = visaLogService.findAll();
         User finalAdmin = admin;
@@ -161,9 +173,15 @@ class VisaServiceIntegrationTest {
         user.setUsername(testEmail);
         user.setPassword("password");
         user.setUserAuthorization(UserAuthorization.USER);
+
         return userRepository.save(user);
     }
 
-
+    private UserPrincipal authenticateUser(User user) {
+        UserPrincipal principal = new UserPrincipal(user);
+        Authentication authentication = new TestingAuthenticationToken(principal, "password", principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return principal;
+    }
 
 }

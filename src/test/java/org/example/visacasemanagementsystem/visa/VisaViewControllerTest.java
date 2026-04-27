@@ -145,7 +145,7 @@ class VisaViewControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/visas/dashboard"));
 
-        verify(visaService).applyForVisa(any(CreateVisaDTO.class), eq(userId),any());
+        verify(visaService).applyForVisa(any(UserPrincipal.class), any(CreateVisaDTO.class), any());
     }
 
     @Test

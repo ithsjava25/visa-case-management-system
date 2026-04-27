@@ -14,7 +14,6 @@ import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@PreAuthorize("isAuthenticated()")
 @Controller
 @RequestMapping("/visas")
 public class VisaViewController {
@@ -102,7 +100,7 @@ public class VisaViewController {
                 s3Key = fileService.uploadFile(passportFile);
             }
 
-            visaService.applyForVisa(createVisaDTO, principal.getUserId(), s3Key);
+            visaService.applyForVisa(principal, createVisaDTO, s3Key);
 
         } catch (java.io.IOException e) {
             bindingResult.reject("upload.error", "Failed to upload document: " + e.getMessage());
@@ -215,14 +213,12 @@ public class VisaViewController {
 
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/approve")
     public String approveVisa(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         visaService.approveVisa(id, principal.getUserId());
         return "redirect:/visas/" + id;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/request-info")
     public String requestMoreInformation(@PathVariable Long id,
                                          @AuthenticationPrincipal UserPrincipal principal,
@@ -233,7 +229,6 @@ public class VisaViewController {
         return "redirect:/visas/" + id;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/reject")
     public String rejectVisa(@PathVariable Long id,
                              @AuthenticationPrincipal UserPrincipal principal,
@@ -242,7 +237,6 @@ public class VisaViewController {
         return "redirect:/visas/" + id;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/assign")
     public String assignCaseToHandler(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         visaService.assignHandler(id, principal.getUserId());

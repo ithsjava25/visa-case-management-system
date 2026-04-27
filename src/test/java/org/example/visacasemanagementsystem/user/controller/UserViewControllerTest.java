@@ -2,11 +2,13 @@ package org.example.visacasemanagementsystem.user.controller;
 
 import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.audit.service.VisaLogService;
+import org.example.visacasemanagementsystem.config.OauthSuccessHandler;
 import org.example.visacasemanagementsystem.config.SecurityConfig;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
+import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
@@ -21,10 +23,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.util.List;
 import java.util.Optional;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -35,13 +35,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserViewController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, OauthSuccessHandler.class})
 @DisplayName("UserViewController web-layer tests")
 class UserViewControllerTest {
 
     @Autowired
     MockMvc mockMvc;
 
+    @MockitoBean
+    private UserRepository userRepository;
     @MockitoBean
     private UserDetailsService userDetailsService;
     @MockitoBean
@@ -446,7 +448,7 @@ class UserViewControllerTest {
     @DisplayName("Checking if POST /profile/edit/{id}/authorization returns 403 when accessed by an ADMIN")
     void updateAuthorization_AsAdmin_ShouldReturnForbidden() throws Exception {
         // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects ADMIN
-        mockMvc.perform(post("/profile/edit/5/authorization")
+        mockMvc.perform(post("/profile/edit/1/authorization")
                         .param("newAuthorization", "USER")
                         .with(authentication(authFor(1L, "Test Admin", "admin@test.com", UserAuthorization.ADMIN)))
                         .with(csrf()))
@@ -459,7 +461,7 @@ class UserViewControllerTest {
     @DisplayName("Checking if POST /profile/edit/{id}/authorization returns 403 when accessed by a regular USER")
     void updateAuthorization_AsRegularUser_ShouldReturnForbidden() throws Exception {
         // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects USER
-        mockMvc.perform(post("/profile/edit/5/authorization")
+        mockMvc.perform(post("/profile/edit/1/authorization")
                         .param("newAuthorization", "USER")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))

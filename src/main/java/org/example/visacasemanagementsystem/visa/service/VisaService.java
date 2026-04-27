@@ -1,4 +1,5 @@
 package org.example.visacasemanagementsystem.visa.service;
+
 import jakarta.persistence.EntityNotFoundException;
 import org.example.visacasemanagementsystem.audit.FileEventType;
 import org.example.visacasemanagementsystem.audit.VisaEventType;
@@ -9,6 +10,7 @@ import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
+import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.visa.VisaStatus;
 import org.example.visacasemanagementsystem.visa.VisaType;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
@@ -18,6 +20,8 @@ import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.example.visacasemanagementsystem.visa.mapper.VisaMapper;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Locale;
 
+@PreAuthorize("isAuthenticated()")
 @Service
 public class VisaService {
 
@@ -55,6 +60,7 @@ public class VisaService {
     }
 
     // --- For filtering in Frontend list-view ---
+    @PreAuthorize("hasRole('ADMIN')")
     public List<VisaDTO> findAll() {
         return visaRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
@@ -195,7 +201,7 @@ public class VisaService {
     }
 
     @Transactional
-    public VisaDTO applyForVisa(CreateVisaDTO dto, Long userId, String s3Key) {
+    public VisaDTO applyForVisa(@AuthenticationPrincipal UserPrincipal principal, CreateVisaDTO dto, String s3Key) {
         // Validate travel date
         validateTravelDate(dto.travelDate());
 
@@ -203,7 +209,7 @@ public class VisaService {
         Visa visa = visaMapper.toEntity(dto);
 
         // Get user
-        User applicant = userRepository.findById(userId)
+        User applicant = userRepository.findById(principal.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         visa.setApplicant(applicant);
@@ -214,7 +220,7 @@ public class VisaService {
         if (s3Key != null && !s3Key.isBlank()) {
             savedVisa.getS3Keys().add(s3Key);
             fileLogService.createFileLog(
-                    userId,
+                    principal.getUserId(),
                     savedVisa.getId(),
                     s3Key,
                     FileEventType.UPLOADED,
@@ -224,7 +230,7 @@ public class VisaService {
 
         // Create log in database
         visaLogService.createVisaLog(
-                userId,
+                principal.getUserId(),
                 savedVisa.getId(),
                 VisaEventType.CREATED,
                 "Visa application submitted." + (s3Key != null && !s3Key.isBlank() ? " Document attached." : "")
@@ -271,7 +277,7 @@ public class VisaService {
         visa.setVisaStatus(VisaStatus.SUBMITTED);
         visa.setStatusInformation(null);
 
-        Visa  savedVisa = visaRepository.save(visa);
+        Visa savedVisa = visaRepository.save(visa);
 
         visaLogService.createVisaLog(
                 userId,
@@ -316,6 +322,7 @@ public class VisaService {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
         User admin = validateHandler(adminId);
@@ -340,6 +347,7 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public VisaDTO rejectVisa(Long visaId, Long adminId, String reason) {
         if (reason == null || reason.isBlank()) {
@@ -367,6 +375,7 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public VisaDTO requestMoreInformation(Long visaId, Long adminId, String infoText) {
         if (infoText == null || infoText.isBlank()) {
@@ -395,6 +404,7 @@ public class VisaService {
         return visaMapper.toDTO(savedVisa);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public VisaDTO assignHandler(Long visaId, Long adminId) {
         User admin = validateHandler(adminId);
@@ -451,6 +461,7 @@ public class VisaService {
                 .toList();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public List<VisaDTO> findVisasByHandlerId(Long handlerId) {
         return visaRepository.findVisasByHandlerId(handlerId,
                         Sort.by("updatedAt").descending())

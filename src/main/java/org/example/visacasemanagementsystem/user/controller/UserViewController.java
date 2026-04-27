@@ -12,7 +12,10 @@ import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,10 +23,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
-@PreAuthorize("isAuthenticated()")
 @Controller
 public class UserViewController {
     private final VisaService visaService;
@@ -42,7 +48,6 @@ public class UserViewController {
     }
 
     // Signup form for new users, accessible to all
-    @PreAuthorize("permitAll()")
     @GetMapping("/user/signup")
     public String userSignupForm(Model model) {
         return "user/signup";
@@ -51,7 +56,6 @@ public class UserViewController {
     // Posting a successful user creation then redirecting to the applicant dashboard since only applicants can be
     // created through the signup process. Admins or Sysadmins are created from applicant users by given authorization
     // from a sysadmin.
-    @PreAuthorize("permitAll()")
     @PostMapping("/user/signup")
     public String createUser(@RequestParam String fullName,
                              @RequestParam String email,
@@ -70,10 +74,19 @@ public class UserViewController {
     }
 
     // Login page
-    @PreAuthorize("permitAll()")
     @GetMapping("/user/login")
     public String userLoginForm(){
         return "user/login";
+    }
+
+    @GetMapping(value = "/static/google-icon.svg", produces = "image/svg+xml")
+    public ResponseEntity<Resource> icon() throws IOException {
+        String inputFile = "src/main/resources/static/google-icon.svg";
+        Path path = new File(inputFile).toPath();
+        FileSystemResource resource = new FileSystemResource(path);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(Files.probeContentType(path)))
+                .body(resource);
     }
 
     // Uneditable profile view from where the user themselves or a sysadmin can access the profile edit view through a
@@ -137,7 +150,6 @@ public class UserViewController {
     }
 
     // Sysadmin-only endpoint that backs the role dropdown
-    @PreAuthorize("hasRole('SYSADMIN')")
     @PostMapping("/profile/edit/{userId}/authorization")
     public String updateAuthorization(@AuthenticationPrincipal UserPrincipal principal,
                                       @PathVariable Long userId,
@@ -169,7 +181,6 @@ public class UserViewController {
     }
 
     // A list view of users only available to sysadmins
-    @PreAuthorize("hasRole('SYSADMIN')")
     @GetMapping("/user/list")
     public String userListView(@AuthenticationPrincipal UserPrincipal principal,
                                Model model) {
@@ -179,7 +190,6 @@ public class UserViewController {
         return "user/list";
     }
 
-    @PreAuthorize("hasRole('USER')")
     @GetMapping("/dashboard/applicant")
     public String applicantDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                      Model model) {
@@ -189,7 +199,6 @@ public class UserViewController {
         return "dashboard/applicant";
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/dashboard/admin")
     public String adminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                  Model model) {
@@ -201,7 +210,6 @@ public class UserViewController {
         return "dashboard/admin";
     }
 
-    @PreAuthorize("hasRole('SYSADMIN')")
     @GetMapping("/dashboard/sysadmin")
     public String sysAdminDashboard(@AuthenticationPrincipal UserPrincipal principal,
                                     Model model) {
