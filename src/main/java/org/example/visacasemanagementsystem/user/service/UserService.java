@@ -94,7 +94,7 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
 
         if (!dto.password().isBlank()) {
-            passwordEncoder.encode(dto.password());
+            user.setPassword(passwordEncoder.encode(dto.password()));
         }
 
         User savedUser;

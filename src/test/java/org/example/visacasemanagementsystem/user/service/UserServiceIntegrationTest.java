@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -39,6 +40,8 @@ class UserServiceIntegrationTest {
 
     @MockitoBean
     private FileService fileService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @AfterEach
     void tearDown() {
@@ -70,12 +73,12 @@ class UserServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Checking if updateUser changes fullName in the database")
+    @DisplayName("Checking if updateUser changes fullName and password in the database")
     void updateUser_shouldUpdateUserFields_WhenDataIsValid() {
         // Arrange
         User user = createAndSaveValidUser();
         authenticateUser(user);
-        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "");
+        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "newPassword");
 
         // Act — actor is the user themselves editing their own profile
         UserDTO result = userService.updateUser(dto, user.getId());
@@ -85,6 +88,7 @@ class UserServiceIntegrationTest {
 
         User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         assertThat(updatedUser.getFullName()).isEqualTo("Updated Name");
+        assertThat(passwordEncoder.matches("newPassword", updatedUser.getPassword())).isTrue();
     }
 
     @Test

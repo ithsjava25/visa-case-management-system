@@ -144,12 +144,12 @@ public class UserViewController {
     public String updateProfile(@AuthenticationPrincipal UserPrincipal principal,
                                 @PathVariable Long userId,
                                 @RequestParam String fullName,
-                                @RequestParam String email,
+                                @RequestParam String password,
                                 Model model) {
         userService.validateProfileAccess(principal, userId);
 
         try {
-            UpdateUserDTO dto = new UpdateUserDTO(userId, fullName, email);
+            UpdateUserDTO dto = new UpdateUserDTO(userId, fullName, password);
             userService.updateUser(dto, principal.getUserId());
             return "redirect:/profile/view/" + userId;
         } catch (IllegalArgumentException e) {
@@ -158,7 +158,7 @@ public class UserViewController {
             UserDTO existing = userService.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("User not found"));
             model.addAttribute("error", e.getMessage());
-            model.addAttribute("user", new UserDTO(userId, fullName, email, existing.userAuthorization()));
+            model.addAttribute("user", new UserDTO(userId, fullName, password, existing.userAuthorization()));
             addAuthorizationFormAttributes(model, principal, userId);
             return "profile/edit";
         }
