@@ -36,14 +36,13 @@
             <th>Status</th>
             <th>Travel Date</th>
             <th>Last updated</th>
-            <th></th>
-        </tr>
+            <th><span class="visually-hidden">Actions</span></th>        </tr>
         </thead>
         <tbody>
         <tr th:each="visa : ${cases}">
             <td th:text="'# ' + ${visa.id}">#101</td>
             <td th:text="${visa.applicantName}">Anna Andersson</td>
-            <td th:text="${visa.handlerName != null ? visa.handlerName : 'Unassigned'}">-</td>
+            <td th:text="${visa.handlerName}">Unassigned</td>
             <td th:text="${visa.visaType}">STUDENT</td>
             <td>
                 <span class="status"

@@ -165,6 +165,7 @@
         <form th:id="'delete-doc-' + ${iter.index}"
               th:action="@{/visa/{id}/documents/delete(id=${visa.id})}"
               method="post" style="display: none;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="s3Key" th:value="${key}">
         </form>
     </div>
