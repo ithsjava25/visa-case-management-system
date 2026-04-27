@@ -59,8 +59,12 @@ public class UserViewController {
     public String createUser(@RequestParam String fullName,
                              @RequestParam String email,
                              @RequestParam String password,
+                             @RequestParam String confirmPassword,
                              Model model) {
         try {
+            if (!password.equals(confirmPassword)) {
+                throw new IllegalArgumentException("Passwords do not match");
+            }
             CreateUserDTO dto = new CreateUserDTO(fullName, email, password, UserAuthorization.USER);
             userService.createUser(dto);
             return "redirect:/user/login";
@@ -145,10 +149,14 @@ public class UserViewController {
                                 @PathVariable Long userId,
                                 @RequestParam String fullName,
                                 @RequestParam String password,
+                                @RequestParam String confirmPassword,
                                 Model model) {
         userService.validateProfileAccess(principal, userId);
 
         try {
+            if (!password.equals(confirmPassword)) {
+                throw new IllegalArgumentException("Passwords do not match");
+            }
             UpdateUserDTO dto = new UpdateUserDTO(userId, fullName, password);
             userService.updateUser(dto, principal.getUserId());
             return "redirect:/profile/view/" + userId;
@@ -158,7 +166,7 @@ public class UserViewController {
             UserDTO existing = userService.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("User not found"));
             model.addAttribute("error", e.getMessage());
-            model.addAttribute("user", new UserDTO(userId, fullName, password, existing.userAuthorization()));
+            model.addAttribute("user", new UserDTO(userId, fullName, existing.email(), existing.userAuthorization()));
             addAuthorizationFormAttributes(model, principal, userId);
             return "profile/edit";
         }

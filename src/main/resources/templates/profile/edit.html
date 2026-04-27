@@ -47,11 +47,15 @@
                            required>
                 </div>
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email"
-                           th:value="${user.email()}"
-                           placeholder="you@example.com"
-                           required>
+                    <label>New Password <span style="color: var(--color-text-dim); font-weight: normal;">(leave blank to keep current)</span></label>
+                    <input type="password" name="password" id="password"
+                           placeholder="Min. 8 characters"
+                           minlength="8">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" name="confirmPassword" id="confirmPassword"
+                           placeholder="Repeat new password">
                 </div>
                 <!-- Read-only role display for any viewer who can't change it
                      (the user themselves, or any non-sysadmin). Sysadmins viewing
@@ -94,5 +98,18 @@
     </div>
 </div>
 
+<script>
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const pw = document.getElementById('password');
+        const cpw = document.getElementById('confirmPassword');
+        if (pw.value !== cpw.value) {
+            cpw.setCustomValidity('Passwords do not match');
+            cpw.reportValidity();
+            e.preventDefault();
+        } else {
+            cpw.setCustomValidity('');
+        }
+    });
+</script>
 </body>
 </html>
