@@ -92,6 +92,25 @@ class UserServiceIntegrationTest {
     }
 
     @Test
+    @DisplayName("Checking if updateUser leaves the password unchanged when an empty password is provided (skip-change branch)")
+    void updateUser_shouldSkipPasswordChange_WhenPasswordIsEmpty() {
+        // Arrange — capture the originally-saved (already encoded) password hash
+        User user = createAndSaveValidUser();
+        authenticateUser(user);
+        String originalHash = userRepository.findById(user.getId()).orElseThrow().getPassword();
+
+        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "NameChange", "");
+
+        // Act
+        userService.updateUser(dto, user.getId());
+
+        // Assert — fullName changed, password hash untouched
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(updatedUser.getFullName()).isEqualTo("NameChange");
+        assertThat(updatedUser.getPassword()).isEqualTo(originalHash);
+    }
+
+    @Test
     @WithMockUser(roles = "SYSADMIN")
     @DisplayName("Checking if updateUserAuthorization promotes a USER to ADMIN when requested by a SYSADMIN")
     void updateUserAuthorization_shouldChangeAuthorization_WhenRequestedBySysAdmin() {

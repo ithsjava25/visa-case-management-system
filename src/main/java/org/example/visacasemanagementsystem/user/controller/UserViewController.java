@@ -157,6 +157,9 @@ public class UserViewController {
             if (!password.equals(confirmPassword)) {
                 throw new IllegalArgumentException("Passwords do not match");
             }
+            if (!password.isBlank() && password.length() < 8) {
+                throw new IllegalArgumentException("Password must be at least 8 characters");
+            }
             UpdateUserDTO dto = new UpdateUserDTO(userId, fullName, password);
             userService.updateUser(dto, principal.getUserId());
             return "redirect:/profile/view/" + userId;

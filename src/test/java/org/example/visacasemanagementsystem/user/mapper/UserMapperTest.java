@@ -129,7 +129,7 @@ class UserMapperTest {
         user.setPassword("secret123");
         user.setUserAuthorization(UserAuthorization.SYSADMIN);
 
-        UpdateUserDTO dto = new UpdateUserDTO(1L, "Changed Name", "changed@example.com");
+        UpdateUserDTO dto = new UpdateUserDTO(1L, "Changed Name", "newPassword123");
 
         // Act
         userMapper.updateEntityFromDTO(dto, user);
@@ -161,7 +161,7 @@ class UserMapperTest {
     @DisplayName("Checking if updateEntityFromDTO does not throw when the User entity is null")
     void shouldNotThrow_WhenUserIsNullInUpdate() {
         // Arrange
-        UpdateUserDTO dto = new UpdateUserDTO(1L, "Some Name", "some@example.com");
+        UpdateUserDTO dto = new UpdateUserDTO(1L, "Some Name", "somePassword1");
 
         // Act & Assert
         assertThatCode(() -> userMapper.updateEntityFromDTO(dto, null))

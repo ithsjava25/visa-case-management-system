@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @PreAuthorize("isAuthenticated()")
 @Service
@@ -104,7 +105,9 @@ public class UserService {
             userMapper.updateEntityFromDTO(dto, user);
             savedUser = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("A user with this email already exists", e);
+            // Email is no longer mutable on this path, but other unique/integrity constraints
+            // (now or in the future) could still trip here, so the message stays generic.
+            throw new IllegalArgumentException("Data integrity violation while updating user", e);
         }
         userLogService.createUserLog(
                 actorUserId,
@@ -113,6 +116,37 @@ public class UserService {
                 "User profile updated (fullName/password)."
         );
         return userMapper.toDTO(savedUser);
+    }
+
+    /**
+     * OAuth login lookup-or-create. Used by OauthSuccessHandler to keep the persistence work
+     * inside a single short-lived transaction that commits before the success handler builds
+     * the SecurityContext and issues the redirect.
+     */
+    @PreAuthorize("permitAll()")
+    @Transactional
+    public User findOrCreateOauthUser(String email, String fullName) {
+        return userRepository.findByEmail(email).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setFullName(fullName);
+            newUser.setUsername(email);
+            newUser.setEmail(email);
+            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            newUser.setUserAuthorization(UserAuthorization.USER);
+            try {
+                User savedUser = userRepository.saveAndFlush(newUser);
+                userLogService.createUserLog(
+                        savedUser.getId(),
+                        savedUser.getId(),
+                        UserEventType.CREATED,
+                        "User account created via OAUTH2."
+                );
+                return savedUser;
+            } catch (DataIntegrityViolationException e) {
+                // Race: another concurrent OAuth login created the row first. Re-read.
+                return userRepository.findByEmail(email).orElseThrow();
+            }
+        });
     }
 
     @PreAuthorize("hasRole('SYSADMIN')")
@@ -162,6 +196,13 @@ public class UserService {
     }
 
     private static UserPrincipal getUserPrincipal() {
-        return (UserPrincipal) Objects.requireNonNull(Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal());
+        // Class-level @PreAuthorize("isAuthenticated()") guarantees an authentication is present.
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof UserPrincipal userPrincipal)) {
+            throw new IllegalStateException(
+                    "Expected UserPrincipal in SecurityContext but got: "
+                            + (principal == null ? "null" : principal.getClass().getName()));
+        }
+        return userPrincipal;
     }
 }

@@ -3,46 +3,35 @@ package org.example.visacasemanagementsystem.config;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.visacasemanagementsystem.audit.UserEventType;
-import org.example.visacasemanagementsystem.audit.service.UserLogService;
-import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
-import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
+import org.example.visacasemanagementsystem.user.service.UserService;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.UUID;
 
 @Configuration
 public class OauthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
     private final SecurityContextRepository securityContextRepository;
-    private final UserLogService userLogService;
 
-    public OauthSuccessHandler(UserRepository userRepository, PasswordEncoder passwordEncoder, SecurityContextRepository securityContextRepository, UserLogService userLogService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+    public OauthSuccessHandler(UserService userService,
+                               SecurityContextRepository securityContextRepository) {
+        this.userService = userService;
         this.securityContextRepository = securityContextRepository;
-        this.userLogService = userLogService;
     }
 
     @Override
-    @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication)
@@ -56,26 +45,9 @@ public class OauthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
             throw new BadCredentialsException("OAuth account missing verified email");
         }
 
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
-            User newUser = new User();
-            newUser.setFullName(name);
-            newUser.setUsername(email);
-            newUser.setEmail(email);
-            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
-            newUser.setUserAuthorization(UserAuthorization.USER);
-            try {
-                User savedUser = userRepository.saveAndFlush(newUser);
-                userLogService.createUserLog(
-                        savedUser.getId(),
-                        savedUser.getId(),
-                        UserEventType.CREATED,
-                        "User account created via OAUTH2."
-                );
-                return savedUser;
-            } catch (DataIntegrityViolationException e) {
-                return userRepository.findByEmail(email).orElseThrow();
-            }
-        });
+        // Persistence + audit run inside a @Transactional service method so the
+        // transaction commits before we touch the SecurityContext or issue the redirect.
+        User user = userService.findOrCreateOauthUser(email, name);
 
         UserPrincipal principal = new UserPrincipal(user);
         Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());

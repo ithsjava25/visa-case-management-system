@@ -62,6 +62,7 @@
             <label>Confirm Password</label>
             <input type="password" name="confirmPassword" id="confirmPassword"
                    placeholder="Repeat your password"
+                   minlength="8"
                    required>
         </div>
 
@@ -74,17 +75,22 @@
 </div>
 
 <script>
-    document.querySelector('form').addEventListener('submit', function (e) {
+    (function () {
         const pw = document.getElementById('password');
         const cpw = document.getElementById('confirmPassword');
-        if (pw.value !== cpw.value) {
-            cpw.setCustomValidity('Passwords do not match');
-            cpw.reportValidity();
-            e.preventDefault();
-        } else {
-            cpw.setCustomValidity('');
-        }
-    });
+        if (!pw || !cpw) return;
+        const form = pw.form || cpw.form;
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            if (pw.value !== cpw.value) {
+                cpw.setCustomValidity('Passwords do not match');
+                cpw.reportValidity();
+                e.preventDefault();
+            } else {
+                cpw.setCustomValidity('');
+            }
+        });
+    })();
 </script>
 
 </body>

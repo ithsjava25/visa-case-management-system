@@ -12,6 +12,7 @@ import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.mapper.UserMapper;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +46,11 @@ class UserServiceTest {
 
     @InjectMocks
     private UserService userService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     // ── createUser ────────────────────────────────────────────────────────────
 
@@ -124,11 +130,11 @@ class UserServiceTest {
     @DisplayName("Checking if updateUser throws EntityNotFoundException when user ID does not exist")
     void updateUser_shouldThrowEntityNotFoundException_WhenUserDoesNotExist() {
         // Arrange
-        User sysadmin = createAndSaveUser("sysadmin", UserAuthorization.SYSADMIN);
+        User sysadmin = buildUser("sysadmin", UserAuthorization.SYSADMIN);
         sysadmin.setId(1L);
         authenticateUser(sysadmin);
 
-        UpdateUserDTO dto = new UpdateUserDTO(999L, "Name", "email@test.com");
+        UpdateUserDTO dto = new UpdateUserDTO(999L, "Name", "newPassword1");
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -138,23 +144,23 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Checking if updateUser throws IllegalArgumentException when new email is already taken by another user")
-    void updateUser_shouldThrowIllegalArgumentException_WhenEmailAlreadyExists() {
-        // Arrange
+    @DisplayName("Checking if updateUser throws IllegalArgumentException when saveAndFlush violates a DB integrity constraint")
+    void updateUser_shouldThrowIllegalArgumentException_WhenDataIntegrityViolation() {
         Long userId = 1L;
-        UpdateUserDTO dto = new UpdateUserDTO(userId, "User", "taken@test.com");
-
-        User existingUser = new User();
+        User existingUser = buildUser("user", UserAuthorization.USER);
         existingUser.setId(userId);
+        authenticateUser(existingUser);
+
+        UpdateUserDTO dto = new UpdateUserDTO(userId, "User", "newPassword1");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
         when(userRepository.saveAndFlush(any(User.class)))
-                .thenThrow(new DataIntegrityViolationException("unique constraint"));
+                .thenThrow(new DataIntegrityViolationException("constraint violation"));
 
         // Act & Assert
         assertThatThrownBy(() -> userService.updateUser(dto, userId))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("email already exists");
+                .hasMessageContaining("Data integrity violation");
     }
 
     @Test
@@ -162,9 +168,9 @@ class UserServiceTest {
     void updateUser_shouldUpdateAndReturnUser_WhenDataIsValid() {
         // Arrange
         Long userId = 1L;
-        UpdateUserDTO dto = new UpdateUserDTO(userId, "Updated Name", "updated@test.com");
+        UpdateUserDTO dto = new UpdateUserDTO(userId, "Updated Name", "newPassword1");
 
-        User existingUser = createAndSaveUser("user", UserAuthorization.USER);
+        User existingUser = buildUser("user", UserAuthorization.USER);
         existingUser.setId(userId);
         authenticateUser(existingUser);
         UserDTO expectedDTO = new UserDTO(userId, "Updated Name", "updated@test.com", UserAuthorization.USER);
@@ -320,7 +326,7 @@ class UserServiceTest {
 
     // ── Helper methods ────────────────────────────────────────────────────────
 
-    private User createAndSaveUser(String name, UserAuthorization auth) {
+    private User buildUser(String name, UserAuthorization auth) {
         User user = new User();
         String uniqueEmail = java.util.UUID.randomUUID() + "@test.com";
         user.setFullName(name);
@@ -328,7 +334,6 @@ class UserServiceTest {
         user.setUsername(uniqueEmail);
         user.setPassword("password123");
         user.setUserAuthorization(auth);
-        userRepository.save(user);
         return user;
     }
 

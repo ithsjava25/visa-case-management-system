@@ -55,7 +55,8 @@
                 <div class="form-group">
                     <label>Confirm New Password</label>
                     <input type="password" name="confirmPassword" id="confirmPassword"
-                           placeholder="Repeat new password">
+                           placeholder="Repeat new password"
+                           minlength="8">
                 </div>
                 <!-- Read-only role display for any viewer who can't change it
                      (the user themselves, or any non-sysadmin). Sysadmins viewing
@@ -99,17 +100,25 @@
 </div>
 
 <script>
-    document.querySelector('form').addEventListener('submit', function (e) {
+    // Attach the mismatch-check to the form that actually owns the password fields,
+    // not to whatever 'form' querySelector picks first — the sysadmin authorization
+    // form on the same page would otherwise trigger this handler too.
+    (function () {
         const pw = document.getElementById('password');
         const cpw = document.getElementById('confirmPassword');
-        if (pw.value !== cpw.value) {
-            cpw.setCustomValidity('Passwords do not match');
-            cpw.reportValidity();
-            e.preventDefault();
-        } else {
-            cpw.setCustomValidity('');
-        }
-    });
+        if (!pw || !cpw) return;
+        const form = pw.form || cpw.form;
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            if (pw.value !== cpw.value) {
+                cpw.setCustomValidity('Passwords do not match');
+                cpw.reportValidity();
+                e.preventDefault();
+            } else {
+                cpw.setCustomValidity('');
+            }
+        });
+    })();
 </script>
 </body>
 </html>
