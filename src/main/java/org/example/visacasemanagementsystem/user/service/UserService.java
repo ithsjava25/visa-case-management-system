@@ -15,12 +15,14 @@ import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @PreAuthorize("isAuthenticated()")
 @Service
@@ -89,24 +91,62 @@ public class UserService {
 
     @Transactional
     public UserDTO updateUser(UpdateUserDTO dto, Long actorUserId) {
+        validateProfileAccess(getUserPrincipal(), dto.id());
         // Check if user and email exists
         User user = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
+
+        if (!dto.password().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.password()));
+        }
 
         User savedUser;
         try {
             userMapper.updateEntityFromDTO(dto, user);
             savedUser = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("A user with this email already exists", e);
+            // Email is no longer mutable on this path, but other unique/integrity constraints
+            // (now or in the future) could still trip here, so the message stays generic.
+            throw new IllegalArgumentException("Data integrity violation while updating user", e);
         }
         userLogService.createUserLog(
                 actorUserId,
                 savedUser.getId(),
                 UserEventType.UPDATED,
-                "User profile updated (fullName/email)."
+                "User profile updated (fullName/password)."
         );
         return userMapper.toDTO(savedUser);
+    }
+
+    /**
+     * OAuth login lookup-or-create. Used by OauthSuccessHandler to keep the persistence work
+     * inside a single short-lived transaction that commits before the success handler builds
+     * the SecurityContext and issues the redirect.
+     */
+    @PreAuthorize("permitAll()")
+    @Transactional
+    public User findOrCreateOauthUser(String email, String fullName) {
+        return userRepository.findByEmail(email).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setFullName(fullName);
+            newUser.setUsername(email);
+            newUser.setEmail(email);
+            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            newUser.setUserAuthorization(UserAuthorization.USER);
+            try {
+                User savedUser = userRepository.saveAndFlush(newUser);
+                userLogService.createUserLog(
+                        savedUser.getId(),
+                        savedUser.getId(),
+                        UserEventType.CREATED,
+                        "User account created via OAUTH2."
+                );
+                return savedUser;
+            } catch (DataIntegrityViolationException e) {
+                // Race: another concurrent OAuth login created the row first. Re-read.
+                return userRepository.findByEmail(email).orElseThrow();
+            }
+        });
     }
 
     @PreAuthorize("hasRole('SYSADMIN')")
@@ -153,5 +193,16 @@ public class UserService {
         if (!isOwnProfile && !isSysAdmin) {
             throw new UnauthorizedException("You do not have permission to edit this profile.");
         }
+    }
+
+    private static UserPrincipal getUserPrincipal() {
+        // Class-level @PreAuthorize("isAuthenticated()") guarantees an authentication is present.
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof UserPrincipal userPrincipal)) {
+            throw new IllegalStateException(
+                    "Expected UserPrincipal in SecurityContext but got: "
+                            + (principal == null ? "null" : principal.getClass().getName()));
+        }
+        return userPrincipal;
     }
 }

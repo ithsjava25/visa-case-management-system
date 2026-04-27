@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -39,6 +40,8 @@ class UserServiceIntegrationTest {
 
     @MockitoBean
     private FileService fileService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @AfterEach
     void tearDown() {
@@ -70,23 +73,41 @@ class UserServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Checking if updateUser changes fullName and email in the database")
+    @DisplayName("Checking if updateUser changes fullName and password in the database")
     void updateUser_shouldUpdateUserFields_WhenDataIsValid() {
         // Arrange
         User user = createAndSaveValidUser();
         authenticateUser(user);
-        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "updated@integration.test");
+        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "newPassword");
 
         // Act — actor is the user themselves editing their own profile
         UserDTO result = userService.updateUser(dto, user.getId());
 
         // Assert
         assertThat(result.fullName()).isEqualTo("Updated Name");
-        assertThat(result.email()).isEqualTo("updated@integration.test");
 
         User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         assertThat(updatedUser.getFullName()).isEqualTo("Updated Name");
-        assertThat(updatedUser.getEmail()).isEqualTo("updated@integration.test");
+        assertThat(passwordEncoder.matches("newPassword", updatedUser.getPassword())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Checking if updateUser leaves the password unchanged when an empty password is provided (skip-change branch)")
+    void updateUser_shouldSkipPasswordChange_WhenPasswordIsEmpty() {
+        // Arrange — capture the originally-saved (already encoded) password hash
+        User user = createAndSaveValidUser();
+        authenticateUser(user);
+        String originalHash = userRepository.findById(user.getId()).orElseThrow().getPassword();
+
+        UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "NameChange", "");
+
+        // Act
+        userService.updateUser(dto, user.getId());
+
+        // Assert — fullName changed, password hash untouched
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(updatedUser.getFullName()).isEqualTo("NameChange");
+        assertThat(updatedUser.getPassword()).isEqualTo(originalHash);
     }
 
     @Test

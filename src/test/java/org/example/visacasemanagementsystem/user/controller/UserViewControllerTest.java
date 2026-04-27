@@ -94,6 +94,7 @@ class UserViewControllerTest {
                         .param("fullName", "New Applicant")
                         .param("email", "new@test.com")
                         .param("password", "securePass1")
+                        .param("confirmPassword", "securePass1")
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/user/login"));
@@ -113,6 +114,7 @@ class UserViewControllerTest {
                         .param("fullName", "Duplicate User")
                         .param("email", "existing@test.com")
                         .param("password", "password123")
+                        .param("confirmPassword", "password123")
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("user/signup"))
@@ -131,6 +133,7 @@ class UserViewControllerTest {
                         .param("fullName", "Short Pass")
                         .param("email", "short@test.com")
                         .param("password", "abc")
+                        .param("confirmPassword", "abc")
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("user/signup"))
@@ -259,7 +262,8 @@ class UserViewControllerTest {
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + userId)
                         .param("fullName", "Updated Name")
-                        .param("email", "updated@test.com")
+                        .param("password", "newPassword")
+                        .param("confirmPassword", "newPassword")
                         .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
@@ -281,7 +285,8 @@ class UserViewControllerTest {
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + userId)
                         .param("fullName", "Test User")
-                        .param("email", "taken@test.com")
+                        .param("password", "newPassword")
+                        .param("confirmPassword", "newPassword")
                         .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -302,7 +307,8 @@ class UserViewControllerTest {
         // Act & Assert — handled by GlobalExceptionHandler → 404
         mockMvc.perform(post("/profile/edit/" + userId)
                         .param("fullName", "Test User")
-                        .param("email", "taken@test.com")
+                        .param("password", "newPassword")
+                        .param("confirmPassword", "newPassword")
                         .with(authentication(authFor(userId, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().isNotFound());
@@ -320,7 +326,8 @@ class UserViewControllerTest {
         // Act & Assert
         mockMvc.perform(post("/profile/edit/" + targetUserId)
                         .param("fullName", "Hacked")
-                        .param("email", "hacked@test.com")
+                        .param("password", "newPassword")
+                        .param("confirmPassword", "newPassword")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))
                 .andExpect(status().isForbidden());
