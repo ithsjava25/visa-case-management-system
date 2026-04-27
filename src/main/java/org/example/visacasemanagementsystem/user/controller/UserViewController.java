@@ -10,24 +10,30 @@ import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * User-facing controller: signup, login, profile view/edit, and the sysadmin user list.
  */
-@PreAuthorize("isAuthenticated()")
 @Controller
 public class UserViewController {
     private final UserService userService;
@@ -36,8 +42,7 @@ public class UserViewController {
         this.userService = userService;
     }
 
-    // Signup form for new users, accessible to all.
-    @PreAuthorize("permitAll()")
+    // Signup form for new users, accessible to all
     @GetMapping("/user/signup")
     public String userSignupForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         if (principal != null) {
@@ -46,7 +51,9 @@ public class UserViewController {
         return "user/signup";
     }
 
-    @PreAuthorize("permitAll()")
+    // Posting a successful user creation then redirecting to the applicant dashboard since only applicants can be
+    // created through the signup process. Admins or Sysadmins are created from applicant users by given authorization
+    // from a sysadmin.
     @PostMapping("/user/signup")
     public String createUser(@RequestParam String fullName,
                              @RequestParam String email,
@@ -64,8 +71,7 @@ public class UserViewController {
         }
     }
 
-    // Login page.
-    @PreAuthorize("permitAll()")
+    // Login page
     @GetMapping("/user/login")
     public String userLoginForm(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal != null) {
@@ -74,8 +80,17 @@ public class UserViewController {
         return "user/login";
     }
 
+    @GetMapping(value = "/static/google-icon.svg", produces = "image/svg+xml")
+    public ResponseEntity<Resource> icon() throws IOException {
+        String inputFile = "src/main/resources/static/google-icon.svg";
+        Path path = new File(inputFile).toPath();
+        FileSystemResource resource = new FileSystemResource(path);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(Files.probeContentType(path)))
+                .body(resource);
+    }
+
     // Sign-out endpoint.
-    @PreAuthorize("isAuthenticated()")
     @PostMapping("/user/logout")
     public String logout(HttpServletRequest request, HttpServletResponse response) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -143,7 +158,6 @@ public class UserViewController {
     }
 
     // Sysadmin-only endpoint that backs the role dropdown
-    @PreAuthorize("hasRole('SYSADMIN')")
     @PostMapping("/profile/edit/{userId}/authorization")
     public String updateAuthorization(@AuthenticationPrincipal UserPrincipal principal,
                                       @PathVariable Long userId,
@@ -175,7 +189,6 @@ public class UserViewController {
     }
 
     // A list view of users only available to sysadmins
-    @PreAuthorize("hasRole('SYSADMIN')")
     @GetMapping("/user/list")
     public String userListView(@AuthenticationPrincipal UserPrincipal principal,
                                Model model) {

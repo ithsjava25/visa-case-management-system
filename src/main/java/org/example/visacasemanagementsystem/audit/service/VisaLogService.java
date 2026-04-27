@@ -6,6 +6,7 @@ import org.example.visacasemanagementsystem.audit.entity.VisaLog;
 import org.example.visacasemanagementsystem.audit.entity.VisaLog_;
 import org.example.visacasemanagementsystem.audit.mapper.VisaLogMapper;
 import org.example.visacasemanagementsystem.audit.repository.VisaLogRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,6 +31,7 @@ public class VisaLogService {
         visaLogRepository.save(visaLog);
     }
 
+    @PreAuthorize("isAuthenticated()")
     public List<VisaLogDTO> findAll() {
         return visaLogRepository.findAll()
                 .stream()

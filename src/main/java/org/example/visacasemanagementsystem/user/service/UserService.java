@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@PreAuthorize("isAuthenticated()")
 @Service
 public class UserService {
 
@@ -41,6 +42,7 @@ public class UserService {
         this.userLogService = userLogService;
     }
 
+    @PreAuthorize("hasRole('SYSADMIN')")
     public List<UserDTO> findAll() {
         return userRepository.findAll()
                 .stream()
@@ -58,6 +60,7 @@ public class UserService {
                 .map(userMapper::toDTO);
     }
 
+    @PreAuthorize("permitAll()")
     @Transactional
     public UserDTO createUser(@Valid CreateUserDTO dto) {
         User user = userMapper.toEntity(dto);

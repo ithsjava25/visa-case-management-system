@@ -13,6 +13,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -26,12 +30,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, OauthSuccessHandler oauthSuccessHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Public landing + static assets + anonymous auth forms
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/css/**").permitAll()
+                        .requestMatchers("/static/google-icon.svg").permitAll()
                         .requestMatchers("/user/signup").permitAll()
                         .requestMatchers("/user/login").permitAll()
 
@@ -44,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/comments/**").authenticated()
 
                         // Audit logs and user list are sysadmin-only.
+                        .requestMatchers("/profile/edit/{userId}/authorization").hasRole("SYSADMIN")
                         .requestMatchers("/log/**").hasRole("SYSADMIN")
                         .anyRequest().hasRole("SYSADMIN")
                 )
@@ -55,20 +61,28 @@ public class SecurityConfig {
                         // SYSADMIN -> /log/visa
                         .defaultSuccessUrl("/home", true)
                         .loginPage("/user/login"))
+                .oauth2Login(l -> l
+                        .loginPage("/user/login")
+                        .successHandler(oauthSuccessHandler))
                 .logout(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider authnProvider = new DaoAuthenticationProvider(userDetailsService);
         authnProvider.setPasswordEncoder(passwordEncoder());
         return authnProvider;
     }
 
     @Bean
-    public static PasswordEncoder passwordEncoder() {
+    public static PasswordEncoder passwordEncoder(){
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityContextRepository securityContextRepository(){
+        return new HttpSessionSecurityContextRepository();
     }
 }

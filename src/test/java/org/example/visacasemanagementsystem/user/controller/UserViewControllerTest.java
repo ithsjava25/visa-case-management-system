@@ -1,12 +1,17 @@
 package org.example.visacasemanagementsystem.user.controller;
 
+import org.example.visacasemanagementsystem.audit.service.UserLogService;
+import org.example.visacasemanagementsystem.audit.service.VisaLogService;
+import org.example.visacasemanagementsystem.config.OauthSuccessHandler;
 import org.example.visacasemanagementsystem.config.SecurityConfig;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
+import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
+import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +23,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.util.List;
 import java.util.Optional;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -33,17 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Web-layer tests for UserViewController after the dashboard-overhaul refactor.
- *
- * Removed tests:
- * - /dashboard/admin and /dashboard/sysadmin tests — those endpoints were
- *   hard-removed; routing now lives in ApplicationViewController (/home)
- *   and the pages they rendered were split into /visa/cases and /log/**.
- *
- * Mocks trimmed: VisaService, VisaLogService, UserLogService are no longer
- * dependencies of UserViewController, so they're gone from this test too.
  */
 @WebMvcTest(UserViewController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, OauthSuccessHandler.class})
 @DisplayName("UserViewController web-layer tests")
 class UserViewControllerTest {
 
@@ -51,9 +46,17 @@ class UserViewControllerTest {
     MockMvc mockMvc;
 
     @MockitoBean
+    private UserRepository userRepository;
+    @MockitoBean
     private UserDetailsService userDetailsService;
     @MockitoBean
     private UserService userService;
+    @MockitoBean
+    private VisaService visaService;
+    @MockitoBean
+    private VisaLogService visaLogService;
+    @MockitoBean
+    private UserLogService userLogService;
 
     // ── GET /user/signup ──────────────────────────────────────────────────────
 
@@ -381,7 +384,7 @@ class UserViewControllerTest {
     @DisplayName("Checking if POST /profile/edit/{id}/authorization returns 403 when accessed by an ADMIN")
     void updateAuthorization_AsAdmin_ShouldReturnForbidden() throws Exception {
         // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects ADMIN
-        mockMvc.perform(post("/profile/edit/5/authorization")
+        mockMvc.perform(post("/profile/edit/1/authorization")
                         .param("newAuthorization", "USER")
                         .with(authentication(authFor(1L, "Test Admin", "admin@test.com", UserAuthorization.ADMIN)))
                         .with(csrf()))
@@ -394,7 +397,7 @@ class UserViewControllerTest {
     @DisplayName("Checking if POST /profile/edit/{id}/authorization returns 403 when accessed by a regular USER")
     void updateAuthorization_AsRegularUser_ShouldReturnForbidden() throws Exception {
         // Act & Assert — @PreAuthorize("hasRole('SYSADMIN')") rejects USER
-        mockMvc.perform(post("/profile/edit/5/authorization")
+        mockMvc.perform(post("/profile/edit/1/authorization")
                         .param("newAuthorization", "USER")
                         .with(authentication(authFor(1L, "Test User", "user@test.com", UserAuthorization.USER)))
                         .with(csrf()))

@@ -9,6 +9,7 @@ import org.example.visacasemanagementsystem.audit.repository.UserLogRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class UserLogService {
         userLogRepository.save(userLog);
     }
 
+    @PreAuthorize("isAuthenticated()")
     public List<UserLogDTO> findAll() {
         return userLogRepository.findAll()
                 .stream()

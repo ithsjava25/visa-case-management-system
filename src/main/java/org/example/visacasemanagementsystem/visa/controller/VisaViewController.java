@@ -14,7 +14,6 @@ import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -98,7 +97,6 @@ public class VisaViewController {
         return "visa/apply-form";
     }
 
-    @PreAuthorize("hasRole('USER')")
     @PostMapping("/apply")
     public String submitApplication(
             @Valid @ModelAttribute("createVisaDTO") CreateVisaDTO createVisaDTO,
@@ -119,7 +117,7 @@ public class VisaViewController {
                 s3Key = fileService.uploadFile(passportFile);
             }
 
-            visaService.applyForVisa(createVisaDTO, principal.getUserId(), s3Key);
+            visaService.applyForVisa(principal, createVisaDTO, s3Key);
 
         } catch (java.io.IOException e) {
             bindingResult.reject("upload.error", "Failed to upload document: " + e.getMessage());
@@ -233,23 +231,12 @@ public class VisaViewController {
 
     }
 
-    // ─── Case-management actions ──────────────────────────────────────────
-    //
-    // Product decision: SYSADMIN has the same case-management powers as ADMIN
-    // (approve, request-info, reject, assign). SYSADMIN is not strictly an
-    // audit-only role in this product — they administer everything, including
-    // visa cases — so the broader hasAnyRole('ADMIN', 'SYSADMIN') is intentional
-    // on the four mutation endpoints below. The /visa/cases nav entry in the
-    // header fragment is shown to both roles for the same reason.
-
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/approve")
     public String approveVisa(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         visaService.approveVisa(id, principal.getUserId());
         return "redirect:/visa/" + id;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/request-info")
     public String requestMoreInformation(@PathVariable Long id,
                                          @AuthenticationPrincipal UserPrincipal principal,
@@ -260,7 +247,6 @@ public class VisaViewController {
         return "redirect:/visa/" + id;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/reject")
     public String rejectVisa(@PathVariable Long id,
                              @AuthenticationPrincipal UserPrincipal principal,
@@ -269,7 +255,6 @@ public class VisaViewController {
         return "redirect:/visa/" + id;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @PostMapping("/{id}/assign")
     public String assignCaseToHandler(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         visaService.assignHandler(id, principal.getUserId());
@@ -311,5 +296,4 @@ public class VisaViewController {
         model.addAttribute("currentUser", user);
         model.addAttribute("visaTypes", VisaType.values());
     }
-
 }
