@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/visa/cases").hasAnyRole("SYSADMIN", "ADMIN")
                         .requestMatchers("/visa/my-applications").hasRole("USER")
                         .requestMatchers("/visa/apply").hasRole("USER")
+                        .requestMatchers("/visa/**").authenticated()
                         .requestMatchers("/api/comments/**").authenticated()
 
                         // Audit logs and user list are sysadmin-only.
@@ -55,8 +56,10 @@ public class SecurityConfig {
                         .requestMatchers("/favicon.ico").permitAll()
                         .requestMatchers("/login/oauth2/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/access-denied").permitAll()
                         .anyRequest().hasRole("SYSADMIN")
                 )
+                .exceptionHandling(ex -> ex.accessDeniedPage("/access-denied"))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .formLogin(l -> l
                         // /home is the single post-login router and redirects as follows:
