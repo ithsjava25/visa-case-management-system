@@ -178,7 +178,7 @@
 
     </div>
 
-    <div th:if="${(visa.visaStatus.name() == 'INCOMPLETE' or visa.visaStatus.name() == 'SUBMITTED') and visa.applicantId == currentUser.id and visa.handlerId == null}"
+    <div th:if="${visa.visaStatus.name() == 'INCOMPLETE' and visa.applicantId == currentUser.id}"
          class="action-required">
 
         <h3>Action Required</h3>

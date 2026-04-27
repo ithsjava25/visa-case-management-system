@@ -142,6 +142,13 @@ public class VisaViewController {
             throw  new UnauthorizedException("You can only edit your own applications.");
         }
 
+        boolean statusAllowsEdit = visa.visaStatus().name().equals("INCOMPLETE")
+                || visa.visaStatus().name().equals("SUBMITTED");
+
+        if (!statusAllowsEdit) {
+            return "redirect:/visa/" + id;
+        }
+
         UpdateVisaDTO updateDto = new UpdateVisaDTO(
                 visa.id(),
                 visa.visaType(),
@@ -172,8 +179,18 @@ public class VisaViewController {
             @AuthenticationPrincipal UserPrincipal principal,
             Model model) {
 
+        VisaDTO visa = visaService.findVisaDtoById(id);
+
+        if (!visa.applicantId().equals(principal.getUserId())) {
+            throw new UnauthorizedException("You are not authorized to edit this application.");
+        }
+
+        String currentStatus = visa.visaStatus().name();
+        if (!(currentStatus.equals("INCOMPLETE") || currentStatus.equals("SUBMITTED"))) {
+            return "redirect:/visa/" + id;
+        }
+
         if (bindingResult.hasErrors()) {
-            VisaDTO visa = visaService.findVisaDtoById(id);
             model.addAttribute("visa", visa);
             prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
@@ -183,7 +200,6 @@ public class VisaViewController {
 
         try {
             String newS3Key = null;
-
             if (passportFile != null && !passportFile.isEmpty()) {
                 newS3Key = fileService.uploadFile(passportFile);
             }
@@ -192,7 +208,6 @@ public class VisaViewController {
 
         } catch (java.io.IOException e) {
             bindingResult.reject("upload.error", "Failed to upload new document: " + e.getMessage());
-            VisaDTO visa  = visaService.findVisaDtoById(id);
             model.addAttribute("visa", visa);
             prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
@@ -207,7 +222,6 @@ public class VisaViewController {
 
             prepareApplyModel(principal.getUserId(), model);
             model.addAttribute("isEdit", true);
-            VisaDTO visa = visaService.findVisaDtoById(id);
             model.addAttribute("visa", visa);
             model.addAttribute("statusInformation", visa.statusInformation());
 
