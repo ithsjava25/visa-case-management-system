@@ -31,7 +31,7 @@ public class UserLogService {
         userLogRepository.save(userLog);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSADMIN')")
     public List<UserLogDTO> findAll() {
         return userLogRepository.findAll()
                 .stream()
