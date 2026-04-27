@@ -47,16 +47,45 @@
             border-color: var(--color-accent);
         }
 
+        /* When .btn-assign is used on an <a> tag it needs link-specific resets. */
+        a.btn-assign {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+        }
+
         #infoReason {
             width: 100%;
             box-sizing: border-box;
             display: block;
             font-size: 12px;
             border-radius: var(--radius-md);
+            padding: 15px;
+            margin-bottom: 20px;
         }
         #infoReason:focus { border-color: var(--color-border-focus) !important; }
 
         .action-group { display: flex; gap: 10px; }
+
+        /* Admin heading inside the actions panel. */
+        .admin-actions h3 { margin-top: 0; font-size: 20px; }
+
+        /* Bordered sub-section for Reject / Request Info forms. */
+        .decision-form {
+            margin-top: 20px;
+            border-top: 1px solid var(--color-border);
+            padding-top: 20px;
+        }
+
+        /* Side-by-side form row used for the two decision buttons. */
+        .form-row                { display: flex; gap: 10px; width: 100%; }
+        .form-row form           { flex: 1; }
+        .form-row button         { width: 100%; transition: 0.2s ease; }
+
+        /* Empty-comments placeholder. */
+        .no-comments { color: var(--color-text-dimmer); padding: 20px 0; }
 
         /* Comment section (kept inline — specific to this page). */
         .comments-section { border-top: 1px solid var(--color-border); padding-top: 10px; font-size: 20px; font-weight: 600; }
@@ -160,17 +189,16 @@
         <div class="info-item full-width">
             <span class="label">Attached Documents</span>
 
-            <div th:if="${not #lists.isEmpty(visa.downloadUrls)}" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+            <div th:if="${not #lists.isEmpty(visa.downloadUrls)}" class="doc-list">
                 <div th:each="url,iter : ${visa.downloadUrls}">
-                    <a th:href="${url}" target="_blank" class="btn-assign"
-                       style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;">
+                    <a th:href="${url}" target="_blank" class="btn-assign">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                         <span th:text="${#strings.substring(visa.s3Keys[iter.index], 37)}">filename.pdf</span>
                     </a>
                 </div>
             </div>
 
-            <div th:if="${#lists.isEmpty(visa.downloadUrls)}" style="margin-top: 10px; color: var(--color-danger); font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <div th:if="${#lists.isEmpty(visa.downloadUrls)}" class="no-docs-warning">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 No documents attached. This may delay processing.
             </div>
@@ -188,14 +216,13 @@
         </p>
 
         <a th:href="@{/visa/{id}/edit(id=${visa.id})}"
-           class="btn-submit"
-           style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto; border-radius: var(--radius-md);">
+           class="btn-submit btn-submit-inline">
             Edit Application
         </a>
     </div>
 
     <div th:if="${currentUser.userAuthorization.name() != 'USER' and visa.visaStatus.name() != 'GRANTED' and visa.visaStatus.name() != 'REJECTED'}" class="admin-actions">
-        <h3 style="margin-top: 0; font-size: 20px;">Case Management</h3>
+        <h3>Case Management</h3>
 
         <div class="action-group">
             <form th:if="${visa.handlerId == null}"
@@ -211,25 +238,24 @@
         </div>
 
 
-        <div class="decision-form" style="margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 20px;">
+        <div class="decision-form">
             <input type="text" id="infoReason"
                    placeholder="Write reason for rejection or what information is missing..."
-                   style="padding: 15px; margin-bottom: 20px;"
                    required>
 
-            <div style="display: flex; gap: 10px; width: 100%;">
-                <form th:action="@{/visa/{id}/request-info(id=${visa.id})}" method="post" id="form-info" style="flex: 1;">
+            <div class="form-row">
+                <form th:action="@{/visa/{id}/request-info(id=${visa.id})}" method="post" id="form-info">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="reason" id="hidden-info">
-                    <button type="submit" style="width: 100%; transition: 0.2s ease;">
+                    <button type="submit">
                         Request More Info
                     </button>
                 </form>
 
-                <form th:action="@{/visa/{id}/reject(id=${visa.id})}" method="post" id="form-reject" style="flex: 1;">
+                <form th:action="@{/visa/{id}/reject(id=${visa.id})}" method="post" id="form-reject">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="reason" id="hidden-reject">
-                    <button type="submit" style="width: 100%;">
+                    <button type="submit">
                         Reject Visa
                     </button>
                 </form>
@@ -251,7 +277,7 @@
             </div>
         </div>
 
-        <div id="noCommentsMessage" th:if="${#lists.isEmpty(comments)}" style="color: var(--color-text-dimmer); padding: 20px 0;">
+        <div id="noCommentsMessage" th:if="${#lists.isEmpty(comments)}" class="no-comments">
             No comments yet.
         </div>
 
