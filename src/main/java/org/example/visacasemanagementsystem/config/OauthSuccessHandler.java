@@ -3,6 +3,8 @@ package org.example.visacasemanagementsystem.config;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.visacasemanagementsystem.audit.UserEventType;
+import org.example.visacasemanagementsystem.audit.service.UserLogService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
@@ -18,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
@@ -28,14 +32,17 @@ public class OauthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityContextRepository securityContextRepository;
+    private final UserLogService userLogService;
 
-    public OauthSuccessHandler(UserRepository userRepository, PasswordEncoder passwordEncoder, SecurityContextRepository securityContextRepository) {
+    public OauthSuccessHandler(UserRepository userRepository, PasswordEncoder passwordEncoder, SecurityContextRepository securityContextRepository, UserLogService userLogService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.securityContextRepository = securityContextRepository;
+        this.userLogService = userLogService;
     }
 
     @Override
+    @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication)
@@ -57,7 +64,14 @@ public class OauthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
             newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             newUser.setUserAuthorization(UserAuthorization.USER);
             try {
-                return userRepository.saveAndFlush(newUser);
+                User savedUser = userRepository.saveAndFlush(newUser);
+                userLogService.createUserLog(
+                        savedUser.getId(),
+                        savedUser.getId(),
+                        UserEventType.CREATED,
+                        "User account created via OAUTH2."
+                );
+                return savedUser;
             } catch (DataIntegrityViolationException e) {
                 return userRepository.findByEmail(email).orElseThrow();
             }
@@ -72,7 +86,7 @@ public class OauthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
         clearAuthenticationAttributes(request);
 
-        String targetUrl = "/dashboard";
+        String targetUrl = "/home";
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }

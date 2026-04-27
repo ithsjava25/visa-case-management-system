@@ -104,7 +104,7 @@ public class UserService {
                 actorUserId,
                 savedUser.getId(),
                 UserEventType.UPDATED,
-                "User profile updated (fullName/email)."
+                "User profile updated (fullName/password)."
         );
         return userMapper.toDTO(savedUser);
     }
