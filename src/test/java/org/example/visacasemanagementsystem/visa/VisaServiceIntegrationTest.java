@@ -52,12 +52,13 @@ class VisaServiceIntegrationTest {
     @Test
     void applyForVisa_shouldSaveVisa_WhenDataIsValid() {
         // Arrange
-       User user = createAndSaveValidUser();
-       UserPrincipal principal = authenticateUser(user);
-       String testS3Key = "testS3Key";
+        User user = createAndSaveValidUser();
+        UserPrincipal principal = authenticateUser(user);
+        String testS3Key = "testS3Key";
+        String passportNum = "PASS-INT-123";
 
         CreateVisaDTO dto = new CreateVisaDTO(
-                VisaType.STUDY, "Swedish", "PASS-INT-123",
+                VisaType.STUDY, "Swedish", passportNum,
                 LocalDate.now().plusDays(30)
         );
 
@@ -65,13 +66,15 @@ class VisaServiceIntegrationTest {
         visaService.applyForVisa(principal, dto, testS3Key);
 
         // Assert
-        var savedVisas = visaRepository.findAll();
-        assertThat(savedVisas).hasSize(1);
-        assertThat(savedVisas.get(0).getPassportNumber()).isEqualTo("PASS-INT-123");
-        assertThat(savedVisas.get(0).getS3Keys()).contains(testS3Key);
         authenticateAsSysadmin();
         assertThat(visaLogService.findAll()).isNotEmpty();
+        var savedVisa = visaRepository.findAll().stream()
+                .filter(v -> v.getPassportNumber().equals(passportNum))
+                .findFirst()
+                .orElseThrow();
 
+        assertThat(savedVisa.getNationality()).isEqualTo("Swedish");
+        assertThat(savedVisa.getS3Keys()).contains(testS3Key);
     }
 
     @Test

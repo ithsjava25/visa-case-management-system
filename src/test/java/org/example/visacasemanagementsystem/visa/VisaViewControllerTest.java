@@ -2,7 +2,6 @@ package org.example.visacasemanagementsystem.visa;
 
 import org.example.visacasemanagementsystem.comment.dto.CommentDTO;
 import org.example.visacasemanagementsystem.comment.service.CommentService;
-import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.file.FileService;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.entity.User;
@@ -35,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.mock.web.MockMultipartFile;
@@ -291,35 +291,64 @@ class VisaViewControllerTest {
                 .andExpect(model().attributeExists("statusInformation"));
     }
 
-    @Test
-    @WithMockUser
-    void processUpdate_Unauthorized_ShouldReturnForbiddenStatus() throws Exception {
-        // Arrange
-        Long visaId = 100L;
-        Long userId = 1L;
-        createMockUser(userId, UserAuthorization.USER);
-        MockMultipartFile mockFile = new MockMultipartFile("passportFile", "", "application/octet-stream", new byte[0]);
 
-        doThrow(new UnauthorizedException("You are not authorized to update this application."))
-                .when(visaService).updateVisa(eq(visaId), any(UpdateVisaDTO.class), eq(userId), any());
+    @Test
+    void processUpdate_Unauthorized_ShouldReturnForbiddenStatus() throws Exception {
+        // --- 1. Arrange ---
+        Long visaId = 100L;
+        Long loggedInUserId = 1L;
+        Long differentOwnerId = 99L;
+
+        UserDTO userDto = createMockUser(loggedInUserId, UserAuthorization.USER);
+
+        User userEntity = new User();
+        userEntity.setId(userDto.id());
+        userEntity.setEmail(userDto.email());
+        userEntity.setFullName(userDto.fullName());
+        userEntity.setUserAuthorization(UserAuthorization.USER);
+        userEntity.setPassword("password");
+
+        UserPrincipal principal = new UserPrincipal(userEntity);
+
+        VisaDTO otherUsersVisa = new VisaDTO(
+                visaId,
+                VisaType.TOURIST,
+                VisaStatus.SUBMITTED,
+                "Sweden",
+                "ABC12345",
+                LocalDate.now().plusMonths(1),
+                differentOwnerId,
+                "Other Person",
+                null, null,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                null,
+                List.of(),
+                List.of()
+        );
+
+
+        when(visaService.findVisaDtoById(visaId)).thenReturn(otherUsersVisa);
+        MockMultipartFile mockFile = new MockMultipartFile("passportFile", "", "application/octet-stream", new byte[0]);
 
         // Act
         var result = mockMvc.perform(multipart("/visa/{id}/edit", visaId)
-                        .file(mockFile)
-                .param("id", visaId.toString())
-                .param("currentUserId", userId.toString())
+                .file(mockFile)
                 .param("visaType", "TOURIST")
-                .param("visaStatus", "INCOMPLETE")
                 .param("nationality", "Sweden")
                 .param("passportNumber", "ABC12345")
                 .param("travelDate", "2026-12-01")
-                .with(csrf()));
+                .with(csrf())
+                .with(user(principal)));
 
         // Assert
         result.andExpect(status().isForbidden())
                 .andExpect(view().name("error/error"))
                 .andExpect(model().attribute("errorTitle", "⚠️Access Denied."))
                 .andExpect(model().attribute("errorMessage", "You do not have permission to perform this action."));
+
+
+        verify(visaService, times(0)).updateVisa(any(), any(), any(), any());
     }
 
     @Test

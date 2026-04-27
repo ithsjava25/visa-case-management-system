@@ -13,8 +13,6 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,51 +44,33 @@ public class FileService {
 
     @PostConstruct
     public void initializeBucket() {
-
         if (bucketName == null || bucketName.equals("test-bucket")) {
             log.info("Skipping bucket initialization (test profile or missing config)");
             return;
         }
+
         try {
+            // Kontrollera om bucket finns
             try {
                 s3Client.headBucket(HeadBucketRequest.builder().bucket(bucketName).build());
                 log.info("Bucket '{}' already exists", bucketName);
             } catch (S3Exception e) {
+                // Om 404 (finns ej), skapa den
                 if (e.statusCode() == 404) {
                     s3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
                     log.info("Bucket '{}' created successfully", bucketName);
-                } else { throw e; }
+                } else {
+                    throw e;
+                }
             }
+
+            // --- VIKTIGT: TA BORT ELLER KOMMENTERA BORT HELA TRY-BLOCKET FÖR CORS ---
+            // Det är detta block som orsakar 501 Not Implemented i MinIO
+            log.info("Bucket initialization complete. Skipping programmatic CORS config for local MinIO compatibility.");
+
         } catch (Exception e) {
-            log.error("Failed to verify/create bucket '{}': {}", bucketName, e.getMessage(), e);
-            return;
-        }
-
-        try {
-
-            List<String> origins = Arrays.stream(corsAllowedOrigins.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isBlank())
-                    .toList();
-
-            if (origins.isEmpty()) {
-                log.warn("minio.corsAllowedOrigins is empty; skipping CORS configuration for bucket '{}'", bucketName);
-                return;
-            }
-
-            CORSRule corsRule = CORSRule.builder()
-                    .allowedOrigins(origins)
-                    .allowedMethods("GET","HEAD")
-                    .allowedHeaders("*")
-                    .build();
-
-            s3Client.putBucketCors(PutBucketCorsRequest.builder()
-                    .bucket(bucketName)
-                    .corsConfiguration(CORSConfiguration.builder().corsRules(corsRule).build())
-                    .build());
-            log.info("CORS configuration applied to bucket '{}'", bucketName);
-        } catch (S3Exception e) {
-            log.warn("Failed to configure CORS to bucket  '{}': {}", bucketName, e.getMessage(), e);
+            // Logga felet men låt applikationen starta ändå!
+            log.error("Failed to verify/create bucket '{}': {}", bucketName, e.getMessage());
         }
     }
 
