@@ -14,7 +14,6 @@ import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
