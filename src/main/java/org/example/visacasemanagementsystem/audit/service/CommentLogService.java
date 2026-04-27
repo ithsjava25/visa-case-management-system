@@ -5,6 +5,7 @@ import org.example.visacasemanagementsystem.audit.dto.CommentLogDTO;
 import org.example.visacasemanagementsystem.audit.entity.CommentLog;
 import org.example.visacasemanagementsystem.audit.mapper.CommentLogMapper;
 import org.example.visacasemanagementsystem.audit.repository.CommentLogRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class CommentLogService {
 
     }
 
+    @PreAuthorize("isAuthenticated()")
     public List<CommentLogDTO> findAll() {
         return commentLogRepository.findAll()
                 .stream()

@@ -5,6 +5,7 @@ import org.example.visacasemanagementsystem.audit.dto.VisaLogDTO;
 import org.example.visacasemanagementsystem.audit.entity.VisaLog;
 import org.example.visacasemanagementsystem.audit.mapper.VisaLogMapper;
 import org.example.visacasemanagementsystem.audit.repository.VisaLogRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class VisaLogService {
         visaLogRepository.save(visaLog);
     }
 
+    @PreAuthorize("isAuthenticated()")
     public List<VisaLogDTO> findAll() {
         return visaLogRepository.findAll()
                 .stream()

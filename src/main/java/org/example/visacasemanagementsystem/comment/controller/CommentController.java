@@ -7,13 +7,12 @@ import org.example.visacasemanagementsystem.comment.service.CommentService;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@PreAuthorize("isAuthenticated()")
+
 @RestController
 @RequestMapping("/api/comments")
 public class CommentController {

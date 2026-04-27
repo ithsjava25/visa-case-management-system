@@ -9,10 +9,14 @@ import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.entity.User;
 import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -35,6 +39,11 @@ class UserServiceIntegrationTest {
 
     @MockitoBean
     private FileService fileService;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     @DisplayName("Checking if createUser persists and returns the new user when all input is valid")
@@ -65,6 +74,7 @@ class UserServiceIntegrationTest {
     void updateUser_shouldUpdateUserFields_WhenDataIsValid() {
         // Arrange
         User user = createAndSaveValidUser();
+        authenticateUser(user);
         UpdateUserDTO dto = new UpdateUserDTO(user.getId(), "Updated Name", "updated@integration.test");
 
         // Act — actor is the user themselves editing their own profile
@@ -85,6 +95,7 @@ class UserServiceIntegrationTest {
     void updateUserAuthorization_shouldChangeAuthorization_WhenRequestedBySysAdmin() {
         // Arrange
         User sysAdmin = createAndSaveUser("SysAdmin Actor", UserAuthorization.SYSADMIN);
+        authenticateUser(sysAdmin);
         User targetUser = createAndSaveValidUser();
 
         // Act
@@ -105,6 +116,7 @@ class UserServiceIntegrationTest {
     void deleteUser_shouldRemoveUser_WhenRequestedBySysAdmin() {
         // Arrange
         User sysAdmin = createAndSaveUser("SysAdmin Actor", UserAuthorization.SYSADMIN);
+        authenticateUser(sysAdmin);
         User targetUser = createAndSaveValidUser();
         Long targetId = targetUser.getId();
 
@@ -120,7 +132,7 @@ class UserServiceIntegrationTest {
     void findAll_shouldReturnAllUsers() {
         // Arrange
         createAndSaveValidUser();
-        createAndSaveUser("Admin", UserAuthorization.ADMIN);
+        authenticateUser(createAndSaveUser("SysAdmin", UserAuthorization.SYSADMIN));
 
         // Act
         var result = userService.findAll();
@@ -134,6 +146,7 @@ class UserServiceIntegrationTest {
     void findById_shouldReturnUser_WhenUserExists() {
         // Arrange
         User user = createAndSaveValidUser();
+        authenticateUser(user);
 
         // Act
         var result = userService.findById(user.getId());
@@ -148,6 +161,7 @@ class UserServiceIntegrationTest {
     void findByEmail_shouldReturnUser_WhenEmailExists() {
         // Arrange
         User user = createAndSaveValidUser();
+        authenticateUser(user);
 
         // Act
         var result = userService.findByEmail(user.getEmail());
@@ -162,7 +176,7 @@ class UserServiceIntegrationTest {
     void validateProfileAccess_shouldNotThrow_WhenAccessingOwnProfile() {
         // Arrange
         User user = createAndSaveValidUser();
-        UserPrincipal principal = new UserPrincipal(user);
+        UserPrincipal principal = authenticateUser(user);
 
         // Act & Assert — should complete without exception
         userService.validateProfileAccess(principal, user.getId());
@@ -173,8 +187,8 @@ class UserServiceIntegrationTest {
     void validateProfileAccess_shouldNotThrow_WhenSysAdminAccessesOtherProfile() {
         // Arrange
         User sysAdmin = createAndSaveUser("SysAdmin", UserAuthorization.SYSADMIN);
+        UserPrincipal principal = authenticateUser(sysAdmin);
         User otherUser = createAndSaveValidUser();
-        UserPrincipal principal = new UserPrincipal(sysAdmin);
 
         // Act & Assert — should complete without exception
         userService.validateProfileAccess(principal, otherUser.getId());
@@ -185,8 +199,8 @@ class UserServiceIntegrationTest {
     void validateProfileAccess_shouldThrowUnauthorizedException_WhenUserAccessesOtherProfile() {
         // Arrange
         User user = createAndSaveValidUser();
+        UserPrincipal principal = authenticateUser(user);
         User otherUser = createAndSaveUser("Other", UserAuthorization.ADMIN);
-        UserPrincipal principal = new UserPrincipal(user);
 
         // Act & Assert
         Long otherUserId = otherUser.getId();
@@ -204,7 +218,8 @@ class UserServiceIntegrationTest {
         user.setUsername(uniqueEmail);
         user.setPassword("password123");
         user.setUserAuthorization(UserAuthorization.USER);
-        return userRepository.save(user);
+        userRepository.save(user);
+        return user;
     }
 
     private User createAndSaveUser(String name, UserAuthorization auth) {
@@ -215,6 +230,14 @@ class UserServiceIntegrationTest {
         user.setUsername(uniqueEmail);
         user.setPassword("password123");
         user.setUserAuthorization(auth);
-        return userRepository.save(user);
+        userRepository.save(user);
+        return user;
+    }
+
+    private UserPrincipal authenticateUser(User user) {
+        UserPrincipal principal = new UserPrincipal(user);
+        Authentication authentication = new TestingAuthenticationToken(principal, "password123", principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return principal;
     }
 }
