@@ -83,7 +83,7 @@ class VisaServiceTest {
 
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "AB123",
-                LocalDate.now(),
+                LocalDate.now()
         );
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.empty());

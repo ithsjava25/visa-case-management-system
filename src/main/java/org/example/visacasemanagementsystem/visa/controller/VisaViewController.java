@@ -14,6 +14,7 @@ import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.service.VisaService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,7 +27,6 @@ import java.util.List;
 /**
  * All visa-case endpoints.
  */
-@PreAuthorize("isAuthenticated()")
 @Controller
 @RequestMapping("/visa")
 public class VisaViewController {
@@ -44,7 +44,7 @@ public class VisaViewController {
     }
 
     // ─── USER: "My Applications" landing page ─────────────────────────────
-    @PreAuthorize("hasRole('USER')")
+//    @PreAuthorize("hasRole('USER')")
     @GetMapping("/my-applications")
     public String showMyApplications(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
@@ -59,7 +59,7 @@ public class VisaViewController {
     }
 
     // ─── ADMIN + SYSADMIN: "Visa Cases" three-list page ────────────────────
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @GetMapping("/cases")
     public String showCases(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
@@ -80,7 +80,7 @@ public class VisaViewController {
     }
 
     // ─── Apply / edit / details — unchanged semantics, renamed URLs ────────
-    @PreAuthorize("hasRole('USER')")
+//    @PreAuthorize("hasRole('USER')")
     @GetMapping("/apply")
     public String showApplyForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
         UserDTO user = userService.findById(principal.getUserId())
