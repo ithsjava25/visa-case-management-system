@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visa Cases</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .page-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .container > header { margin-bottom: 40px; padding-bottom: 24px; }
+
+        .subtitle   { font-size: 14px; color: var(--color-text-muted); margin-top: 4px; }
+        .case-count { font-size: 14px; color: var(--color-text-muted); }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/header :: nav}"></nav>
+
+<div class="page-content">
+
+    <!-- Page heading -->
+    <div>
+        <h1>Visa Cases</h1>
+        <p class="subtitle">Logged in as <span th:text="${currentUser.fullName}">Admin</span></p>
+    </div>
+
+    <!-- ─── Open Cases ─────────────────────────────────────────────────
+         Status in {ASSIGNED, INCOMPLETE} AND handler = current user.
+    -->
+    <div th:replace="~{fragments/cases :: caseSection(
+            'Open Cases',
+            ${openCases},
+            'No cases currently assigned to you.',
+            '',
+            'Reference')}"></div>
+
+    <!-- ─── Unassigned Cases ───────────────────────────────────────────
+         Status = SUBMITTED AND handler is null.
+    -->
+    <div th:replace="~{fragments/cases :: caseSection(
+            'Unassigned Cases',
+            ${unassignedCases},
+            'All cases are assigned — nothing in the queue.',
+            ' waiting',
+            'Visa ID')}"></div>
+
+    <!-- ─── Handled Cases ──────────────────────────────────────────────
+         Status in {GRANTED, REJECTED} AND handler = current user.
+    -->
+    <div th:replace="~{fragments/cases :: caseSection(
+            'Handled Cases',
+            ${handledCases},
+            'You have not yet handled any cases.',
+            ' handled',
+            'Reference')}"></div>
+
+</div>
+
+</body>
+</html>

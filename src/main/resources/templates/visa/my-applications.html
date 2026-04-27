@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Applications</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .container { max-width: 1000px; margin: 0 auto; }
+        .container > header { margin-bottom: 40px; padding-bottom: 24px; }
+
+        .user-info      { font-size: 14px; color: var(--color-text-muted); }
+        .header-actions { display: flex; gap: 12px; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/header :: nav}"></nav>
+
+<div class="page-content">
+<div class="container">
+    <header>
+        <div>
+            <h1>My Applications</h1>
+            <span class="user-info">Logged in as: <span th:text="${currentUser.fullName()}">User</span></span>
+        </div>
+        <div class="header-actions">
+            <a th:href="@{/visa/apply}" class="btn-new">+ New Application</a>
+        </div>
+    </header>
+
+    <main>
+        <table th:if="${not #lists.isEmpty(visas)}">
+            <thead>
+            <tr>
+                <th>Visa ID</th>
+                <th>Visa Type</th>
+                <th>Status</th>
+                <th>Travel Date</th>
+                <th>Last updated</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="visa : ${visas}">
+                <td th:text="'# ' + ${visa.id()}">#101</td>
+                <td th:text="${visa.visaType()}">STUDENT</td>
+                <td>
+                    <span class="status"
+                          th:classappend="${'status-' + #strings.toLowerCase(visa.visaStatus())}"
+                          th:text="${visa.visaStatus()}">
+                        SUBMITTED
+                    </span>
+                </td>
+                <td th:text="${#temporals.format(visa.travelDate(), 'yyyy-MM-dd')}">2026-05-20</td>
+                <td th:text="${#temporals.format(visa.updatedAt(), 'yyyy-MM-dd HH:mm')}">-</td>
+                <td style="text-align: left;">
+                    <a th:href="@{/visa/{id}(id=${visa.id()})}" class="view-link">
+                        Details &rarr;
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${#lists.isEmpty(visas)}" class="empty-state">
+            You have no applications yet.
+        </div>
+    </main>
+</div>
+</div>
+
+</body>
+</html>

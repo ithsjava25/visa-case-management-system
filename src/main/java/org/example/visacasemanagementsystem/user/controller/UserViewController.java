@@ -1,8 +1,9 @@
 package org.example.visacasemanagementsystem.user.controller;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.visacasemanagementsystem.audit.service.UserLogService;
-import org.example.visacasemanagementsystem.audit.service.VisaLogService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.example.visacasemanagementsystem.exception.UnauthorizedException;
 import org.example.visacasemanagementsystem.user.UserAuthorization;
 import org.example.visacasemanagementsystem.user.dto.CreateUserDTO;
@@ -10,13 +11,14 @@ import org.example.visacasemanagementsystem.user.dto.UpdateUserDTO;
 import org.example.visacasemanagementsystem.user.dto.UserDTO;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.user.service.UserService;
-import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
-import org.example.visacasemanagementsystem.visa.service.VisaService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,26 +32,23 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * User-facing controller: signup, login, profile view/edit, and the sysadmin user list.
+ */
 @Controller
 public class UserViewController {
-    private final VisaService visaService;
     private final UserService userService;
-    private final VisaLogService visaLogService;
-    private final UserLogService userLogService;
 
-    public UserViewController(VisaService visaService,
-                              UserService userService,
-                              VisaLogService visaLogService,
-                              UserLogService userLogService) {
-        this.visaService = visaService;
+    public UserViewController(UserService userService) {
         this.userService = userService;
-        this.visaLogService = visaLogService;
-        this.userLogService = userLogService;
     }
 
     // Signup form for new users, accessible to all
     @GetMapping("/user/signup")
-    public String userSignupForm(Model model) {
+    public String userSignupForm(@AuthenticationPrincipal UserPrincipal principal, Model model) {
+        if (principal != null) {
+            return "redirect:/home";
+        }
         return "user/signup";
     }
 
@@ -75,7 +74,10 @@ public class UserViewController {
 
     // Login page
     @GetMapping("/user/login")
-    public String userLoginForm(){
+    public String userLoginForm(@AuthenticationPrincipal UserPrincipal principal) {
+        if (principal != null) {
+            return "redirect:/home";
+        }
         return "user/login";
     }
 
@@ -89,8 +91,21 @@ public class UserViewController {
                 .body(resource);
     }
 
-    // Uneditable profile view from where the user themselves or a sysadmin can access the profile edit view through a
-    // button only available to them
+    // Sign-out endpoint.
+    @PostMapping("/user/logout")
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        new SecurityContextLogoutHandler().logout(request, response, auth);
+
+        // Invalidate the HTTP session
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        return "redirect:/user/login?logout";
+    }
+
+    // Uneditable profile view
     @GetMapping("/profile/view/{userId}")
     public String viewProfile(@AuthenticationPrincipal UserPrincipal principal,
                               @PathVariable Long userId,
@@ -171,15 +186,6 @@ public class UserViewController {
         }
     }
 
-    // Adds the two model attributes the role dropdown on profile/edit needs
-    private void addAuthorizationFormAttributes(Model model, UserPrincipal principal, Long userId) {
-        boolean isOwnProfile = principal.getUserId().equals(userId);
-        boolean isSysAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
-        model.addAttribute("canChangeAuthorization", isSysAdmin && !isOwnProfile);
-        model.addAttribute("authorizations", UserAuthorization.values());
-    }
-
     // A list view of users only available to sysadmins
     @GetMapping("/user/list")
     public String userListView(@AuthenticationPrincipal UserPrincipal principal,
@@ -190,34 +196,12 @@ public class UserViewController {
         return "user/list";
     }
 
-    @GetMapping("/dashboard/applicant")
-    public String applicantDashboard(@AuthenticationPrincipal UserPrincipal principal,
-                                     Model model) {
-        List<VisaDTO> visas = visaService.findVisasByApplicantId(principal.getUserId());
-        model.addAttribute("name", principal.getFullName());
-        model.addAttribute("visas", visas);
-        return "dashboard/applicant";
-    }
-
-    @GetMapping("/dashboard/admin")
-    public String adminDashboard(@AuthenticationPrincipal UserPrincipal principal,
-                                 Model model) {
-        List<VisaDTO> assignedCases = visaService.findVisasByHandlerId(principal.getUserId());
-        List<VisaDTO> unassignedCases = visaService.findVisaByStatus("SUBMITTED");
-        model.addAttribute("name", principal.getFullName());
-        model.addAttribute("assignedCases", assignedCases);
-        model.addAttribute("unassignedCases", unassignedCases);
-        return "dashboard/admin";
-    }
-
-    @GetMapping("/dashboard/sysadmin")
-    public String sysAdminDashboard(@AuthenticationPrincipal UserPrincipal principal,
-                                    Model model) {
-        List<UserDTO> allUsers = userService.findAll();
-        model.addAttribute("name", principal.getFullName());
-        model.addAttribute("users", allUsers);
-        model.addAttribute("visaLogs", visaLogService.findAll());
-        model.addAttribute("userLogs", userLogService.findAll());
-        return "dashboard/sysadmin";
+    // Adds the two model attributes the role dropdown on profile/edit needs
+    private void addAuthorizationFormAttributes(Model model, UserPrincipal principal, Long userId) {
+        boolean isOwnProfile = principal.getUserId().equals(userId);
+        boolean isSysAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
+        model.addAttribute("canChangeAuthorization", isSysAdmin && !isOwnProfile);
+        model.addAttribute("authorizations", UserAuthorization.values());
     }
 }

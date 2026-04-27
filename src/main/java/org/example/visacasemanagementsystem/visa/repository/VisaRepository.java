@@ -30,4 +30,10 @@ public interface VisaRepository extends JpaRepository<Visa,Long> {
 
     List<Visa> findVisasByHandlerId(Long handlerId, Sort sort);
 
+    // Used by /visa/cases "Open Cases" list (ASSIGNED + INCOMPLETE held by me).
+    List<Visa> findByHandler_IdAndVisaStatusIn(Long handlerId, List<VisaStatus> statuses, Sort sort);
+
+    // Used by /visa/cases "Unassigned Cases" list (SUBMITTED without a handler).
+    List<Visa> findByVisaStatusAndHandlerIsNull(VisaStatus visaStatus, Sort sort);
+
 }

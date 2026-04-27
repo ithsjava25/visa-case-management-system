@@ -3,148 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>New Visa Application</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #f0f0f0;
-            line-height: 1.6;
-            background: #000;
-            margin: 0;
-            padding: 40px;
-        }
+        /* Narrow form column. */
+        .container { max-width: 500px; margin: 0 auto; }
 
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: #111;
-            padding: 32px;
-            border-radius: 12px;
-            border: 1px solid #222;
-        }
-
-        header {
-            border-bottom: 1px solid #222;
+        .container > header {
+            display: block;
+            text-align: left;
             margin-bottom: 30px;
             padding-bottom: 10px;
         }
-
-        h1 { font-size: 24px; font-weight: 500; color: #fff; margin: 0; }
-        header p { color: #666; font-size: 14px; margin-top: 5px; }
-
-        /* Form Elements */
-        .form-group { margin-bottom: 20px; }
-
-        label {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #666;
-            letter-spacing: 0.5px;
-        }
-
-        select, input, textarea {
-            width: 100%;
-            padding: 12px;
-            background: #181818;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #ccc;
-            font-size: 15px;
-            box-sizing: border-box;
-            transition: all 0.2s ease;
-            -webkit-appearance: none;
-            resize: none;
-        }
-
-
-        select:focus, input:focus, textarea:focus {
-            outline: none;
-            border-color: #666;
-            background: #1a1a1a;
-            color: #fff;
-        }
-
-        ::placeholder { color: #444; }
-
-        .btn-submit {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: 600;
-            transition: 0.2s;
-            margin-top: 10px;
-        }
-        .btn-submit:hover { background: #ccc; transform: translateY(-1px); }
-
-        .cancel-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            text-decoration: none;
-            font-size: 14px;
-            transition: 0.2s;
-        }
-        .cancel-link:hover { color: #fff; }
-
-        .is-invalid {
-            border-color: #ff4d4d !important;
-        }
-
-        .error-text {
-            color: #ff4d4d;
-            font-size: 0.75rem;
-            margin-top: 8px;
-            display: block;
-        }
-
-        /* Styling for new Choose file-button */
-        input[type="file"] {
-            width: 105px !important;
-            height: 32px;
-            color: transparent;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        input[type="file"]::-webkit-file-upload-button {
-            display: none;
-        }
-
-        input[type="file"]::before {
-            content: 'Choose File';
-            display: inline-block;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 5px 12px;
-            color: #ccc;
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-
+        .container > header p { color: var(--color-text-dim); font-size: 14px; margin-top: 5px; }
     </style>
 </head>
 <body>
 
+<nav th:replace="~{fragments/header :: nav}"></nav>
+
+<div class="page-content">
 <div class="container">
     <header>
         <h1>New Application</h1>
         <p>Logged in as <span th:text="${currentUser.fullName}">User</span></p>
     </header>
 
-    <form th:action="@{/visas/apply}" th:object="${createVisaDTO}" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="applicantId" th:value="${createVisaDTO.applicantId}" />
+    <form th:action="@{/visa/apply}" th:object="${createVisaDTO}" method="post" enctype="multipart/form-data">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-        <div th:if="${#fields.hasErrors('global')}"
-             style="background: #3a1111; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
+        <div th:if="${#fields.hasErrors('global')}" class="alert-error">
             <p style="margin: 0;" th:each="err : ${#fields.errors('global')}" th:text="${err}"></p>
         </div>
 
@@ -192,24 +80,27 @@
 
         <div class="form-group">
             <label>Add Passport Document</label>
-            <div style="position: relative; border: 1px dashed #333; background: #111; border-radius: 6px; padding: 12px; display: flex; align-items: center; gap: 15px;">
+            <div style="position: relative; border: 1px dashed var(--color-border-strong); background: var(--color-surface); border-radius: var(--radius-sm); padding: 12px; display: flex; align-items: center; gap: 15px;">
 
                 <input type="file" name="passportFile" id="passportFile" accept="image/*,.pdf"
                        style="border: none; background: transparent; padding: 0; width: auto; margin: 0;">
 
-                <span id="file-name" style="color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                <span id="file-name" style="color: var(--color-text-primary); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
             </div>
 
-            <p style="color: #666; font-size: 11px; margin-top: 5px;">
+            <p style="color: var(--color-text-dim); font-size: 11px; margin-top: 5px;">
                 Supported Formats: PDF, JPG or PNG. (Max 10MB).
             </p>
         </div>
 
         <button type="submit" class="btn-submit">Submit Application</button>
 
-        <a th:href="@{/visas/dashboard}" class="cancel-link">Cancel</a>
+        <!-- Apply is USER-only, so Cancel always returns to the applicant's
+             own list. No role-aware back link needed. -->
+        <a th:href="@{/visa/my-applications}" class="cancel-link">Cancel</a>
     </form>
 
+</div>
 </div>
 
 <script>

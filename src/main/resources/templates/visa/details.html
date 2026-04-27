@@ -3,131 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <title>Visa Case Details</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <style>
-        /* Modern Dark Case Details CSS */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #f0f0f0;
-            line-height: 1.6;
-            background: #000;
-            margin: 0;
-            padding: 40px;
+        /* Details is a layout-wrapper page: the .info-item tiles are the
+           visible cards, not the outer wrapper, so no .container surface. */
+        .page-layout { max-width: 800px; margin: 0 auto; }
+
+        .page-header {
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
         }
+        .page-header h1 { font-size: 38px; font-weight: 500; margin: 0; color: var(--color-text-primary); }
+        .page-header .user-info { color: var(--color-text-dim); font-size: 14px; margin-top: 5px; }
 
-        .container { max-width: 800px; margin: 0 auto; }
-
-        /* Navigation back */
-        .back-link {
-            text-decoration: none;
-            color: #888;
-            font-size: 14px;
-            margin-bottom: 20px;
-            display: block;
-            transition: 0.2s;
-        }
-        .back-link:hover { color: #fff; }
-
-        header { border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px;}
-        h1 { font-size: 38px; font-weight: 500; margin: 0; color: #fff; }
-        .user-info { color: #666; font-size: 14px; margin-top: 5px; }
-
-        /* Grid för info */
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
-        .info-item {
-            border: 1px solid #222;
-            padding: 15px;
-            border-radius: 8px;
-            background: #111;
-        }
-        .label { font-size: 12px; text-transform: uppercase; color: #666; display: block; margin-bottom: 5px; letter-spacing: 0.5px; }
-        .value { font-size: 18px; font-weight: 500; color: #ccc; }
-
-        /* Admin Actions & Buttons */
+        /* Admin action panel */
         .admin-actions {
-            background: #111;
+            background: var(--color-surface);
             padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #222;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
             margin-bottom: 40px;
         }
-        .btn-assign, .btn-approve, button[type="submit"] {
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #333;
+
+        /* Case-management buttons — secondary dark chips local to this page. */
+        .btn-assign, .btn-approve,
+        .admin-actions button[type="submit"] {
+            background: var(--color-surface-raised);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border-strong);
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: 0.2s;
             font-weight: 600;
             font-size: 12px;
-
         }
-        .btn-assign:hover, .btn-approve:hover, button:hover {
-            background: #fff;
-            color: #000;
-            border-color: #fff;
+        .btn-assign:hover, .btn-approve:hover,
+        .admin-actions button[type="submit"]:hover {
+            background: var(--color-accent);
+            color: var(--color-accent-on);
+            border-color: var(--color-accent);
         }
 
-        /* Input i decision form */
         #infoReason {
-            background: #181818;
-            color: #fff;
-            border: 1px solid #333 !important;
             width: 100%;
             box-sizing: border-box;
             display: block;
-            border-radius: 8px;
             font-size: 12px;
+            border-radius: var(--radius-md);
         }
-        #infoReason:focus { outline: none; border-color: #666 !important; }
+        #infoReason:focus { border-color: var(--color-border-focus) !important; }
 
-        .action-group{ display: flex; gap: 10px; }
+        .action-group { display: flex; gap: 10px; }
 
-        /* Kommentar-sektion */
-        .comments-section { border-top: 1px solid #222; padding-top: 10px; font-size: 20px; font-weight: 600; }
-        .comment-card { padding: 15px 0; border-bottom: 1px solid #111; }
-        .comment-meta { font-size: 12px; color: #666; margin-bottom: 5px; }
-        .comment-text { font-size: 14px; color: #ccc; }
+        /* Comment section (kept inline — specific to this page). */
+        .comments-section { border-top: 1px solid var(--color-border); padding-top: 10px; font-size: 20px; font-weight: 600; }
+        .comment-card { padding: 15px 0; border-bottom: 1px solid var(--color-surface); }
+        .comment-meta { font-size: 12px; color: var(--color-text-dim); margin-bottom: 5px; }
+        .comment-text { font-size: 14px; color: var(--color-text-secondary); }
 
-        /* Kommentar formulär */
         .comment-form {
             margin-top: 30px;
-            background: #111;
+            background: var(--color-surface);
             padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #222;
-
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
         }
-        textarea {
-            width: 100%;
-            background: #181818;
-            color: #fff;
-            border: 1px solid #333;
-            padding: 10px;
-            border-radius: 8px;
+        .comment-form textarea {
             resize: vertical;
             min-height: 80px;
             margin-bottom: 10px;
-            box-sizing: border-box;
             font-size: 12px;
         }
-        textarea:focus { outline: none; border-color: #666; }
-        .btn-submit { background: #fff; color: #000; font-weight: 600; border: none; transition: 0.2s ease; }
-        .btn-submit:hover { background: #ccc; }
+
+        /* "Action required" warning callout for applicants. */
+        .action-required {
+            margin-bottom: 40px;
+            padding: 24px;
+            background: var(--color-warning-bg);
+            border: 1px solid var(--color-warning-border);
+            border-radius: var(--radius-lg);
+            border-left: 4px solid var(--color-warning-accent);
+        }
+        .action-required h3 { margin-top: 0; color: var(--color-warning-accent); font-size: 18px; }
+        .action-required p  { color: var(--color-text-secondary); margin-bottom: 20px; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-
     </style>
 </head>
 <body>
 
-<div class="container">
-    <a th:href="@{/visas/dashboard}" class="back-link">← Back to Dashboard</a>
+<nav th:replace="~{fragments/header :: nav}"></nav>
 
-    <header>
+<div class="page-content">
+<div class="page-layout">
+    <a th:href="@{${backUrl != null ? backUrl : '/home'}}" class="back-link">← Back</a>
+
+    <header class="page-header">
         <h1 th:text="'Case #' + ${visa.id}">Case #101</h1>
         <p class="user-info" th:if="${currentUser.userAuthorization.name() != 'USER'}">
             Handled by: <span th:text="${visa.handlerName != 'Unassigned' ? visa.handlerName : 'Waiting for assignment'}"></span>
@@ -175,12 +152,12 @@
             <span class="value" th:text="${#temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm')}">2023-10-28 09:30</span>
         </div>
 
-        <div class="info-item" style="grid-column: span 2;" th:if="${visa.statusInformation != null}">
+        <div class="info-item full-width" th:if="${visa.statusInformation != null}">
             <span class="label">Important Information / Notes</span>
             <span class="value" th:text="${visa.statusInformation}">-</span>
         </div>
 
-        <div class="info-item" style="grid-column: span 2;">
+        <div class="info-item full-width">
             <span class="label">Attached Documents</span>
 
             <div th:if="${not #lists.isEmpty(visa.downloadUrls)}" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
@@ -193,7 +170,7 @@
                 </div>
             </div>
 
-            <div th:if="${#lists.isEmpty(visa.downloadUrls)}" style="margin-top: 10px; color: #ff4d4d; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <div th:if="${#lists.isEmpty(visa.downloadUrls)}" style="margin-top: 10px; color: var(--color-danger); font-size: 14px; display: flex; align-items: center; gap: 8px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 No documents attached. This may delay processing.
             </div>
@@ -201,47 +178,47 @@
 
     </div>
 
-    <div th:if="${(visa.visaStatus.name() == 'INCOMPLETE' or visa.visaStatus.name() == 'SUBMITTED') and visa.applicantId == currentUser.id and visa.handlerName == 'Unassigned'}"
-         style="margin-bottom: 40px; padding: 24px; background: #1a1500; border: 1px solid #332200; border-radius: 12px; border-left: 4px solid #ffcc00;">
+    <div th:if="${(visa.visaStatus.name() == 'INCOMPLETE' or visa.visaStatus.name() == 'SUBMITTED') and visa.applicantId == currentUser.id and visa.handlerId == null}"
+         class="action-required">
 
-        <h3 style="margin-top:0; color: #ffcc00; font-size: 18px;">Action Required</h3>
-        <p style="color: #ccc; margin-bottom: 20px;">
+        <h3>Action Required</h3>
+        <p>
             The handler has marked your application as <strong>incomplete</strong>.
             Please review the notes above and update your application with the requested information.
         </p>
 
-        <a th:href="@{/visas/{id}/edit(id=${visa.id})}"
+        <a th:href="@{/visa/{id}/edit(id=${visa.id})}"
            class="btn-submit"
-           style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto; border-radius: 8px;">
+           style="text-decoration: none; display: inline-block; padding: 12px 24px; width: auto; border-radius: var(--radius-md);">
             Edit Application
         </a>
     </div>
 
     <div th:if="${currentUser.userAuthorization.name() != 'USER' and visa.visaStatus.name() != 'GRANTED' and visa.visaStatus.name() != 'REJECTED'}" class="admin-actions">
-        <h3 style="  margin-top:0; font-size: 20px;">Case Management</h3>
+        <h3 style="margin-top: 0; font-size: 20px;">Case Management</h3>
 
         <div class="action-group">
-            <form th:if="${visa.handlerName == 'Unassigned'}"
-                  th:action="@{/visas/{id}/assign(id=${visa.id})}" method="post">
+            <form th:if="${visa.handlerId == null}"
+                  th:action="@{/visa/{id}/assign(id=${visa.id})}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="btn-assign">Assign to Me</button>
             </form>
 
-            <form th:action="@{/visas/{id}/approve(id=${visa.id})}" method="post">
+            <form th:action="@{/visa/{id}/approve(id=${visa.id})}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="btn-approve">Approve Visa</button>
             </form>
         </div>
 
 
-        <div class="decision-form" style="margin-top: 20px; border-top: 1px solid #222; padding-top: 20px;">
+        <div class="decision-form" style="margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 20px;">
             <input type="text" id="infoReason"
                    placeholder="Write reason for rejection or what information is missing..."
-                   style="width: 100%; padding: 15px; margin-bottom: 20px; border: 1px solid #333; border-radius: 8px; box-sizing: border-box;"
+                   style="padding: 15px; margin-bottom: 20px;"
                    required>
 
             <div style="display: flex; gap: 10px; width: 100%;">
-                <form th:action="@{/visas/{id}/request-info(id=${visa.id})}" method="post" id="form-info" style="flex: 1;">
+                <form th:action="@{/visa/{id}/request-info(id=${visa.id})}" method="post" id="form-info" style="flex: 1;">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="reason" id="hidden-info">
                     <button type="submit" style="width: 100%; transition: 0.2s ease;">
@@ -249,7 +226,7 @@
                     </button>
                 </form>
 
-                <form th:action="@{/visas/{id}/reject(id=${visa.id})}" method="post" id="form-reject" style="flex: 1;">
+                <form th:action="@{/visa/{id}/reject(id=${visa.id})}" method="post" id="form-reject" style="flex: 1;">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="reason" id="hidden-reject">
                     <button type="submit" style="width: 100%;">
@@ -274,7 +251,7 @@
             </div>
         </div>
 
-        <div id="noCommentsMessage" th:if="${#lists.isEmpty(comments)}" style="color: #999; padding: 20px 0;">
+        <div id="noCommentsMessage" th:if="${#lists.isEmpty(comments)}" style="color: var(--color-text-dimmer); padding: 20px 0;">
             No comments yet.
         </div>
 
@@ -292,6 +269,7 @@
         </div>
     </section>
 </div>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -303,7 +281,7 @@
 
             if (!reasonValue) {
                 e.preventDefault();
-                reasonInput.style.borderColor = '#ff4d4d';
+                reasonInput.style.borderColor = 'var(--color-danger)';
                 alert('Please provide a reason or note for this decision.');
                 return;
             }

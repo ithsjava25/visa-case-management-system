@@ -10,6 +10,7 @@ import org.example.visacasemanagementsystem.user.repository.UserRepository;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.example.visacasemanagementsystem.visa.dto.CreateVisaDTO;
 import org.example.visacasemanagementsystem.visa.dto.UpdateVisaDTO;
+import org.example.visacasemanagementsystem.visa.dto.VisaDTO;
 import org.example.visacasemanagementsystem.visa.entity.Visa;
 import org.example.visacasemanagementsystem.visa.mapper.VisaMapper;
 import org.example.visacasemanagementsystem.visa.repository.VisaRepository;
@@ -20,11 +21,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -58,8 +61,7 @@ class VisaServiceTest {
         UserPrincipal principal = authenticateUser(user);
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "AB123",
-                LocalDate.now().minusDays(1),
-                userId
+                LocalDate.now().minusDays(1)
         );
 
         // Act & Assert
@@ -81,8 +83,7 @@ class VisaServiceTest {
 
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "AB123",
-                LocalDate.now(),
-                user.getId()
+                LocalDate.now()
         );
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
@@ -316,6 +317,145 @@ class VisaServiceTest {
                 .hasMessage("User not found.");
 
         verifyNoInteractions(visaRepository);
+    }
+
+    // --- Helpers ---
+
+    private static VisaDTO visaDtoWithId(Long id) {
+        return new VisaDTO(id, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
+    }
+
+    // --- Tests for the /visa/cases landing-page queries ---
+
+    @Test
+    void findOpenCasesByHandler_shouldMapEntitiesToDTOs_andQueryAssignedAndIncomplete() {
+        // Arrange
+        Long handlerId = 5L;
+        List<VisaStatus> expectedStatuses = List.of(VisaStatus.ASSIGNED, VisaStatus.INCOMPLETE);
+        Sort expectedSort = Sort.by("updatedAt").descending();
+
+        Visa v1 = new Visa();
+        v1.setId(1L);
+        Visa v2 = new Visa();
+        v2.setId(2L);
+        VisaDTO d1 = visaDtoWithId(1L);
+        VisaDTO d2 = visaDtoWithId(2L);
+
+        when(visaRepository.findByHandler_IdAndVisaStatusIn(
+                eq(handlerId), eq(expectedStatuses), eq(expectedSort)))
+                .thenReturn(List.of(v1, v2));
+        when(visaMapper.toDTO(v1)).thenReturn(d1);
+        when(visaMapper.toDTO(v2)).thenReturn(d2);
+
+        // Act
+        List<VisaDTO> result = visaService.findOpenCasesByHandler(handlerId);
+
+        // Assert
+        assertThat(result).containsExactly(d1, d2);
+        verify(visaRepository).findByHandler_IdAndVisaStatusIn(
+                handlerId, expectedStatuses, expectedSort);
+        verifyNoMoreInteractions(visaRepository);
+    }
+
+    @Test
+    void findOpenCasesByHandler_shouldReturnEmptyList_whenHandlerHasNoOpenCases() {
+        // Arrange
+        Long handlerId = 5L;
+        when(visaRepository.findByHandler_IdAndVisaStatusIn(
+                anyLong(), anyList(), any(Sort.class)))
+                .thenReturn(List.of());
+
+        // Act
+        List<VisaDTO> result = visaService.findOpenCasesByHandler(handlerId);
+
+        // Assert
+        assertThat(result).isEmpty();
+        verifyNoInteractions(visaMapper);
+    }
+
+    @Test
+    void findUnassignedCases_shouldMapEntitiesToDTOs_andQuerySubmittedWithNullHandler() {
+        // Arrange
+        Sort expectedSort = Sort.by("updatedAt").descending();
+
+        Visa v1 = new Visa();
+        VisaDTO d1 = visaDtoWithId(10L);
+
+        when(visaRepository.findByVisaStatusAndHandlerIsNull(
+                eq(VisaStatus.SUBMITTED), eq(expectedSort)))
+                .thenReturn(List.of(v1));
+        when(visaMapper.toDTO(v1)).thenReturn(d1);
+
+        // Act
+        List<VisaDTO> result = visaService.findUnassignedCases();
+
+        // Assert
+        assertThat(result).containsExactly(d1);
+        verify(visaRepository).findByVisaStatusAndHandlerIsNull(
+                VisaStatus.SUBMITTED, expectedSort);
+        verifyNoMoreInteractions(visaRepository);
+    }
+
+    @Test
+    void findUnassignedCases_shouldReturnEmptyList_whenNoSubmittedCasesExist() {
+        // Arrange
+        when(visaRepository.findByVisaStatusAndHandlerIsNull(
+                any(VisaStatus.class), any(Sort.class)))
+                .thenReturn(List.of());
+
+        // Act
+        List<VisaDTO> result = visaService.findUnassignedCases();
+
+        // Assert
+        assertThat(result).isEmpty();
+        verifyNoInteractions(visaMapper);
+    }
+
+    @Test
+    void findHandledCasesByHandler_shouldMapEntitiesToDTOs_andQueryGrantedAndRejected() {
+        // Arrange
+        Long handlerId = 7L;
+        List<VisaStatus> expectedStatuses = List.of(VisaStatus.GRANTED, VisaStatus.REJECTED);
+        Sort expectedSort = Sort.by("updatedAt").descending();
+
+        Visa granted = new Visa();
+        granted.setId(100L);
+        Visa rejected = new Visa();
+        rejected.setId(101L);
+        VisaDTO grantedDto = visaDtoWithId(100L);
+        VisaDTO rejectedDto = visaDtoWithId(101L);
+
+        when(visaRepository.findByHandler_IdAndVisaStatusIn(
+                eq(handlerId), eq(expectedStatuses), eq(expectedSort)))
+                .thenReturn(List.of(granted, rejected));
+        when(visaMapper.toDTO(granted)).thenReturn(grantedDto);
+        when(visaMapper.toDTO(rejected)).thenReturn(rejectedDto);
+
+        // Act
+        List<VisaDTO> result = visaService.findHandledCasesByHandler(handlerId);
+
+        // Assert
+        assertThat(result).containsExactly(grantedDto, rejectedDto);
+        verify(visaRepository).findByHandler_IdAndVisaStatusIn(
+                handlerId, expectedStatuses, expectedSort);
+        verifyNoMoreInteractions(visaRepository);
+    }
+
+    @Test
+    void findHandledCasesByHandler_shouldReturnEmptyList_whenHandlerHasClosedNothing() {
+        // Arrange
+        Long handlerId = 7L;
+        when(visaRepository.findByHandler_IdAndVisaStatusIn(
+                anyLong(), anyList(), any(Sort.class)))
+                .thenReturn(List.of());
+
+        // Act
+        List<VisaDTO> result = visaService.findHandledCasesByHandler(handlerId);
+
+        // Assert
+        assertThat(result).isEmpty();
+        verifyNoInteractions(visaMapper);
     }
 
     private User createAndSaveValidUser(Long userId, UserAuthorization auth) {

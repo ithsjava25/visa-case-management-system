@@ -1,0 +1,519 @@
+/* --------------------------------------------------------------------------
+ * components.css
+ * Reusable component classes built on top of tokens.css.
+ *
+ * Keep this file focused on patterns that appear in two or more templates.
+ * Page-unique styling stays inline in the template that needs it.
+ *
+ * Class names are preserved from the original inline styles so no template
+ * needs to be re-tagged: .container, .btn-submit, .status-badge, etc.
+ * -------------------------------------------------------------------------- */
+
+/* ==========================================================================
+ * Base
+ * ========================================================================== */
+body {
+    font-family: var(--font-system);
+    color: var(--color-text-body);
+    line-height: 1.6;
+    background: var(--color-bg);
+    margin: 0;
+    padding: 0;
+}
+
+::placeholder { color: var(--color-placeholder); }
+
+h1 { font-size: 24px; font-weight: 500; color: var(--color-text-primary); margin: 0; }
+h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin: 0; }
+
+/* ==========================================================================
+ * Site navigation (was fragments/header.html :: nav-style)
+ * The fragment itself still renders the <nav>; its styling lives here so
+ * every page automatically gets it just by linking components.css.
+ * ========================================================================== */
+.site-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 32px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.site-nav .brand {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+}
+
+.site-nav .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.site-nav .nav-links a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+.site-nav .nav-links a:hover  { color: var(--color-text-primary); }
+.site-nav .nav-links a.active { color: var(--color-text-primary); font-weight: 500; }
+
+.site-nav .nav-user {
+    font-size: 13px;
+    color: var(--color-text-dimmer);
+    padding-left: 24px;
+    border-left: 1px solid var(--color-border);
+}
+
+/* Logout is a POST form but must look like the old Sign Out link. */
+.site-nav .logout-form { margin: 0; padding: 0; }
+
+.site-nav .btn-signout {
+    color: var(--color-text-dim);
+    background: transparent;
+    text-decoration: none;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 6px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.site-nav .btn-signout:hover {
+    color: var(--color-text-secondary);
+    background: var(--color-surface-raised);
+    border-color: var(--color-border-strong);
+}
+
+/* ==========================================================================
+ * Page layout
+ * .page-content is the outer body wrapper on every authenticated page;
+ * it gives breathing room beneath the <nav>.
+ * ========================================================================== */
+.page-content { padding: 40px; }
+
+/* ==========================================================================
+ * Card surface
+ * Templates set their own max-width inline when they need it centered.
+ * ========================================================================== */
+.container {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-card);
+}
+
+/* Shared card header pattern (underlined bar at the top of a card). */
+.container > header,
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+/* ==========================================================================
+ * Form controls
+ * ========================================================================== */
+.form-group { margin-bottom: 20px; }
+
+label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--color-text-dim);
+    letter-spacing: 0.5px;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    resize: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    background: var(--color-input-bg-focus);
+    color: var(--color-text-primary);
+}
+
+input:disabled {
+    /* 0.6 keeps disabled fields readable against --color-input-bg while still
+       signalling "disabled" — 0.4 was below WCAG AA contrast for normal text. */
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.is-invalid { border-color: var(--color-danger) !important; }
+
+.error-text {
+    color: var(--color-danger);
+    font-size: 0.75rem;
+    margin-top: 8px;
+    display: block;
+}
+
+/* File input — replace the native "Choose File" button with a styled one */
+input[type="file"] {
+    width: 100%;           /* was 105px !important — let it fill the form column */
+    height: auto;
+    color: var(--color-text-secondary);   /* was transparent — show the filename */
+    cursor: pointer;
+    /* overflow: hidden removed */
+}
+/*
+ * Style the native file-select button via the standard ::file-selector-button
+ * pseudo-element (Firefox/Safari/Chromium ≥ 89). The ::-webkit-file-upload-button
+ * rule below is kept as a fallback for older WebKit/Chromium builds. The
+ * previous use of input[type="file"]::before was nonstandard and didn't render
+ * in Firefox or Safari.
+ */
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+    background: var(--color-border);
+    border: 1px solid var(--color-placeholder);
+    border-radius: 4px;
+    padding: 5px 12px;
+    margin-right: 8px;          /* gap between the button and the filename text */
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+ * Buttons
+ * ========================================================================== */
+
+/* Primary — white pill used for "Submit", "Save", etc. */
+.btn-submit {
+    background: var(--color-accent);
+    color: var(--color-accent-on);
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    width: 100%;
+    font-weight: 600;
+    transition: 0.2s;
+    margin-top: 10px;
+    font-size: 15px;
+}
+.btn-submit:hover { background: var(--color-accent-hover); transform: translateY(-1px); }
+
+/* Secondary — dark chip used for "Edit Profile", "+ New Application". */
+.btn-edit,
+.btn-new {
+    text-decoration: none;
+    color: var(--color-text-primary);
+    background: var(--color-border);
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    border: 1px solid var(--color-border-strong);
+    display: inline-block;
+}
+.btn-edit:hover,
+.btn-new:hover {
+    background: var(--color-border-strong);
+    color: var(--color-text-primary);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+ * Links
+ * ========================================================================== */
+.back-link {
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: block;
+    transition: 0.2s;
+}
+.back-link:hover { color: var(--color-text-primary); }
+
+.view-link {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.2s;
+}
+.view-link:hover { color: var(--color-text-muted); text-decoration: underline; }
+
+.action-link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: 0.2s;
+}
+.action-link:hover { color: var(--color-text-primary); }
+
+.cancel-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--color-text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    transition: 0.2s;
+}
+.cancel-link:hover { color: var(--color-text-primary); }
+
+/* Used by login.html and signup.html for the "already have an account?" line. */
+.signup-link,
+.login-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--color-text-dim);
+    font-size: 14px;
+}
+.signup-link a,
+.login-link a {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: 0.2s;
+}
+.signup-link a:hover,
+.login-link a:hover { color: var(--color-text-primary); }
+
+.header-link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    border: 1px solid var(--color-border-strong);
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+.header-link:hover {
+    color: var(--color-text-primary);
+    background: var(--color-surface-raised);
+    border-color: var(--color-placeholder);
+}
+
+/* ==========================================================================
+ * Tables
+ * ========================================================================== */
+table { width: 100%; border-collapse: collapse; }
+
+th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-text-dim);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+td {
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+tr:hover td { background: var(--color-surface-hover); }
+tr:hover td:first-child { border-left: 2px solid var(--color-text-primary); }
+
+/* ==========================================================================
+ * Badges
+ * Shared pill shape; status-* and role-* variants set the colours.
+ * .status is kept as an alias for templates that used the shorter class.
+ * ========================================================================== */
+.status-badge,
+.status,
+.role-badge,
+.event-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-weight: 500;
+}
+
+.status-submitted  { background: var(--color-submitted-bg);  color: var(--color-submitted-fg); }
+.status-unassigned { background: var(--color-unassigned-bg); color: var(--color-unassigned-fg); }
+.status-assigned   { background: var(--color-assigned-bg);   color: var(--color-assigned-fg); }
+.status-incomplete { background: var(--color-incomplete-bg); color: var(--color-incomplete-fg); }
+.status-granted    { background: var(--color-granted-bg);    color: var(--color-granted-fg); }
+.status-rejected   { background: var(--color-rejected-bg);   color: var(--color-rejected-fg); }
+
+.role-user     { background: var(--color-role-user-bg);     color: var(--color-role-user-fg); }
+.role-admin    { background: var(--color-role-admin-bg);    color: var(--color-role-admin-fg); }
+.role-sysadmin { background: var(--color-role-sysadmin-bg); color: var(--color-role-sysadmin-fg); }
+
+/* Audit-log event chip — monospace for CREATED / UPDATED / DELETED labels. */
+.event-badge {
+    background: rgba(80, 80, 80, 0.3);
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.03em;
+}
+
+/*
+ * UserEventType pills (log/user.html). The user-log template applies
+ * class="status" + "status-<event>" so the chips share the badge shape; the
+ * rules below give each event its own colour. Kept side-by-side with the
+ * status-* rules above so adding a new UserEventType only needs one new line.
+ */
+.status-created               { background: var(--color-granted-bg);    color: var(--color-granted-fg); }
+.status-updated               { background: var(--color-submitted-bg);  color: var(--color-submitted-fg); }
+.status-deleted               { background: var(--color-rejected-bg);   color: var(--color-rejected-fg); }
+.status-authorization_changed { background: var(--color-incomplete-bg); color: var(--color-incomplete-fg); }
+
+/* ==========================================================================
+ * Alerts
+ * ========================================================================== */
+.alert-error {
+    background: var(--color-alert-error-bg);
+    border: 1px solid var(--color-alert-error-border);
+    color: var(--color-alert-error-fg);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    background: var(--color-alert-success-bg);
+    border: 1px solid var(--color-alert-success-border);
+    color: var(--color-alert-success-fg);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* ==========================================================================
+ * Info grid (profile view, visa details)
+ * Two-column grid of outlined info tiles; use .full-width or inline
+ * grid-column: span 2 for double-wide items.
+ * ========================================================================== */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.info-item {
+    border: 1px solid var(--color-border);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+}
+
+.info-item.full-width { grid-column: span 2; }
+
+.info-item .label,
+.label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+    display: block;
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+}
+
+.info-item .value,
+.value {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+/* ==========================================================================
+ * Audit log utility text
+ * ========================================================================== */
+.timestamp   { color: var(--color-text-dim);    font-size: 13px; font-family: var(--font-mono); }
+.description { color: var(--color-text-muted);  font-size: 13px; }
+
+/* ==========================================================================
+ * Empty state
+ * ========================================================================== */
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--color-text-dimmer);
+    font-size: 14px;
+}
+
+/* ==========================================================================
+ * Log pages (log/user.html, log/visa.html)
+ * Add class="container log-page" to the card wrapper on audit-log views.
+ * The modifier widens the card and tightens the header spacing, then the
+ * filter-bar and pager components are shared between both pages.
+ * ========================================================================== */
+.container.log-page             { max-width: 1100px; margin: 0 auto; }
+.container.log-page > header    { margin-bottom: 24px; padding-bottom: 24px; }
+
+.log-count { font-size: 14px; color: var(--color-text-muted); }
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+.filter-bar .field   { display: flex; flex-direction: column; gap: 4px; }
+.filter-bar label    { font-size: 11px; text-transform: uppercase; color: var(--color-text-dim); }
+.filter-bar input,
+.filter-bar select   { padding: 6px 10px; font-size: 13px; }
+.filter-bar .actions { display: flex; gap: 8px; margin-left: auto; }
+
+.pager {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+.pager .page-info { font-size: 13px; color: var(--color-text-muted); }
+
+/* ==========================================================================
+ * Anonymous auth pages (login / signup)
+ * These pages have no <nav>, so the body is the centering surface.
+ * ========================================================================== */
+.auth-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px;
+    box-sizing: border-box;
+}

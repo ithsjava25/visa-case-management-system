@@ -37,6 +37,13 @@ public class VisaService {
 
     private static final String NOT_FOUND_MESSAGE = "Visa not found.";
 
+    // Status groupings used by the admin "Visa Cases" page. Held as constants
+    // so the lists are allocated once per JVM rather than once per request.
+    private static final List<VisaStatus> OPEN_STATUSES =
+            List.of(VisaStatus.ASSIGNED, VisaStatus.INCOMPLETE);
+    private static final List<VisaStatus> HANDLED_STATUSES =
+            List.of(VisaStatus.GRANTED, VisaStatus.REJECTED);
+
     private final VisaRepository visaRepository;
     private final UserRepository userRepository;
     private final VisaMapper visaMapper;
@@ -464,6 +471,46 @@ public class VisaService {
     @PreAuthorize("hasRole('ADMIN')")
     public List<VisaDTO> findVisasByHandlerId(Long handlerId) {
         return visaRepository.findVisasByHandlerId(handlerId,
+                        Sort.by("updatedAt").descending())
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+    }
+
+    // --- Queries for /visa/cases (admin + sysadmin landing page) ---
+
+    /**
+     * Open Cases: everything the current handler is actively working on.
+     */
+    public List<VisaDTO> findOpenCasesByHandler(Long handlerId) {
+        return visaRepository.findByHandler_IdAndVisaStatusIn(
+                        handlerId,
+                        OPEN_STATUSES,
+                        Sort.by("updatedAt").descending())
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+    }
+
+    /**
+     * Unassigned Cases: freshly-submitted applications nobody is handling yet.
+     */
+    public List<VisaDTO> findUnassignedCases() {
+        return visaRepository.findByVisaStatusAndHandlerIsNull(
+                        VisaStatus.SUBMITTED,
+                        Sort.by("updatedAt").descending())
+                .stream()
+                .map(visaMapper::toDTO)
+                .toList();
+    }
+
+    /**
+     * Handled Cases: contains cases which have been either GRANTED or REJECTED.
+     */
+    public List<VisaDTO> findHandledCasesByHandler(Long handlerId) {
+        return visaRepository.findByHandler_IdAndVisaStatusIn(
+                        handlerId,
+                        HANDLED_STATUSES,
                         Sort.by("updatedAt").descending())
                 .stream()
                 .map(visaMapper::toDTO)

@@ -7,6 +7,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -15,7 +16,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -32,29 +32,46 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, OauthSuccessHandler oauthSuccessHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // Public landing + static assets + anonymous auth forms
                         .requestMatchers("/").permitAll()
+                        .requestMatchers("/css/**").permitAll()
                         .requestMatchers("/static/google-icon.svg").permitAll()
                         .requestMatchers("/user/signup").permitAll()
                         .requestMatchers("/user/login").permitAll()
-                        .requestMatchers("/logout").permitAll()
-                        .requestMatchers("/dashboard").authenticated()
+
+                        // Any authenticated user can hit these; role-specific protection
+                        // lives on the individual @PreAuthorize annotations.
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/user/logout").authenticated()
+                        .requestMatchers("/home").authenticated()
                         .requestMatchers("/profile/**").authenticated()
-                        .requestMatchers("/visas/**").authenticated()
+                        .requestMatchers("/visa/cases").hasAnyRole("SYSADMIN", "ADMIN")
+                        .requestMatchers("/visa/my-applications").hasRole("USER")
+                        .requestMatchers("/visa/apply").hasRole("USER")
+                        .requestMatchers("/visa/**").authenticated()
                         .requestMatchers("/api/comments/**").authenticated()
-                        .requestMatchers("/**/admin").hasRole("ADMIN")
-                        .requestMatchers("/**/applicant").hasRole("USER")
+
+                        // Audit logs and user list are sysadmin-only.
                         .requestMatchers("/profile/edit/{userId}/authorization").hasRole("SYSADMIN")
+                        .requestMatchers("/log/**").hasRole("SYSADMIN")
+                        .requestMatchers("/favicon.ico").permitAll()
+                        .requestMatchers("/login/oauth2/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/access-denied").permitAll()
                         .anyRequest().hasRole("SYSADMIN")
                 )
+                .exceptionHandling(ex -> ex.accessDeniedPage("/access-denied"))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .formLogin(l -> l
-                        .defaultSuccessUrl("/dashboard", true)
+                        // /home is the single post-login router and redirects as follows:
+                        // USER -> /visa/my-applications
+                        // ADMIN -> /visa/cases,
+                        // SYSADMIN -> /log/visa
+                        .defaultSuccessUrl("/home", true)
                         .loginPage("/user/login"))
                 .oauth2Login(l -> l
                         .loginPage("/user/login")
                         .successHandler(oauthSuccessHandler))
-                .logout(withDefaults()) //TODO: Custom logout page required
-                .httpBasic(withDefaults());
+                .logout(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

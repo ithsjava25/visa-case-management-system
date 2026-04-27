@@ -3,134 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Visa Application</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #f0f0f0;
-            line-height: 1.6;
-            background: #000;
-            margin: 0;
-            padding: 40px;
-        }
+        .container { max-width: 500px; margin: 0 auto; }
 
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: #111;
-            padding: 32px;
-            border-radius: 12px;
-            border: 1px solid #222;
-        }
-
-        header {
-            border-bottom: 1px solid #222;
+        .container > header {
+            display: block;
+            text-align: left;
             margin-bottom: 30px;
             padding-bottom: 10px;
         }
+        .container > header p { color: var(--color-text-dim); font-size: 14px; margin-top: 5px; }
 
-        h1 { font-size: 24px; font-weight: 500; color: #fff; margin: 0; }
-        header p { color: #666; font-size: 14px; margin-top: 5px; }
-
-        /* Form Elements */
-        .form-group { margin-bottom: 20px; }
-
-        label {
-            display: block;
+        /* Handler-feedback banner shown when a case is INCOMPLETE. */
+        .feedback-banner {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--color-warning-bg);
+            border: 1px solid var(--color-warning-border);
+            border-radius: var(--radius-md);
+        }
+        .feedback-banner .feedback-label {
+            color: var(--color-warning-accent);
             font-size: 11px;
             text-transform: uppercase;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #666;
-            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .feedback-banner p {
+            color: var(--color-text-secondary);
+            margin: 0;
+            font-style: italic;
         }
 
-        select, input, textarea {
-            width: 100%;
+        /* Attached-document row on the edit form. */
+        .document-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--color-surface-raised);
             padding: 12px;
-            background: #181818;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #ccc;
-            font-size: 15px;
-            box-sizing: border-box;
-            transition: all 0.2s ease;
-            -webkit-appearance: none;
-            resize: none;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border-strong);
         }
-
-        select:focus, input:focus, textarea:focus {
-            outline: none;
-            border-color: #666;
-            background: #1a1a1a;
-            color: #fff;
-        }
-
-        ::placeholder { color: #444; }
-
-        .btn-submit {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: 600;
-            transition: 0.2s;
-            margin-top: 10px;
-        }
-        .btn-submit:hover { background: #ccc; transform: translateY(-1px); }
-
-        .cancel-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
+        .document-row a {
+            color: var(--color-text-primary);
             text-decoration: none;
-            font-size: 14px;
-            transition: 0.2s;
-        }
-        .cancel-link:hover { color: #fff; }
-
-        .is-invalid {
-            border-color: #ff4d4d !important;
-        }
-
-        .error-text {
-            color: #ff4d4d;
-            font-size: 0.75rem;
-            margin-top: 8px;
-            display: block;
-        }
-
-        input[type="file"] {
-            width: 105px !important;
-            height: 32px;
-            color: transparent;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        input[type="file"]::-webkit-file-upload-button {
-            display: none;
-        }
-
-        input[type="file"]::before {
-            content: 'Choose File';
-            display: inline-block;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 5px 12px;
-            color: #ccc;
-            font-weight: 600;
             font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-
+        .document-row button {
+            background: none;
+            border: none;
+            color: var(--color-danger);
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            padding: 0;
+            width: auto;
+        }
     </style>
 </head>
 <body>
 
+<nav th:replace="~{fragments/header :: nav}"></nav>
+
+<div class="page-content">
 <div class="container">
     <header>
         <h1>Edit Application</h1>
@@ -138,22 +80,18 @@
     </header>
 
     <div th:if="${updateVisaDto != null && updateVisaDto.visaStatus != null && updateVisaDto.visaStatus.name() == 'INCOMPLETE'}"
-         style="margin-bottom: 30px; padding: 20px; background: #1a1500; border: 1px solid #332200; border-radius: 8px;">
-        <label style="color: #ffcc00; font-size: 11px; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 10px;">
-            Feedback from Handler
-        </label>
-        <p style="color: #ccc; margin: 0; font-style: italic;"
-           th:text="${statusInformation != null ? statusInformation : 'Please review and update your application details.'}">
+         class="feedback-banner">
+        <label class="feedback-label">Feedback from Handler</label>
+        <p th:text="${statusInformation != null ? statusInformation : 'Please review and update your application details.'}">
             Reason for incomplete status goes here.
         </p>
     </div>
 
-    <form th:action="@{/visas/{id}/edit(id=${updateVisaDto.id})}"
+    <form th:action="@{/visa/{id}/edit(id=${updateVisaDto.id})}"
           th:object="${updateVisaDto}"
           method="post" enctype="multipart/form-data">
 
-        <div th:if="${#fields.hasErrors('global')}"
-             style="background: #3a1111; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
+        <div th:if="${#fields.hasErrors('global')}" class="alert-error">
             <p style="margin: 0;" th:each="err : ${#fields.errors('global')}" th:text="${err}"></p>
         </div>
 
@@ -190,17 +128,14 @@
         <div class="form-group" th:if="${not #lists.isEmpty(visa.downloadUrls)}">
             <label>Current Passport Documents</label>
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div th:each="url, iter : ${visa.downloadUrls}"
-                     style="display: flex; align-items: center; justify-content: space-between; background: #1a1a1a; padding: 12px; border-radius: 8px; border: 1px solid #333;">
-
-                    <a th:href="${url}" target="_blank" rel="noopener noreferrer" style="color:#fff; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                <div th:each="url, iter : ${visa.downloadUrls}" class="document-row">
+                    <a th:href="${url}" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                         <span th:text="'View Attachment ' + ${iter.count}">View Attachment</span>
                     </a>
 
-                    <button type="button"
-                            th:onclick="'if(confirm(\'Remove this document?\')) document.getElementById(\'delete-doc-' + ${iter.index} + '\').submit();'"
-                            style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 20px; line-height: 1;">
+                    <button type="button" class="js-delete-doc"
+                            th:attr="data-form-id='delete-doc-' + ${iter.index}">
                         &times;
                     </button>
                 </div>
@@ -209,30 +144,32 @@
 
         <div class="form-group">
             <label>Add Passport Document</label>
-            <div style="position: relative; border: 1px dashed #333; background: #111; border-radius: 6px; padding: 12px; display: flex; align-items: center; gap: 15px;">
+            <div style="position: relative; border: 1px dashed var(--color-border-strong); background: var(--color-surface); border-radius: var(--radius-sm); padding: 12px; display: flex; align-items: center; gap: 15px;">
 
                 <input type="file" name="passportFile" id="passportFile" accept="image/*,.pdf"
                        style="border: none; background: transparent; padding: 0; width: auto; margin: 0;">
 
-                <span id="file-name" style="color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                <span id="file-name" style="color: var(--color-text-primary); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
             </div>
 
-            <p style="color: #666; font-size: 11px; margin-top: 5px;">
+            <p style="color: var(--color-text-dim); font-size: 11px; margin-top: 5px;">
                 Supported Formats: PDF, JPG or PNG. (Max 10MB).
             </p>
         </div>
 
         <button type="submit" class="btn-submit">Save Changes</button>
-        <a th:href="@{/visas/{id}(id=${updateVisaDto.id})}" class="cancel-link">Back to Details</a>
+        <a th:href="@{/visa/{id}(id=${updateVisaDto.id})}" class="cancel-link">Back to Details</a>
     </form>
 
     <div th:each="key, iter : ${visa.s3Keys}">
         <form th:id="'delete-doc-' + ${iter.index}"
-              th:action="@{/visas/{id}/documents/delete(id=${visa.id})}"
+              th:action="@{/visa/{id}/documents/delete(id=${visa.id})}"
               method="post" style="display: none;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="s3Key" th:value="${key}">
         </form>
     </div>
+</div>
 </div>
 
 <script>
@@ -244,8 +181,17 @@
             fileNameDisplay.textContent = '';
         }
     });
-</script>
 
+    // Delegated handler for the per-document delete buttons. Reads the target
+    // hidden form's id from data-form-id and submits it after a confirm prompt.
+    document.querySelectorAll('.js-delete-doc').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (!confirm('Remove this document?')) return;
+            const form = document.getElementById(btn.dataset.formId);
+            if (form) form.submit();
+        });
+    });
+</script>
 
 </body>
 </html>

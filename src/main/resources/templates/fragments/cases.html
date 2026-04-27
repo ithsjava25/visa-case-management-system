@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!--
+    Fragment: caseSection
+    Parameters:
+      title       – section heading (e.g. "Open Cases")
+      cases       – the List<VisaDTO> to render
+      emptyMsg    – text shown when the list is empty
+      countSuffix – appended after the count (e.g. " waiting", " handled", or "")
+      idHeader    – first column heading ("Reference" or "Visa ID")
+-->
+<div th:fragment="caseSection(title, cases, emptyMsg, countSuffix, idHeader)" class="container">
+    <header>
+        <div>
+            <h2 th:text="${title}">Cases</h2>
+            <span class="case-count"
+                  th:text="${#lists.size(cases) + ' case' + (#lists.size(cases) == 1 ? '' : 's') + countSuffix}">
+                0 cases
+            </span>
+        </div>
+    </header>
+
+    <div th:if="${#lists.isEmpty(cases)}" class="empty-state" th:text="${emptyMsg}">
+        No cases.
+    </div>
+
+    <table th:if="${!#lists.isEmpty(cases)}">
+        <thead>
+        <tr>
+            <th th:text="${idHeader}">Reference</th>
+            <th>Applicant</th>
+            <th>Handler</th>
+            <th>Visa Type</th>
+            <th>Status</th>
+            <th>Travel Date</th>
+            <th>Last updated</th>
+            <th><span class="visually-hidden">Actions</span></th>        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="visa : ${cases}">
+            <td th:text="'# ' + ${visa.id}">#101</td>
+            <td th:text="${visa.applicantName}">Anna Andersson</td>
+            <td th:text="${visa.handlerName}">Unassigned</td>
+            <td th:text="${visa.visaType}">STUDENT</td>
+            <td>
+                <span class="status"
+                      th:classappend="${visa.visaStatus != null ? 'status-' + #strings.toLowerCase(visa.visaStatus.name()) : ''}"
+                      th:text="${visa.visaStatus}">ASSIGNED</span>
+            </td>
+            <td th:text="${visa.travelDate != null ? #temporals.format(visa.travelDate, 'yyyy-MM-dd') : '-'}">2026-05-20</td>
+            <td th:text="${visa.updatedAt != null ? #temporals.format(visa.updatedAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+            <td style="text-align: left;">
+                <a th:href="@{/visa/{id}(id=${visa.id})}" class="view-link">Details &rarr;</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

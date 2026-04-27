@@ -58,8 +58,7 @@ class VisaServiceIntegrationTest {
 
         CreateVisaDTO dto = new CreateVisaDTO(
                 VisaType.STUDY, "Swedish", "PASS-INT-123",
-                LocalDate.now().plusDays(30),
-                user.getId()
+                LocalDate.now().plusDays(30)
         );
 
         // Act

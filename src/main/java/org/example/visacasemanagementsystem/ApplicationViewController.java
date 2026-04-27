@@ -1,31 +1,59 @@
 package org.example.visacasemanagementsystem;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.example.visacasemanagementsystem.user.security.UserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import java.util.Objects;
 
+/**
+ * Entry-point controller: maps the site root to the role-based router and
+ * hosts that router at /home.
+ */
 @Controller
 public class ApplicationViewController {
 
     @GetMapping("/")
     public String index() {
-        return "redirect:/dashboard";
+        return "redirect:/home";
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard(@AuthenticationPrincipal UserPrincipal principal) {
+    /**
+     * Role-based landing-page router. Each role has a distinct primary page:
+     *   SYSADMIN -> /log/visa
+     *   ADMIN    -> /visa/cases
+     *   USER     -> /visa/my-applications.
+     */
+    @GetMapping("/home")
+    public String home(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return "redirect:/user/login";
         }
-        boolean isSysAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_SYSADMIN"));
-        boolean isAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
 
-        if (isSysAdmin) return "redirect:/dashboard/sysadmin";
-        if (isAdmin)    return "redirect:/dashboard/admin";
-        return "redirect:/dashboard/applicant";
+        boolean isSysAdmin = false;
+        boolean isAdmin = false;
+        for (var authority : principal.getAuthorities()) {
+            String role = authority.getAuthority();
+            if (Objects.equals(role, "ROLE_SYSADMIN")) isSysAdmin = true;
+            else if (Objects.equals(role, "ROLE_ADMIN")) isAdmin = true;
+        }
+
+        if (isSysAdmin) return "redirect:/log/visa";
+        if (isAdmin)    return "redirect:/visa/cases";
+        return "redirect:/visa/my-applications";
+    }
+
+    /**
+     * Target of {@code SecurityConfig.exceptionHandling().accessDeniedPage(...)}.
+     */
+    @GetMapping("/access-denied")
+    public String accessDenied(Model model, HttpServletResponse response) {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        model.addAttribute("errorTitle", "⚠️Access Denied.");
+        model.addAttribute("errorMessage",
+                "You do not have permission to perform this action.");
+        return "error/error";
     }
 }
