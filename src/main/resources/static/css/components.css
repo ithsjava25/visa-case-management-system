@@ -517,3 +517,114 @@ tr:hover td:first-child { border-left: 2px solid var(--color-text-primary); }
     padding: 40px;
     box-sizing: border-box;
 }
+
+/* ==========================================================================
+ * File-upload widget
+ * .file-upload-zone wraps a file <input> and an optional filename display.
+ * Used on apply-form.html and edit-form.html.
+ * ========================================================================== */
+.file-upload-zone {
+    position: relative;
+    border: 1px dashed var(--color-border-strong);
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Strip the global input defaults that don't apply inside the upload zone. */
+.file-upload-zone input[type="file"] {
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: auto;
+    margin: 0;
+}
+
+/* Filename text shown next to the picker button. */
+.file-name {
+    color: var(--color-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Small hint below the upload zone ("Supported formats…"). */
+.upload-hint {
+    color: var(--color-text-dim);
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+/* ==========================================================================
+ * Document lists
+ * ========================================================================== */
+/* Horizontal flex row of document download chips (visa/details). */
+.doc-list {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+/* Vertical stack of document rows (visa/edit-form). */
+.doc-list-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Missing-documents warning shown when no files are attached. */
+.no-docs-warning {
+    margin-top: 10px;
+    color: var(--color-danger);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ==========================================================================
+ * Alert helpers
+ * Strip default <p> margin so alert text sits flush with the box padding.
+ * ========================================================================== */
+.alert-error p,
+.alert-success p { margin: 0; }
+
+/* ==========================================================================
+ * Filter-bar submit button
+ * .btn-submit is full-width by default; inside .filter-bar it should
+ * shrink to fit its label.
+ * ========================================================================== */
+.filter-bar .btn-submit {
+    width: auto;
+    padding: 8px 16px;
+    margin-top: 0;
+}
+
+/* ==========================================================================
+ * Utility helpers
+ * ========================================================================== */
+/* Right-align a table cell's content (action/link columns). */
+.td-right { text-align: right; }
+
+/* Vertical gap between two stacked .container cards on the same page. */
+.mt-card  { margin-top: 24px; }
+
+/* Hides an element completely — used for hidden helper forms. */
+.hidden   { display: none; }
+
+/* Inline-width variant of .btn-submit — for <a> links that look like the
+   primary button but must not stretch to full column width. */
+.btn-submit-inline {
+    text-decoration: none;
+    display: inline-block;
+    width: auto;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    margin-top: 0;
+}

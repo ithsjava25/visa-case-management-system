@@ -92,7 +92,7 @@
           method="post" enctype="multipart/form-data">
 
         <div th:if="${#fields.hasErrors('global')}" class="alert-error">
-            <p style="margin: 0;" th:each="err : ${#fields.errors('global')}" th:text="${err}"></p>
+            <p th:each="err : ${#fields.errors('global')}" th:text="${err}"></p>
         </div>
 
         <input type="hidden" th:field="*{id}" />
@@ -127,7 +127,7 @@
 
         <div class="form-group" th:if="${not #lists.isEmpty(visa.downloadUrls)}">
             <label>Current Passport Documents</label>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="doc-list-stack">
                 <div th:each="url, iter : ${visa.downloadUrls}" class="document-row">
                     <a th:href="${url}" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -144,17 +144,12 @@
 
         <div class="form-group">
             <label>Add Passport Document</label>
-            <div style="position: relative; border: 1px dashed var(--color-border-strong); background: var(--color-surface); border-radius: var(--radius-sm); padding: 12px; display: flex; align-items: center; gap: 15px;">
-
-                <input type="file" name="passportFile" id="passportFile" accept="image/*,.pdf"
-                       style="border: none; background: transparent; padding: 0; width: auto; margin: 0;">
-
-                <span id="file-name" style="color: var(--color-text-primary); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+            <div class="file-upload-zone">
+                <input type="file" name="passportFile" id="passportFile" accept="image/*,.pdf">
+                <span id="file-name" class="file-name"></span>
             </div>
 
-            <p style="color: var(--color-text-dim); font-size: 11px; margin-top: 5px;">
-                Supported Formats: PDF, JPG or PNG. (Max 10MB).
-            </p>
+            <p class="upload-hint">Supported Formats: PDF, JPG or PNG. (Max 10MB).</p>
         </div>
 
         <button type="submit" class="btn-submit">Save Changes</button>
@@ -164,7 +159,7 @@
     <div th:each="key, iter : ${visa.s3Keys}">
         <form th:id="'delete-doc-' + ${iter.index}"
               th:action="@{/visa/{id}/documents/delete(id=${visa.id})}"
-              method="post" style="display: none;">
+              method="post" class="hidden">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="s3Key" th:value="${key}">
         </form>
