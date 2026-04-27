@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.example.visacasemanagementsystem.audit.AuditEventType;
+import org.example.visacasemanagementsystem.audit.VisaEventType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -17,29 +17,29 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class AuditLog {
+public class VisaLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "audit_id", nullable = false)
+    @Column(name = "visa_log_id", nullable = false)
     private Long id;
 
     @NotNull @CreatedDate
     private LocalDateTime timeStamp;
 
-    @NotNull private Long userId; // Vem gjorde vad?
+    @NotNull private Long userId;
 
-    @NotNull private Long visaCaseId; // Vilket ärende rör det?
+    @NotNull private Long visaCaseId;
 
     @NotNull @Enumerated(EnumType.STRING)
-    private AuditEventType auditEventType;
+    private VisaEventType visaEventType;
 
-    private String description; // Beskrivning av händelse
+    private String description;
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof AuditLog auditLog)) return false;
-        return Objects.equals(id, auditLog.id);
+        if (!(o instanceof VisaLog visaLog)) return false;
+        return Objects.equals(id, visaLog.id);
     }
 
     @Override
@@ -49,12 +49,12 @@ public class AuditLog {
 
     @Override
     public String toString() {
-        return "AuditLog{" +
+        return "VisaLog{" +
                 "id=" + id +
                 ", timeStamp=" + timeStamp +
                 ", userId=" + userId +
                 ", visaCaseId=" + visaCaseId +
-                ", auditEventType=" + auditEventType +
+                ", visaEventType=" + visaEventType +
                 ", description='" + description + '\'' +
                 '}';
     }
