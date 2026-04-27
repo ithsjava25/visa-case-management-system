@@ -33,7 +33,7 @@ public class CommentLogService {
 
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSADMIN')")
     public List<CommentLogDTO> findAll() {
         return commentLogRepository.findAll()
                 .stream()

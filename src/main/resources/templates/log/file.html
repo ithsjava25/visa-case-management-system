@@ -8,110 +8,44 @@
 </head>
 <body>
 
-<nav th:replace="~{fragments/header :: nav}"></nav>
-
-<div class="page-content">
-    <div class="container log-page">
-        <header>
-            <div>
-                <h1>File Log</h1>
-                <span class="log-count"
-                      th:text="${logs.totalElements + ' event' + (logs.totalElements == 1 ? '' : 's') + ' total'}">
-                    0 events total
-                </span>
-            </div>
-        </header>
-
-        <!-- Filter form. GET so the resulting URL is shareable and page=N links
-             can keep the rest of the query string intact. -->
-        <form class="filter-bar" method="get" th:action="@{/log/file}">
-            <div class="field">
-                <label for="eventType">Event type</label>
-                <select id="eventType" name="eventType">
-                    <option value="" th:selected="${selectedEventType == null}">All</option>
-                    <option th:each="type : ${eventTypes}"
-                            th:value="${type.name()}"
-                            th:text="${type}"
-                            th:selected="${selectedEventType != null and selectedEventType.name() == type.name()}">
-                    </option>
-                </select>
-            </div>
-            <div class="field">
-                <label for="from">From</label>
-                <input type="date" id="from" name="from"
-                       th:value="${from != null ? #temporals.format(from, 'yyyy-MM-dd') : ''}">
-            </div>
-            <div class="field">
-                <label for="to">To</label>
-                <input type="date" id="to" name="to"
-                       th:value="${to != null ? #temporals.format(to, 'yyyy-MM-dd') : ''}">
-            </div>
-            <div class="actions">
-                <button type="submit" class="btn-submit">
-                    Apply filters
-                </button>
-                <a th:href="@{/log/file}" class="cancel-link">Reset</a>
-            </div>
-        </form>
-
-        <main>
-            <table>
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Timestamp</th>
-                    <th>Actor User ID</th>
-                    <th>Visa Case ID</th>
-                    <th>File Name</th>
-                    <th>Event</th>
-                    <th>Description</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="log : ${logs.content}">
-                    <td th:text="${log.id}">1</td>
-                    <td th:text="${#temporals.format(log.timeStamp, 'yyyy-MM-dd HH:mm')}">2026-04-24 10:00</td>
-                    <td th:text="${log.actorUserId}">42</td>
-                    <td th:text="${log.visaCaseId}">101</td>
-                    <td th:text="${log.fileName}">passport.pdf</td>
-                    <td>
-                        <span class="status"
-                              th:classappend="${log.fileEventType != null ? 'status-' + #strings.toLowerCase(log.fileEventType.name()) : ''}"
-                              th:text="${log.fileEventType}">UPLOADED</span>
-                    </td>
-                    <td th:text="${log.description}">File uploaded.</td>
-                </tr>
-                </tbody>
-            </table>
-
-            <div th:if="${logs.totalElements == 0}" class="empty-state">
-                No log entries match the current filters.
-            </div>
-
-            <!-- Pager. Each link re-emits the current filter state so narrowing
-                 the result set and then paging through it keeps the filters. -->
-            <div class="pager" th:if="${logs.totalPages > 1}">
-                <a th:if="${!logs.first}"
-                   th:href="@{/log/file(page=${logs.number - 1}, size=${logs.size},
-                                         eventType=${selectedEventType != null ? selectedEventType.name() : null},
-                                         from=${from != null ? #temporals.format(from, 'yyyy-MM-dd') : null},
-                                         to=${to != null ? #temporals.format(to, 'yyyy-MM-dd') : null})}"
-                   class="view-link">&larr; Previous</a>
-
-                <span class="page-info"
-                      th:text="'Page ' + (${logs.number} + 1) + ' of ' + ${logs.totalPages}">
-                    Page 1 of 1
-                </span>
-
-                <a th:if="${!logs.last}"
-                   th:href="@{/log/file(page=${logs.number + 1}, size=${logs.size},
-                                         eventType=${selectedEventType != null ? selectedEventType.name() : null},
-                                         from=${from != null ? #temporals.format(from, 'yyyy-MM-dd') : null},
-                                         to=${to != null ? #temporals.format(to, 'yyyy-MM-dd') : null})}"
-                   class="view-link">Next &rarr;</a>
-            </div>
-        </main>
-    </div>
+<div th:replace="~{fragments/log-page :: logPage(
+        'File Log',
+        '/log/file',
+        ${logs},
+        ${eventTypes},
+        ${selectedEventType},
+        ${from},
+        ${to},
+        ~{::thead},
+        ~{::tbody})}">
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Timestamp</th>
+            <th>Actor User ID</th>
+            <th>Visa Case ID</th>
+            <th>File Name</th>
+            <th>Event</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="log : ${logs.content}">
+            <td th:text="${log.id}">1</td>
+            <td th:text="${#temporals.format(log.timeStamp, 'yyyy-MM-dd HH:mm')}">2026-04-24 10:00</td>
+            <td th:text="${log.actorUserId}">42</td>
+            <td th:text="${log.visaCaseId}">101</td>
+            <td th:text="${log.fileName}">passport.pdf</td>
+            <td>
+                <span class="status"
+                      th:classappend="${log.fileEventType != null ? 'status-' + #strings.toLowerCase(log.fileEventType.name()) : ''}"
+                      th:text="${log.fileEventType}">UPLOADED</span>
+            </td>
+            <td th:text="${log.description}">File uploaded.</td>
+        </tr>
+        </tbody>
+    </table>
 </div>
 
 </body>

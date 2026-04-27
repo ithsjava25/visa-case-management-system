@@ -31,7 +31,7 @@ public class VisaLogService {
         visaLogRepository.save(visaLog);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSADMIN')")
     public List<VisaLogDTO> findAll() {
         return visaLogRepository.findAll()
                 .stream()

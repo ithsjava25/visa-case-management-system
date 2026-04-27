@@ -32,7 +32,7 @@ public class FileLogService {
 
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSADMIN')")
     public List<FileLogDTO> findAll() {
         return fileLogRepository.findAll()
                 .stream()

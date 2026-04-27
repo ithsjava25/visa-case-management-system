@@ -329,6 +329,9 @@ public class VisaService {
         }
     }
 
+    // SYSADMIN is intentionally included in all business-action methods below.
+    // SYSADMINs can act as full admins when needed (e.g. covering for absent staff)
+    // while retaining their additional audit/user-management privileges.
     @PreAuthorize("hasAnyRole('ADMIN', 'SYSADMIN')")
     @Transactional
     public VisaDTO approveVisa(Long visaId, Long adminId) {
